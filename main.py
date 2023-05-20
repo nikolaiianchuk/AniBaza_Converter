@@ -43,6 +43,7 @@ class MainWindow(QMainWindow):  # Program window
         self.hard_only = False
         self.soft_hard = True
         self.compile_var = False
+        self.hardsubber = False
         self.finish_message = False
         self.sub = None
         self.Nvenc = None
@@ -68,6 +69,7 @@ class MainWindow(QMainWindow):  # Program window
             self.ui.subPath,
             self.ui.softPath
         ]
+        self.ui.stopButton.hide()
 
     def open_faq(self):
         if self.faqWindow is None:
@@ -177,22 +179,19 @@ class MainWindow(QMainWindow):  # Program window
                 self.soft_hard = False
                 self.hard_only = False
                 self.compile_var = True
+            case 'Для хардсабберов':
+                self.hardsubber = True
 
         if self.ui.episodeLine.text():
-            if self.ui.soundPath.text():
+            if self.ui.soundPath.text() or self.hardsubber:
                 if self.ui.rawPath.text():
-                    if (self.ui.subPath.text() and self.sub == True) or \
-                            (self.ui.subPath.text() and self.sub == False) or \
-                            (self.ui.subPath.text() and self.sub == True and self.hard_only == True) or \
-                            (self.ui.subPath.text() and self.sub == True and self.soft_hard == True) or \
-                            (self.ui.subPath.text() and self.sub == True and self.compile_var == True) or \
-                            (not self.ui.subPath.text() and self.sub == False):
-                        if self.ui.softPath.text() or self.hard_only == True:
+                    if self.ui.subPath.text() and self.sub:
+                        if self.ui.softPath.text() or self.hard_only or self.hardsubber:
                             self.threadMain = ThreadClassSoft(self.ui.episodeLine.text(), self.ui.rawPath.text(),
                                                               self.ui.soundPath.text(), self.ui.subPath.text(),
                                                               self.ui.softPath.text(), self.ui.bitrateBox.currentText(),
                                                               self.Nvenc, self.sub, self.compile_var,
-                                                              self.soft_hard, self.hard_only)
+                                                              self.soft_hard, self.hard_only, self.hardsubber)
                             self.threadMain.finished.connect(self.finished)
                             self.threadMain.frame_upd.connect(self.frame_update)
                             self.threadMain.time_upd.connect(self.time_update)
@@ -232,6 +231,7 @@ class MainWindow(QMainWindow):  # Program window
     def finished(self):
         os.chdir(self.main_dir)
         self.ui.startButton.show()
+        self.ui.stopButton.hide()
 
         if self.finish_message:
             self.coding_error('stop')
@@ -256,7 +256,7 @@ class ThreadClassSoft(QThread):
     frame_upd = QtCore.pyqtSignal(object)
     time_upd = QtCore.pyqtSignal(object)
 
-    def __init__(self, name, raw, sound, sub, soft, rate, nvenc, hard, compile_var, soft_hard, hard_only):
+    def __init__(self, name, raw, sound, sub, soft, rate, nvenc, hard, compile_var, soft_hard, hard_only, hardsubber):
         super(ThreadClassSoft, self).__init__()
         self.path_hard = Path(pathlib.Path.cwd(), 'HARDSUB')
         self.sub_name = None
@@ -271,6 +271,7 @@ class ThreadClassSoft(QThread):
         self.compile_var = compile_var
         self.soft_hard = soft_hard
         self.hard_only = hard_only
+        self.hardsubber = hardsubber
 
     def softsub(self):
         if self.compile_var or self.soft_hard:
@@ -310,6 +311,39 @@ class ThreadClassSoft(QThread):
                     self.time_upd.emit(frame)
                 if f1 is not None:
                     self.frame_upd.emit(f1.group())
+
+    def hardsubbering(self):
+        if self.hardsubber:
+            command_list_hardsub = \
+                'ffmpeg', '-y', \
+                    '-i', f'{self.raw_path}', \
+                    '-vf', f'subtitles={self.sub_name}', \
+                    f'{self.path_hard}/{self.name}.mp4'
+            p3 = subprocess.Popen(command_list_hardsub,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT,
+                                  universal_newlines=True,
+                                  shell=True,
+                                  encoding='utf-8'
+                                  )
+            for line in p3.stdout:
+                print(line)
+                f1 = re.search(r'frame=\s?\s?\s?\s?\d+', line)
+                l1 = re.search(r'Duration:\s\d{2}.\d{2}.\d{2}.\d{2}\b', line)
+                if l1 is not None:
+                    l2 = str(l1.group())
+                    l3 = l2.replace('Duration: ', '').split(':')
+                    hrs = float(l3[0]) * 3600
+                    minutes = float(l3[1]) * 60
+                    sec = float(l3[2])
+                    dur = hrs + minutes + sec
+                    frame = dur * 23.98
+                    self.time_upd.emit(frame)
+                if f1 is not None:
+                    self.frame_upd.emit(f1.group())
+
+
+
 
     def hardsub(self):
         if self.hard_only or self.soft_hard:
@@ -375,6 +409,7 @@ class ThreadClassSoft(QThread):
 
         self.softsub()
         self.hardsub()
+        self.hardsubbering()
 
 
 # Standard code

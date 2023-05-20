@@ -285,6 +285,11 @@ border-bottom: 2px solid rgba(105, 118, 132, 255);
                 <string>Только хард</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>Для хардсабберов</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
