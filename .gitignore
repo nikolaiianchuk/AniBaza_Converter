@@ -1,4 +1,12 @@
 # Project exclude paths
-/venv/
-/ffmpeg/
-/output/
+/.venv/
+/.vscode/
+/.idea/
+/__pycache__/
+/batScripts/
+/exeCreationTXT/
+/HARDSUB/
+/logs/
+/projectCreationOutput/
+/tests/
+/tmp/
