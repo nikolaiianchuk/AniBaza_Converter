@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>556</width>
-    <height>598</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="font">
@@ -114,7 +114,7 @@ background-color: rgb(47, 49, 54);
         <string>Один файл</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="7" column="1" colspan="4">
+        <item row="8" column="1" colspan="4">
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <widget class="QLineEdit" name="episodeLine">
@@ -138,7 +138,20 @@ padding-bottom:7px;</string>
           </item>
          </layout>
         </item>
-        <item row="15" column="1" rowspan="2" colspan="4">
+        <item row="5" column="1" colspan="4">
+         <spacer name="verticalSpacer_8">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="16" column="1" rowspan="2" colspan="4">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QPushButton" name="faqButton">
@@ -292,7 +305,7 @@ padding-top: -5px;
           </item>
          </layout>
         </item>
-        <item row="17" column="1" colspan="4">
+        <item row="18" column="1" colspan="4">
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
            <widget class="QLabel" name="versionLabel">
@@ -327,84 +340,20 @@ border:none;
           </item>
          </layout>
         </item>
-        <item row="0" column="1" rowspan="2">
-         <widget class="QPushButton" name="pushButton_rick">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>20</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-            <strikeout>false</strikeout>
-           </font>
+        <item row="12" column="1" colspan="4">
+         <spacer name="verticalSpacer_16">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
           </property>
-          <property name="whatsThis">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;asdasdasd&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
           </property>
-          <property name="styleSheet">
-           <string notr="true">color: rgb(98, 114, 164);
-background-color: rgba(0, 0, 0, 0);
-border:none;
-</string>
-          </property>
-          <property name="text">
-           <string>AniBaza converter :3</string>
-          </property>
-         </widget>
+         </spacer>
         </item>
-        <item row="13" column="1" colspan="4">
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="stateLabel">
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(98, 114, 164);
-background-color: rgba(0, 0, 0, 0);
-border:none;
-
-</string>
-            </property>
-            <property name="text">
-             <string>Заполняй поля!</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="10" column="1" colspan="4">
-         <layout class="QVBoxLayout" name="verticalLayout_8">
-          <item>
-           <widget class="QProgressBar" name="progressBar">
-            <property name="styleSheet">
-             <string notr="true">QProgressBar {
-	background-color: rgb(98, 114, 164);
-	color: rgb(200, 200, 200);
-	border-style: none;
-	border-radius: 20px;
-	text-align: center;
-}
-QProgressBar::chunk{	
-	border-radius: 20px;
-	
-	background-color: qlineargradient(spread:pad, x1:0.006, y1:0.556, x2:1, y2:0.522727, stop:0 rgba(54, 57, 63, 255), stop:1 rgba(54, 57, 63, 255));
-}</string>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="3" column="1" colspan="4">
+        <item row="4" column="1" colspan="4">
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -820,24 +769,26 @@ border-bottom: 2px solid rgba(105, 118, 132, 255);
 border: none;
 padding-top: 5px;
 padding-top: 3px;
+border-top: 1px solid  rgb(37, 40, 44);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-bottom: 3px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
 font: 75 20pt &quot;Segoe UI&quot;;
 color: rgb(98, 114, 164);
 }
 QPushButton:hover{
 background-color: rgb(62, 65, 72);
+border-top: 1px solid  rgb(37, 40, 44);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-bottom: 3px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
 }
 QPushButton:pressed{
 background-color: rgb(44, 47, 52);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-top: 3px solid  rgb(37, 40, 44);
-border-bottom: none;
+border-top: 2px solid  rgb(37, 40, 44);
+border-bottom: 1px solid  rgb(37, 40, 44);
 padding-top: -5px;
 }</string>
               </property>
@@ -881,24 +832,26 @@ padding-top: -5px;
 border: none;
 padding-top: 5px;
 padding-top: 3px;
+border-top: 1px solid  rgb(37, 40, 44);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-bottom: 3px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
 font: 75 20pt &quot;Segoe UI&quot;;
 color: rgb(98, 114, 164);
 }
 QPushButton:hover{
 background-color: rgb(62, 65, 72);
+border-top: 1px solid  rgb(37, 40, 44);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-bottom: 3px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
 }
 QPushButton:pressed{
 background-color: rgb(44, 47, 52);
 border-left: 1px solid  rgb(37, 40, 44);
 border-right: 1px solid  rgb(37, 40, 44);
-border-top: 3px solid  rgb(37, 40, 44);
-border-bottom: none;
+border-top: 2px solid  rgb(37, 40, 44);
+border-bottom: 1px solid  rgb(37, 40, 44);
 padding-top: -5px;
 }</string>
               </property>
@@ -927,7 +880,76 @@ padding-top: -5px;
           </item>
          </layout>
         </item>
-        <item row="5" column="1" colspan="4">
+        <item row="3" column="1" colspan="4">
+         <spacer name="verticalSpacer_23">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="10" column="1" colspan="4">
+         <spacer name="verticalSpacer_15">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="15" column="1" colspan="4">
+         <spacer name="verticalSpacer_17">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="14" column="1" colspan="4">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="stateLabel">
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(98, 114, 164);
+background-color: rgba(0, 0, 0, 0);
+border:none;
+
+</string>
+            </property>
+            <property name="text">
+             <string>Заполняй поля!</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="6" column="1" colspan="4">
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -1369,49 +1391,7 @@ padding-top: -5px;
           </item>
          </layout>
         </item>
-        <item row="11" column="1" colspan="4">
-         <spacer name="verticalSpacer_16">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="14" column="1" colspan="4">
-         <spacer name="verticalSpacer_17">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="9" column="1" colspan="4">
-         <spacer name="verticalSpacer_15">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Expanding</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="6" column="1" colspan="4">
+        <item row="7" column="1" colspan="4">
          <spacer name="verticalSpacer_21">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -1424,44 +1404,122 @@ padding-top: -5px;
           </property>
          </spacer>
         </item>
-        <item row="4" column="1" colspan="4">
-         <spacer name="verticalSpacer_8">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
+        <item row="11" column="1" colspan="4">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QProgressBar" name="progressBar">
+            <property name="styleSheet">
+             <string notr="true">QProgressBar {
+	background-color: rgb(98, 114, 164);
+	color: rgb(200, 200, 200);
+	border-style: none;
+	border-radius: 20px;
+	text-align: center;
+}
+QProgressBar::chunk{	
+	border-radius: 20px;
+	
+	background-color: qlineargradient(spread:pad, x1:0.006, y1:0.556, x2:1, y2:0.522727, stop:0 rgba(54, 57, 63, 255), stop:1 rgba(54, 57, 63, 255));
+}</string>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item row="2" column="1" colspan="4">
-         <spacer name="verticalSpacer_23">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="2" rowspan="2" colspan="3">
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="pushButton_rick">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>20</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+              <strikeout>false</strikeout>
+             </font>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;asdasdasd&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(98, 114, 164);
+background-color: rgba(0, 0, 0, 0);
+border:none;
+</string>
+            </property>
+            <property name="text">
+             <string>AniBaza converter :3</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="settingsSaving">
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>14</pointsize>
+              <weight>9</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{
+border: none;
+padding-top: 5px;
+padding-top: 3px;
+border-top: 1px solid  rgb(37, 40, 44);
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
+font: 75 14pt &quot;Segoe UI&quot;;
+color: rgb(98, 114, 164);
+}
+QPushButton:hover{
+background-color: rgb(62, 65, 72);
+border-top: 1px solid  rgb(37, 40, 44);
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-bottom: 2px solid  rgb(37, 40, 44);
+}
+QPushButton:pressed{
+background-color: rgb(44, 47, 52);
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-top: 2px solid  rgb(37, 40, 44);
+border-bottom: 1px solid  rgb(37, 40, 44);
+padding-top: -5px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Сохранить конфигурацию</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>

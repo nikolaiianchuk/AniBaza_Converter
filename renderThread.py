@@ -4,7 +4,10 @@ import os
 import shutil
 import re
 import subprocess
+import sys
+import traceback
 import config
+import loggingModule
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
@@ -19,22 +22,24 @@ class ThreadClassSoft(QThread):
     # Thread init
     def __init__(self):
         super(ThreadClassSoft, self).__init__()
+        sys.excepthook = self.handle_exception
+        
+    def handle_exception(self, exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            # Для прерываний типа Ctrl+C
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        loggingModule.write_to_log(f"Handled exception: {error_message}")
 
     # Frame updater
     def frame_update(self, proc):
         for line in proc.stdout:
-            print(line)
+            loggingModule.write_to_log(line)
             frame_match = re.search(r'frame=\s*(\d+)\s+fps=\s*(\d+)', line)
-            duration_match = re.search(r'Duration:\s*(\d+):(\d+):([\d.]+)', line)
-        
-            if duration_match:
-                hrs, minutes, sec = map(float, duration_match.groups())
-                duration = hrs * 3600 + minutes * 60 + sec
-                total_frames = duration * 24000 / 1001.0
-                self.time_upd.emit(total_frames)
 
             if frame_match:
-                remaining_frames = total_frames - int(frame_match.group(1))
+                remaining_frames = config.total_frames - int(frame_match.group(1))
                 fps = float(frame_match.group(2))
                 remaining_time = remaining_frames / (fps if math.ceil(fps) != 0 else 1)
                 rem_hrs = int(remaining_time // 3600)
@@ -47,10 +52,17 @@ class ThreadClassSoft(QThread):
     # State updater
     def state_update(self, state):
         self.state_upd.emit(state)
+        
+    def cmd_prettyfier(self, cmd):
+        cmd_list = cmd.split('-')
+        prettified_cmd = '\n' + cmd_list[0] + '\n' + ''.join(f'-{line}\n' for line in cmd_list[1:-1])
+        last_part = cmd_list[-1].split(' ')
+        prettified_cmd += '-' + last_part[0] + ' ' + last_part[1] + '\n' + last_part[2]
+        return prettified_cmd
 
     # Softsubbing
     def softsub(self):
-        print("Starting softsubbing...")
+        loggingModule.write_to_log("Starting softsubbing...")
         if config.build_state in [0, 1]:
             cmd = config.init_cmd + \
                 config.override_output_cmd + \
@@ -68,13 +80,15 @@ class ThreadClassSoft(QThread):
                 (config.subtitle_lang_metadata_cmd if config.sub else '') + \
                 config.soft_burning_cmd + \
                 config.video_codec_cmd.get('copy' if not config.logo else 'h264' + config.nvenc)   + \
+                "-crf 18 -maxrate 8M -bufsize 32M -preset faster -tune animation -profile:v high10 -level:v 5.0 -pix_fmt yuv420p10le " + \
                 config.audio_codec_cmd + \
                 config.audio_bitrate_cmd + \
                 config.audio_samplerate_cmd + \
                 (config.subtitle_codec_cmd if config.sub else '') + \
-                config.video_pixel_format_cmd + \
                 config.softsub_output_cmd
-            print(f"Generated command: {cmd}")
+                #config.video_pixel_format_cmd + \
+            
+            loggingModule.write_to_log(f"Generated command: {cmd}")
             config.current_state = "Собираю софтсаб..."
             self.state_update(config.current_state)
             process = subprocess.Popen(cmd,
@@ -88,7 +102,7 @@ class ThreadClassSoft(QThread):
 
     # Hardsubbing special
     def hardsubbering(self):
-        print("Starting special hardsubbing...")
+        loggingModule.write_to_log("Starting special hardsubbing...")
         if config.build_state == 3:
             cmd = config.init_cmd + \
                 config.override_output_cmd + \
@@ -99,7 +113,7 @@ class ThreadClassSoft(QThread):
                 config.video_pixel_format_cmd + \
                 config.hardsub_output_cmd
             
-            print(cmd)
+            loggingModule.write_to_log(f"Generated command: {cmd}")
             config.current_state = "Собираю хардсаб для хардсабберов..."
             self.state_update(config.current_state)
             process = subprocess.Popen(cmd,
@@ -113,7 +127,7 @@ class ThreadClassSoft(QThread):
 
     # Hardsubbing
     def hardsub(self):
-        print("Starting hardsubbing...")
+        loggingModule.write_to_log("Starting hardsubbing...")
         if config.build_state in [0, 2]:
             cmd = config.init_cmd + \
                 config.override_output_cmd + \
@@ -130,7 +144,7 @@ class ThreadClassSoft(QThread):
                 config.video_pixel_format_cmd + \
                 config.hardsub_output_cmd
 
-            print(cmd)
+            loggingModule.write_to_log(f"Generated command: {cmd}")
             config.current_state = "Собираю хардсаб..."
             self.state_update(config.current_state)
             process = subprocess.Popen(cmd,
@@ -143,12 +157,35 @@ class ThreadClassSoft(QThread):
             self.frame_update(process)
 
     def ffmpeg_analysis(self):
-        print("Starting ffmpeg analysis...")
+        loggingModule.write_to_log("Starting ffmpeg analysis...")
+        cmd = 'ffprobe "' + config.raw_path +'"'
+        loggingModule.write_to_log(f"Generated command: {cmd}")
+        process = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                universal_newlines=True,
+                                shell=True,
+                                encoding='utf-8'
+                                )
+        self.ffmpeg_analysis_decoding(process)
+        
+    def ffmpeg_analysis_decoding(self, proc):
+        for line in proc.stdout:
+            loggingModule.write_to_log(line)
+            duration_match = re.search(r'Duration:\s*(\d+):(\d+):([\d.]+)', line)
+            codec_match = re.search(r'Stream #Video:\s*(.*)', line)
+            
+            if duration_match:
+                hrs, minutes, sec = map(float, duration_match.groups())
+                duration = hrs * 3600 + minutes * 60 + sec
+                config.total_frames = duration * 24000 / 1001.0
+                self.time_upd.emit(config.total_frames)
+            
 
     # Coding commands
     def run(self):
         try:
-            print("Running ffmpeg thread...")
+            loggingModule.write_to_log("Running ffmpeg thread...")
             temp = f'{chr(92)}:{chr(92)}{chr(92)}' 
             os.chdir(config.main_dir)
             if config.sub:
@@ -179,5 +216,5 @@ class ThreadClassSoft(QThread):
                 os.remove(temp_sub_path)
 
         except Exception as e:
-            print(f"Error occurred: {e}")
+            loggingModule.write_to_log(f"Error occurred: {e}")
             input()

@@ -2,15 +2,24 @@ import pathlib
 
 from pathlib import Path
 
+appTitle = ''
+appVersion = ''
+appVersionName = ''
+appAuthor = ''
+
 hardsub_dir = Path(pathlib.Path.cwd(), 'HARDSUB')
 logs_dir = Path(pathlib.Path.cwd(), 'logs')
 logo_file = Path(pathlib.Path.cwd(), 'logo/AniBaza_Logo16x9.ass')
 main_dir = Path(pathlib.Path.cwd())
 build_states = {'Софт и хард' : 0, 'Только софт' : 1, 'Только хард' : 2, 'Для хардсабберов' : 3}
 build_state = 0
+configSettings = None
 enableDevMode = True
 enableLogging = True
 log_file = None
+log_filename = None
+log_flag = False
+max_logs = 10
 total_frames = 0
 current_state = ''
 
@@ -18,6 +27,8 @@ current_state = ''
 init_cmd = 'ffmpeg '
 override_output_cmd = '-y '
 output_title_metadata_cmd = ''
+nvencFlag = False
+hevcFlag = False
 nvenc = ''
 hevc = 'h264'
 codec = 'h264'
