@@ -2,8 +2,11 @@ import math
 import os
 import re
 import subprocess
+import sys
+import traceback
 import webbrowser
 import config
+import loggingModule
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QApplication, QMainWindow
@@ -20,11 +23,13 @@ class MainWindow(QMainWindow):
         self.threadMain = None
         self.faqWindow = None
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)   
+        self.ui.setupUi(self)  
+        sys.excepthook = self.handle_exception
         self.set_buttons()
         self.set_checkboxes()
         self.set_textboxes()
         self.set_comboboxes()
+        self.set_config_init()
         self.base = [
             self.ui.startButton,
             self.ui.bitrateBox,
@@ -41,9 +46,32 @@ class MainWindow(QMainWindow):
             self.ui.rawPath,
             self.ui.soundPath,
             #self.ui.subPath,
-            self.ui.softPath
+            self.ui.softPath,
+            self.ui.settingsSaving
         ]
         self.ui.stopButton.hide()
+
+    def handle_exception(self, exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            # Для прерываний типа Ctrl+C
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        loggingModule.write_to_log(f"Handled exception: {error_message}")
+
+    def set_config_init(self):
+        if os.path.exists('config.ini'):
+            config.logo = config.configSettings.getboolean('main settings', 'logo')
+            config.nvencFlag = config.configSettings.getboolean('main settings', 'nvenc')
+            config.hevcFlag = config.configSettings.getboolean('main settings', 'hevc')
+            config.sub = config.configSettings.getboolean('main settings', 'sub')
+            config.build_state = config.configSettings.getint('main settings', 'build_state')
+            self.ui.logo_check.setChecked(config.logo)
+            self.ui.nvencCheck.setChecked(config.nvencFlag)
+            self.ui.codec.setChecked(config.hevcFlag)
+            self.ui.hardCheck.setChecked(config.sub)
+            self.ui.modeBox.setCurrentIndex(config.build_state)
+            loggingModule.write_to_log(f"Settings initialized from config.")
 
     # Dev mode updater
     def update_dev_mode(self):
@@ -51,43 +79,45 @@ class MainWindow(QMainWindow):
         self.ui.enableLogging.setEnabled(config.enableDevMode)
         if not config.enableDevMode:
             self.ui.enableLogging.setChecked(False)
-        print(f"Dev mode {'enabled' if config.enableDevMode else 'disabled'}.")
+        loggingModule.write_to_log(f"Dev mode {'enabled' if config.enableDevMode else 'disabled'}.")
 
     # Subtitle updater
     def update_sub(self):
         config.sub = self.ui.hardCheck.isChecked()
         self.ui.subPath.setEnabled(config.sub)
         self.ui.subButton.setEnabled(config.sub)
-        print(f"Subtitles {'enabled' if config.sub else 'disabled'}.")
+        loggingModule.write_to_log(f"Subtitles {'enabled' if config.sub else 'disabled'}.")
 
     # Logo updater
     def update_logo(self):
         config.logo = self.ui.logo_check.isChecked()
-        print(f"Logo {'enabled' if config.logo else 'disabled'}.")
+        loggingModule.write_to_log(f"Logo {'enabled' if config.logo else 'disabled'}.")
 
     # NVENC updater
     def update_nvenc(self):
-        config.nvenc = '_nvenc' if self.ui.nvencCheck.isChecked() else ''
-        config.codec = config.hevc + config.nvenc
-        print(f"NVENC {'enabled' if config.nvenc else 'disabled'}.")
-
+        config.nvencFlag = self.ui.nvencCheck.isChecked()
+        config.nvenc = '_nvenc' if config.nvencFlag else ''
+        config.codec = f"{config.hevc}{config.nvenc}"
+        loggingModule.write_to_log(f"NVENC {'enabled' if config.nvencFlag else 'disabled'}.")
+        
     # Codec updater
     def update_codec(self):
-        config.hevc = 'h265' if self.ui.codec.isChecked() else 'h264'
-        config.codec = config.hevc + config.nvenc
-        print(f"H265 {'enabled' if config.hevc == 'h265' else 'disabled'}.")
+        config.hevcFlag = self.ui.codec.isChecked()
+        config.hevc = 'h265' if config.hevcFlag else 'h264'
+        config.codec = f"{config.hevc}{config.nvenc}"
+        loggingModule.write_to_log(f"H265 {'enabled' if config.hevc == 'h265' else 'disabled'}.")
 
     # Sound path updater
     def update_sound_path(self):
         config.sound_path = self.ui.soundPath.text()
         config.audio_input_cmd = f'-i "{config.sound_path}" '
-        print(f"Sound path updated to: {config.sound_path}")
+        loggingModule.write_to_log(f"Sound path updated to: {config.sound_path}")
 
     # Raw path updater
     def update_raw_path(self):
         config.raw_path = self.ui.rawPath.text()
         config.video_input_cmd = f'-i "{config.raw_path}" '
-        print(f"Raw path updated to: {config.raw_path}")
+        loggingModule.write_to_log(f"Raw path updated to: {config.raw_path}")
 
     # Softsub path updater
     def update_soft_path(self):
@@ -95,37 +125,48 @@ class MainWindow(QMainWindow):
         config.episode_line = self.ui.episodeLine.text() if '[AniBaza]' not in config.soft_path else config.soft_path.split('/')[-1]
         config.episode_line = config.episode_line.replace(config.episode_line[config.episode_line.rfind('[')+1:config.episode_line.rfind(']')],'') if '[' in config.episode_line else config.episode_line
         self.ui.episodeLine.setText(config.episode_line)
-        print(f"Softsub path updated to: {config.soft_path}")
+        loggingModule.write_to_log(f"Softsub path updated to: {config.soft_path}")
 
     # Subtitle path updater
     def update_sub_path(self):
         config.sub_path = self.ui.subPath.text()
         config.subtitle_input_cmd = f'-i "{config.sub_path}" '
-        print(f"Subtitle path updated to: {config.sub_path}")
+        loggingModule.write_to_log(f"Subtitle path updated to: {config.sub_path}")
 
     # Episode name updater
     def update_episode(self):
         config.episode_line = self.ui.episodeLine.text()
         config.output_title_metadata_cmd = f'-metadata title="{config.episode_line}" '
-        print(f"Episode name updated to: {config.episode_line}")
+        loggingModule.write_to_log(f"Episode name updated to: {config.episode_line}")
 
     # Bitrate updater
     def update_bitrate(self):
         config.video_bitrate = self.ui.bitrateBox.currentText()
         config.video_bitrate_cmd = f'-b:v {config.video_bitrate}K '
-        print(f"Bitrate updated to: {config.video_bitrate}Kbps")
+        loggingModule.write_to_log(f"Bitrate updated to: {config.video_bitrate}Kbps")
 
     # Mode updater
     def update_mode(self):
         config.build_state = config.build_states.get(self.ui.modeBox.currentText())
-        print(f"Mode updated to: {self.ui.modeBox.currentText()}")
+        loggingModule.write_to_log(f"Mode updated to: {self.ui.modeBox.currentText()}")
 
     # FAQ window opener
     def open_faq(self):
         if self.faqWindow is None:
             self.faqWindow = FAQWindow()
         self.faqWindow.show()
-        print("FAQ window opened.")
+        loggingModule.write_to_log("FAQ window opened.")
+    
+    # Config saving
+    def save_config(self):
+        config.configSettings.set('main settings', 'logo', str(config.logo))
+        config.configSettings.set('main settings', 'nvenc', str(config.nvencFlag))
+        config.configSettings.set('main settings', 'hevc', str(config.hevcFlag))
+        config.configSettings.set('main settings', 'sub', str(config.sub))
+        config.configSettings.set('main settings', 'build_state', str(config.build_state))
+        with open('config.ini', 'w') as configfile:
+            config.configSettings.write(configfile)
+        loggingModule.write_to_log("Config saved.")
 
     # Buttons definition
     def set_buttons(self):
@@ -140,12 +181,13 @@ class MainWindow(QMainWindow):
             self.ui.siteButton: lambda: webbrowser.open('https://www.youtube.com/watch?v=jQ6gPyYNgPo'),
             self.ui.pushButton_rick: lambda: webbrowser.open('https://www.youtube.com/watch?v=o-YBDTqX_ZU'),
             self.ui.faqButton: self.open_faq,
+            self.ui.settingsSaving: self.save_config
         }
 
         for button, handler in buttons.items():
             button.clicked.connect(handler)
-
-        print("Buttons set.")
+        
+        loggingModule.write_to_log("Buttons set.")
 
     # Checkboxes definition
     def set_checkboxes(self):
@@ -154,12 +196,13 @@ class MainWindow(QMainWindow):
             self.ui.hardCheck: self.update_sub,
             self.ui.logo_check: self.update_logo,
             self.ui.nvencCheck: self.update_nvenc,
+            self.ui.codec: self.update_codec
         }
 
         for checkbox, handler in checkboxes.items():
             checkbox.stateChanged.connect(handler)
 
-        print("Checkboxes set.")
+        loggingModule.write_to_log("Checkboxes set.")
 
     # Textboxes definition
     def set_textboxes(self):
@@ -174,7 +217,7 @@ class MainWindow(QMainWindow):
         for textbox, handler in paths.items():
             textbox.textChanged.connect(handler)
 
-        print("Textboxes set.")
+        loggingModule.write_to_log("Textboxes set.")
 
     # Comboboxes definition
     def set_comboboxes(self):
@@ -186,7 +229,7 @@ class MainWindow(QMainWindow):
         for combobox, handler in comboboxes.items():
             combobox.currentIndexChanged.connect(handler)
 
-        print("Comboboxes set.")
+        loggingModule.write_to_log("Comboboxes set.")
 
     # Open hardsub directory
     def open_hardsub(self):
@@ -194,34 +237,34 @@ class MainWindow(QMainWindow):
             os.startfile(config.hardsub_dir)
         else:
             self.coding_error('hardsub_folder')
-        print("Hardsub folder opened.")
+        loggingModule.write_to_log("Hardsub folder opened.")
 
     # Softsub saving path
     def soft_folder_path(self):
         config.soft_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Куда пихать софт?')
         self.ui.softPath.setText(config.soft_path)
-        print(f"Softsub path updated to: {config.soft_path}")
+        loggingModule.write_to_log(f"Softsub path updated to: {config.soft_path}")
 
     # Sound file choose
     def sound_folder_path(self):
         config.sound_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать звук?", "",
                                                             "All(*.wav *.flac *.aac *.m4a *.mka)")
         self.ui.soundPath.setText(config.sound_path)
-        print(f"Sound path updated to: {config.sound_path}")
+        loggingModule.write_to_log(f"Sound path updated to: {config.sound_path}")
 
     # Raw video choose
     def raw_folder_path(self):
         config.raw_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать равку?", "",
                                                             "ALL (*.mkv *.mp4 *.avi)")
         self.ui.rawPath.setText(config.raw_path)
-        print(f"Raw path updated to: {config.raw_path}")
+        loggingModule.write_to_log(f"Raw path updated to: {config.raw_path}")
 
     # Subtitle choose
     def sub_folder_path(self):
         config.sub_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать надписи?", "",
                                                             "Хуй (*.ass *.srt)")
         self.ui.subPath.setText(config.sub_path)
-        print(f"Subtitle path updated to: {config.sub_path}")
+        loggingModule.write_to_log(f"Subtitle path updated to: {config.sub_path}")
 
     # Coding Errors
     def coding_error(self, error_type):
@@ -252,16 +295,16 @@ class MainWindow(QMainWindow):
                 os.mkdir('HARDSUB')
 
         msg.exec_()
-        print(f"Coding error: {error_type}")
+        loggingModule.write_to_log(f"Coding error: {error_type}")
 
     # Progress updater
     def frame_update(self, frame):
-        print(f"Frame updated: {frame}")
+        loggingModule.write_to_log(f"Frame updated: {frame}")
         self.ui.progressBar.setValue(int(frame))
 
     # Set progressbar maximum
     def time_update(self, time):
-        print(f"Time updated: {time}")
+        loggingModule.write_to_log(f"Time updated: {time}")
         self.ui.progressBar.setMaximum(math.ceil(time))
 
     # State updater
@@ -300,7 +343,7 @@ class MainWindow(QMainWindow):
             self.coding_error('name')
             return
 
-        print("Starting ffmpeg...")
+        loggingModule.write_to_log("Starting ffmpeg...")
         self.threadMain = ThreadClassSoft()
         self.threadMain.finished.connect(self.finished)
         self.threadMain.frame_upd.connect(self.frame_update)
@@ -316,7 +359,7 @@ class MainWindow(QMainWindow):
         os.chdir(config.main_dir)
         self.finish_message = True
         subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
-        print("Killed ffmpeg process")
+        loggingModule.write_to_log("Killed ffmpeg process")
 
     # After coding
     def finished(self):
@@ -334,7 +377,7 @@ class MainWindow(QMainWindow):
 
         self.ui.progressBar.setValue(0)
         self.locker(False)
-        print("Coding finished")
+        loggingModule.write_to_log("Coding finished")
 
     # Blocking strings and buttons while coding
     def locker(self, lock_value):
@@ -346,4 +389,4 @@ class MainWindow(QMainWindow):
             tab.setDisabled(lock_value)
 
         self.ui.stopButton.setDisabled(not lock_value)
-        print("UI locked")
+        loggingModule.write_to_log("UI locked")

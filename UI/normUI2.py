@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'normUI2.ui'
+# Form implementation generated from reading ui file 'UI/normUI2.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(556, 598)
+        MainWindow.resize(556, 600)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
         font.setPointSize(10)
@@ -87,7 +87,9 @@ class Ui_MainWindow(object):
 "padding-bottom:7px;")
         self.episodeLine.setObjectName("episodeLine")
         self.verticalLayout_3.addWidget(self.episodeLine)
-        self.gridLayout_2.addLayout(self.verticalLayout_3, 7, 1, 1, 4)
+        self.gridLayout_2.addLayout(self.verticalLayout_3, 8, 1, 1, 4)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem, 5, 1, 1, 4)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.faqButton = QtWidgets.QPushButton(self.main_tab)
@@ -202,7 +204,7 @@ class Ui_MainWindow(object):
         self.hardfolderButton.setIcon(icon2)
         self.hardfolderButton.setObjectName("hardfolderButton")
         self.horizontalLayout.addWidget(self.hardfolderButton)
-        self.gridLayout_2.addLayout(self.horizontalLayout, 15, 1, 2, 4)
+        self.gridLayout_2.addLayout(self.horizontalLayout, 16, 1, 2, 4)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.versionLabel = QtWidgets.QLabel(self.main_tab)
@@ -221,62 +223,15 @@ class Ui_MainWindow(object):
         self.versionLabel.setWordWrap(False)
         self.versionLabel.setObjectName("versionLabel")
         self.verticalLayout_4.addWidget(self.versionLabel)
-        self.gridLayout_2.addLayout(self.verticalLayout_4, 17, 1, 1, 4)
-        self.pushButton_rick = QtWidgets.QPushButton(self.main_tab)
-        font = QtGui.QFont()
-        font.setFamily("Segoe UI")
-        font.setPointSize(20)
-        font.setBold(True)
-        font.setWeight(75)
-        font.setStrikeOut(False)
-        self.pushButton_rick.setFont(font)
-        self.pushButton_rick.setStyleSheet("color: rgb(98, 114, 164);\n"
-"background-color: rgba(0, 0, 0, 0);\n"
-"border:none;\n"
-"")
-        self.pushButton_rick.setObjectName("pushButton_rick")
-        self.gridLayout_2.addWidget(self.pushButton_rick, 0, 1, 2, 1)
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.stateLabel = QtWidgets.QLabel(self.main_tab)
-        font = QtGui.QFont()
-        font.setFamily("Segoe UI")
-        font.setPointSize(12)
-        self.stateLabel.setFont(font)
-        self.stateLabel.setStyleSheet("color: rgb(98, 114, 164);\n"
-"background-color: rgba(0, 0, 0, 0);\n"
-"border:none;\n"
-"\n"
-"")
-        self.stateLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.stateLabel.setObjectName("stateLabel")
-        self.horizontalLayout_3.addWidget(self.stateLabel)
-        self.gridLayout_2.addLayout(self.horizontalLayout_3, 13, 1, 1, 4)
-        self.verticalLayout_8 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_8.setObjectName("verticalLayout_8")
-        self.progressBar = QtWidgets.QProgressBar(self.main_tab)
-        self.progressBar.setStyleSheet("QProgressBar {\n"
-"    background-color: rgb(98, 114, 164);\n"
-"    color: rgb(200, 200, 200);\n"
-"    border-style: none;\n"
-"    border-radius: 20px;\n"
-"    text-align: center;\n"
-"}\n"
-"QProgressBar::chunk{    \n"
-"    border-radius: 20px;\n"
-"    \n"
-"    background-color: qlineargradient(spread:pad, x1:0.006, y1:0.556, x2:1, y2:0.522727, stop:0 rgba(54, 57, 63, 255), stop:1 rgba(54, 57, 63, 255));\n"
-"}")
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setObjectName("progressBar")
-        self.verticalLayout_8.addWidget(self.progressBar)
-        self.gridLayout_2.addLayout(self.verticalLayout_8, 10, 1, 1, 4)
+        self.gridLayout_2.addLayout(self.verticalLayout_4, 18, 1, 1, 4)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem1, 12, 1, 1, 4)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.verticalLayout_12 = QtWidgets.QVBoxLayout()
         self.verticalLayout_12.setObjectName("verticalLayout_12")
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_12.addItem(spacerItem)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_12.addItem(spacerItem2)
         self.logo_check = QtWidgets.QCheckBox(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -332,12 +287,12 @@ class Ui_MainWindow(object):
         self.hardCheck.setObjectName("hardCheck")
         self.verticalLayout_12.addWidget(self.hardCheck)
         self.horizontalLayout_4.addLayout(self.verticalLayout_12)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem1)
+        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem3)
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setObjectName("verticalLayout_11")
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_11.addItem(spacerItem2)
+        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_11.addItem(spacerItem4)
         self.modeLabel = QtWidgets.QLabel(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -368,12 +323,12 @@ class Ui_MainWindow(object):
         self.modeBox.addItem("")
         self.verticalLayout_11.addWidget(self.modeBox)
         self.horizontalLayout_4.addLayout(self.verticalLayout_11)
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem3)
+        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem5)
         self.verticalLayout_10 = QtWidgets.QVBoxLayout()
         self.verticalLayout_10.setObjectName("verticalLayout_10")
-        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_10.addItem(spacerItem4)
+        spacerItem6 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_10.addItem(spacerItem6)
         self.bitrateLabel = QtWidgets.QLabel(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -419,12 +374,12 @@ class Ui_MainWindow(object):
         self.bitrateBox.addItem("")
         self.verticalLayout_10.addWidget(self.bitrateBox)
         self.horizontalLayout_4.addLayout(self.verticalLayout_10)
-        spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem5)
+        spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem7)
         self.verticalLayout_9 = QtWidgets.QVBoxLayout()
         self.verticalLayout_9.setObjectName("verticalLayout_9")
-        spacerItem6 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_9.addItem(spacerItem6)
+        spacerItem8 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_9.addItem(spacerItem8)
         self.startButton = QtWidgets.QPushButton(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -437,30 +392,32 @@ class Ui_MainWindow(object):
 "border: none;\n"
 "padding-top: 5px;\n"
 "padding-top: 3px;\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-bottom: 3px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
 "font: 75 20pt \"Segoe UI\";\n"
 "color: rgb(98, 114, 164);\n"
 "}\n"
 "QPushButton:hover{\n"
 "background-color: rgb(62, 65, 72);\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-bottom: 3px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
 "}\n"
 "QPushButton:pressed{\n"
 "background-color: rgb(44, 47, 52);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-top: 3px solid  rgb(37, 40, 44);\n"
-"border-bottom: none;\n"
+"border-top: 2px solid  rgb(37, 40, 44);\n"
+"border-bottom: 1px solid  rgb(37, 40, 44);\n"
 "padding-top: -5px;\n"
 "}")
         self.startButton.setObjectName("startButton")
         self.verticalLayout_9.addWidget(self.startButton)
-        spacerItem7 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_9.addItem(spacerItem7)
+        spacerItem9 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_9.addItem(spacerItem9)
         self.stopButton = QtWidgets.QPushButton(self.main_tab)
         self.stopButton.setEnabled(False)
         font = QtGui.QFont()
@@ -475,39 +432,63 @@ class Ui_MainWindow(object):
 "border: none;\n"
 "padding-top: 5px;\n"
 "padding-top: 3px;\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-bottom: 3px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
 "font: 75 20pt \"Segoe UI\";\n"
 "color: rgb(98, 114, 164);\n"
 "}\n"
 "QPushButton:hover{\n"
 "background-color: rgb(62, 65, 72);\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-bottom: 3px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
 "}\n"
 "QPushButton:pressed{\n"
 "background-color: rgb(44, 47, 52);\n"
 "border-left: 1px solid  rgb(37, 40, 44);\n"
 "border-right: 1px solid  rgb(37, 40, 44);\n"
-"border-top: 3px solid  rgb(37, 40, 44);\n"
-"border-bottom: none;\n"
+"border-top: 2px solid  rgb(37, 40, 44);\n"
+"border-bottom: 1px solid  rgb(37, 40, 44);\n"
 "padding-top: -5px;\n"
 "}")
         self.stopButton.setCheckable(False)
         self.stopButton.setObjectName("stopButton")
         self.verticalLayout_9.addWidget(self.stopButton)
-        spacerItem8 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_9.addItem(spacerItem8)
+        spacerItem10 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_9.addItem(spacerItem10)
         self.horizontalLayout_4.addLayout(self.verticalLayout_9)
-        self.gridLayout_2.addLayout(self.horizontalLayout_4, 3, 1, 1, 4)
+        self.gridLayout_2.addLayout(self.horizontalLayout_4, 4, 1, 1, 4)
+        spacerItem11 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem11, 3, 1, 1, 4)
+        spacerItem12 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem12, 10, 1, 1, 4)
+        spacerItem13 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem13, 15, 1, 1, 4)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.stateLabel = QtWidgets.QLabel(self.main_tab)
+        font = QtGui.QFont()
+        font.setFamily("Segoe UI")
+        font.setPointSize(12)
+        self.stateLabel.setFont(font)
+        self.stateLabel.setStyleSheet("color: rgb(98, 114, 164);\n"
+"background-color: rgba(0, 0, 0, 0);\n"
+"border:none;\n"
+"\n"
+"")
+        self.stateLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.stateLabel.setObjectName("stateLabel")
+        self.horizontalLayout_3.addWidget(self.stateLabel)
+        self.gridLayout_2.addLayout(self.horizontalLayout_3, 14, 1, 1, 4)
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        spacerItem9 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem9)
+        spacerItem14 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem14)
         self.soundPath = QtWidgets.QLineEdit(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -521,8 +502,8 @@ class Ui_MainWindow(object):
         self.soundPath.setDragEnabled(True)
         self.soundPath.setObjectName("soundPath")
         self.verticalLayout.addWidget(self.soundPath)
-        spacerItem10 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem10)
+        spacerItem15 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem15)
         self.rawPath = QtWidgets.QLineEdit(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -536,8 +517,8 @@ class Ui_MainWindow(object):
         self.rawPath.setDragEnabled(True)
         self.rawPath.setObjectName("rawPath")
         self.verticalLayout.addWidget(self.rawPath)
-        spacerItem11 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem11)
+        spacerItem16 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem16)
         self.subPath = QtWidgets.QLineEdit(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -551,8 +532,8 @@ class Ui_MainWindow(object):
         self.subPath.setDragEnabled(True)
         self.subPath.setObjectName("subPath")
         self.verticalLayout.addWidget(self.subPath)
-        spacerItem12 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem12)
+        spacerItem17 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem17)
         self.softPath = QtWidgets.QLineEdit(self.main_tab)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
@@ -566,13 +547,13 @@ class Ui_MainWindow(object):
         self.softPath.setDragEnabled(True)
         self.softPath.setObjectName("softPath")
         self.verticalLayout.addWidget(self.softPath)
-        spacerItem13 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem13)
+        spacerItem18 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem18)
         self.horizontalLayout_5.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        spacerItem14 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem14)
+        spacerItem19 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem19)
         self.soundButton = QtWidgets.QPushButton(self.main_tab)
         self.soundButton.setMinimumSize(QtCore.QSize(30, 30))
         font = QtGui.QFont()
@@ -612,8 +593,8 @@ class Ui_MainWindow(object):
         self.soundButton.setIcon(icon3)
         self.soundButton.setObjectName("soundButton")
         self.verticalLayout_2.addWidget(self.soundButton)
-        spacerItem15 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem15)
+        spacerItem20 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem20)
         self.rawButton = QtWidgets.QPushButton(self.main_tab)
         self.rawButton.setMinimumSize(QtCore.QSize(30, 30))
         font = QtGui.QFont()
@@ -651,8 +632,8 @@ class Ui_MainWindow(object):
         self.rawButton.setIcon(icon3)
         self.rawButton.setObjectName("rawButton")
         self.verticalLayout_2.addWidget(self.rawButton)
-        spacerItem16 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem16)
+        spacerItem21 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem21)
         self.subButton = QtWidgets.QPushButton(self.main_tab)
         self.subButton.setMinimumSize(QtCore.QSize(30, 30))
         font = QtGui.QFont()
@@ -690,8 +671,8 @@ class Ui_MainWindow(object):
         self.subButton.setIcon(icon3)
         self.subButton.setObjectName("subButton")
         self.verticalLayout_2.addWidget(self.subButton)
-        spacerItem17 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem17)
+        spacerItem22 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem22)
         self.softButton = QtWidgets.QPushButton(self.main_tab)
         self.softButton.setMinimumSize(QtCore.QSize(30, 30))
         font = QtGui.QFont()
@@ -729,24 +710,91 @@ class Ui_MainWindow(object):
         self.softButton.setIcon(icon3)
         self.softButton.setObjectName("softButton")
         self.verticalLayout_2.addWidget(self.softButton)
-        spacerItem18 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem18)
-        self.horizontalLayout_5.addLayout(self.verticalLayout_2)
-        self.gridLayout_2.addLayout(self.horizontalLayout_5, 5, 1, 1, 4)
-        spacerItem19 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem19, 11, 1, 1, 4)
-        spacerItem20 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem20, 14, 1, 1, 4)
-        spacerItem21 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem21, 9, 1, 1, 4)
-        spacerItem22 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem22, 6, 1, 1, 4)
         spacerItem23 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem23, 4, 1, 1, 4)
+        self.verticalLayout_2.addItem(spacerItem23)
+        self.horizontalLayout_5.addLayout(self.verticalLayout_2)
+        self.gridLayout_2.addLayout(self.horizontalLayout_5, 6, 1, 1, 4)
         spacerItem24 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem24, 2, 1, 1, 4)
+        self.gridLayout_2.addItem(spacerItem24, 7, 1, 1, 4)
+        self.verticalLayout_8 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_8.setObjectName("verticalLayout_8")
+        self.progressBar = QtWidgets.QProgressBar(self.main_tab)
+        self.progressBar.setStyleSheet("QProgressBar {\n"
+"    background-color: rgb(98, 114, 164);\n"
+"    color: rgb(200, 200, 200);\n"
+"    border-style: none;\n"
+"    border-radius: 20px;\n"
+"    text-align: center;\n"
+"}\n"
+"QProgressBar::chunk{    \n"
+"    border-radius: 20px;\n"
+"    \n"
+"    background-color: qlineargradient(spread:pad, x1:0.006, y1:0.556, x2:1, y2:0.522727, stop:0 rgba(54, 57, 63, 255), stop:1 rgba(54, 57, 63, 255));\n"
+"}")
+        self.progressBar.setProperty("value", 0)
+        self.progressBar.setObjectName("progressBar")
+        self.verticalLayout_8.addWidget(self.progressBar)
+        self.gridLayout_2.addLayout(self.verticalLayout_8, 11, 1, 1, 4)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.pushButton_rick = QtWidgets.QPushButton(self.main_tab)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pushButton_rick.sizePolicy().hasHeightForWidth())
+        self.pushButton_rick.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Segoe UI")
+        font.setPointSize(20)
+        font.setBold(True)
+        font.setWeight(75)
+        font.setStrikeOut(False)
+        self.pushButton_rick.setFont(font)
+        self.pushButton_rick.setStyleSheet("color: rgb(98, 114, 164);\n"
+"background-color: rgba(0, 0, 0, 0);\n"
+"border:none;\n"
+"")
+        self.pushButton_rick.setObjectName("pushButton_rick")
+        self.horizontalLayout_2.addWidget(self.pushButton_rick)
         spacerItem25 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout_2.addItem(spacerItem25, 0, 2, 2, 3)
+        self.horizontalLayout_2.addItem(spacerItem25)
+        self.settingsSaving = QtWidgets.QPushButton(self.main_tab)
+        font = QtGui.QFont()
+        font.setFamily("Segoe UI")
+        font.setPointSize(14)
+        font.setBold(False)
+        font.setItalic(False)
+        font.setWeight(9)
+        self.settingsSaving.setFont(font)
+        self.settingsSaving.setStyleSheet("QPushButton{\n"
+"border: none;\n"
+"padding-top: 5px;\n"
+"padding-top: 3px;\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
+"border-left: 1px solid  rgb(37, 40, 44);\n"
+"border-right: 1px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
+"font: 75 14pt \"Segoe UI\";\n"
+"color: rgb(98, 114, 164);\n"
+"}\n"
+"QPushButton:hover{\n"
+"background-color: rgb(62, 65, 72);\n"
+"border-top: 1px solid  rgb(37, 40, 44);\n"
+"border-left: 1px solid  rgb(37, 40, 44);\n"
+"border-right: 1px solid  rgb(37, 40, 44);\n"
+"border-bottom: 2px solid  rgb(37, 40, 44);\n"
+"}\n"
+"QPushButton:pressed{\n"
+"background-color: rgb(44, 47, 52);\n"
+"border-left: 1px solid  rgb(37, 40, 44);\n"
+"border-right: 1px solid  rgb(37, 40, 44);\n"
+"border-top: 2px solid  rgb(37, 40, 44);\n"
+"border-bottom: 1px solid  rgb(37, 40, 44);\n"
+"padding-top: -5px;\n"
+"}")
+        self.settingsSaving.setObjectName("settingsSaving")
+        self.horizontalLayout_2.addWidget(self.settingsSaving)
+        self.gridLayout_2.addLayout(self.horizontalLayout_2, 2, 1, 1, 4)
         self.app_tab.addTab(self.main_tab, "")
         self.folder_tab = QtWidgets.QWidget()
         self.folder_tab.setMouseTracking(True)
@@ -884,9 +932,6 @@ class Ui_MainWindow(object):
         self.hardfolderButton.setWhatsThis(_translate("MainWindow", "<html><head/><body><p>аыаыва</p></body></html>"))
         self.hardfolderButton.setText(_translate("MainWindow", " Папка Hardsub "))
         self.versionLabel.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-weight:600;\">Version 2.1 (Einsein) by Miki-san</span></p></body></html>"))
-        self.pushButton_rick.setWhatsThis(_translate("MainWindow", "<html><head/><body><p>asdasdasd</p></body></html>"))
-        self.pushButton_rick.setText(_translate("MainWindow", "AniBaza converter :3"))
-        self.stateLabel.setText(_translate("MainWindow", "Заполняй поля!"))
         self.logo_check.setText(_translate("MainWindow", "Лого"))
         self.nvencCheck.setText(_translate("MainWindow", "Nvenc"))
         self.codec.setText(_translate("MainWindow", "HEVC"))
@@ -919,10 +964,14 @@ class Ui_MainWindow(object):
         self.bitrateBox.setItemText(19, _translate("MainWindow", "12000"))
         self.startButton.setText(_translate("MainWindow", "  НАЧАТЬ  "))
         self.stopButton.setText(_translate("MainWindow", " СТОП "))
+        self.stateLabel.setText(_translate("MainWindow", "Заполняй поля!"))
         self.soundPath.setPlaceholderText(_translate("MainWindow", "Дорожка звука"))
         self.rawPath.setPlaceholderText(_translate("MainWindow", "Равка"))
         self.subPath.setPlaceholderText(_translate("MainWindow", "Файл субтитров"))
         self.softPath.setPlaceholderText(_translate("MainWindow", "Путь сохранения софтсаба"))
+        self.pushButton_rick.setWhatsThis(_translate("MainWindow", "<html><head/><body><p>asdasdasd</p></body></html>"))
+        self.pushButton_rick.setText(_translate("MainWindow", "AniBaza converter :3"))
+        self.settingsSaving.setText(_translate("MainWindow", "Сохранить конфигурацию"))
         self.app_tab.setTabText(self.app_tab.indexOf(self.main_tab), _translate("MainWindow", "Один файл"))
         self.tempLabel.setText(_translate("MainWindow", "БУДЕТ ЗАВТРА"))
         self.app_tab.setTabText(self.app_tab.indexOf(self.folder_tab), _translate("MainWindow", "Папка"))
