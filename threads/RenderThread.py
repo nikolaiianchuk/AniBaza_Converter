@@ -130,8 +130,22 @@ class ThreadClassRender(QThread):
     def hardsubbering(self):
         config.logging_module.write_to_log('RenderThread', "Starting special hardsubbing...")
         if config.build_settings['build_state'] == 3:
-            #cmd = f"{config.init_cmd}{config.override_output_cmd}{config.video_input_cmd}{config.hard_burning_cmd}{config.video_codec_cmd.get(config.codec)}-crf 18 {config.video_pixel_format_cmd}{config.hardsub_output_cmd}"
-            cmd = ''
+            cmd = config.command_constructor.build_hard_command(
+                raw_path      = config.rendering_paths['raw'],  
+                sub_path      = config.rendering_paths['sub'], 
+                output_path   = config.rendering_paths['hardsub'], 
+                nvenc         = config.build_settings['hardsub_settings']['nvenc'], 
+                crf_rate      = '18', 
+                cqmin         = '17', 
+                cq            = '18', 
+                cqmax         = '25', 
+                preset        = 'faster' if not config.build_settings['hardsub_settings']['nvenc'] else 'p5', 
+                tune          = config.build_settings['hardsub_settings']['video_tune'] if not config.build_settings['hardsub_settings']['nvenc'] else 'uhq',
+                video_profile = config.build_settings['hardsub_settings']['video_profile'], 
+                profile_level = config.build_settings['hardsub_settings']['profile_level'] if '10' in config.build_settings['hardsub_settings']['video_profile'] else '4.2', 
+                pixel_format  = config.build_settings['hardsub_settings']['pixel_format'], 
+                include_logo  = config.build_settings['logo']
+            )
             config.logging_module.write_to_log('RenderThread', f"Generated command: {cmd}")
             config.current_state = "Собираю хардсаб для хардсабберов..."
             self.state_update(config.current_state)
@@ -203,7 +217,7 @@ class ThreadClassRender(QThread):
             self.ffmpeg_analysis()
             self.softsub()
             self.hardsub()
-            #self.hardsubbering()     
+            self.hardsubbering()     
             config.command_constructor.remove_temp_sub()
 
         except Exception as e:

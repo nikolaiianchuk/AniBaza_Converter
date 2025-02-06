@@ -38,7 +38,6 @@ class MainWindow(QMainWindow):
             self.ui.startButton,
             self.ui.modeBox,
             self.ui.nvencCheck,
-            self.ui.codec,
             self.ui.logo_check,
             self.ui.update_check,
             self.ui.rawButton,
@@ -213,9 +212,15 @@ class MainWindow(QMainWindow):
         config.logging_module.write_to_log('mainWindow', f"Hardsub render path updated to: {config.rendering_paths['hardsub']}")
         config.logging_module.write_to_log('mainWindow', 'Render paths updated!')
 
+    def lock_mode(self):
+        ui_for_disable = (self.ui.soundPath, self.ui.soundButton, self.ui.softPath, self.ui.softButton)
+        for ui in ui_for_disable:
+            ui.setDisabled(config.build_settings['build_state'] == 3)
+
     # Mode updater
     def update_mode(self):
         config.build_settings['build_state'] = config.build_states.get(self.ui.modeBox.currentText())
+        self.lock_mode()
         config.logging_module.write_to_log('mainWindow', f"Mode updated to: {config.build_settings['build_state']}")
 
     # FAQ window opener
@@ -441,7 +446,7 @@ class MainWindow(QMainWindow):
             self.state_update(config.current_state)
             self.elapsed_time_update('')
             QApplication.beep()
-
+        self.ui.elapsed_time.setText('')
         self.ui.progressBar.setValue(0)
         self.locker(False)
         config.logging_module.write_to_log('mainWindow', "Coding finished")
@@ -456,4 +461,5 @@ class MainWindow(QMainWindow):
             tab.setDisabled(lock_value)
 
         self.ui.stopButton.setDisabled(not lock_value)
+        self.lock_mode()
         config.logging_module.write_to_log('mainWindow', "UI locked")
