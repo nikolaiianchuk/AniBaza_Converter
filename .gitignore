@@ -3,10 +3,8 @@
 /.vscode/
 /.idea/
 /__pycache__/
-/batScripts/
-/exeCreationTXT/
+/AppBuilder/
 /HARDSUB/
 /logs/
-/projectCreationOutput/
 /tests/
 /tmp/
