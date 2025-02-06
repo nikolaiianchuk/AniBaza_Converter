@@ -1,16 +1,15 @@
 # Lib import
 import os
-import pathlib
 import sys
 import ctypes
-import configparser
+import modules.ConfigModule as ConfigModule
 import traceback
-import config
-import loggingModule
+import configs.config as config 
+import wmi
 
-from pathlib import Path
 from PyQt5 import QtWidgets
-from mainWindow import MainWindow
+from windows.mainWindow import MainWindow
+from modules.LoggingModule import LoggingModule
 
 # Admin check
 def is_admin():
@@ -21,39 +20,70 @@ def is_admin():
         print(f"Ошибка проверки прав администратора: {e}")
         return False
     
+def restore_config(config_path):
+    if not os.path.exists(config.main_paths['config']):
+        config.logging_module.write_to_log('App System', "Config file not found.")
+        config.logging_module.write_to_log('App System', "Creating new config file.")
+        default_config = """
+                            [dev settings]
+                            enabledevmode = True
+                            enablelogging = True
 
+                            [log settings]
+                            max_logs = 10
+
+                            [main settings]
+                            logo = True
+                            nvenc = False
+                            hevc = True
+                            build_state = 0
+                            update_search = True
+                        """
+        with open(config_path, 'w', encoding='utf-8') as config_file:
+            config_file.write(default_config)
+        config.logging_module.write_to_log('App System', "Config file restored.")
+
+def get_PC_info():
+    config.computer = wmi.WMI()
+    hardware = config.computer
+    config.PC_info.update({
+        'System': hardware.Win32_ComputerSystem()[0],
+        'OS'    : hardware.Win32_OperatingSystem()[0],
+        'CPU'   : hardware.Win32_Processor()[0],
+        'GPU'   : hardware.Win32_VideoController()[0]
+    })
+
+def start_logging():
+    config.logging_module = LoggingModule()
+    config.logging_module.start_logging(config.dev_settings['logging']['state'])
+    config.logging_module.write_to_log('App System', 'Starting application')
+    
 # Main function
 def main():
     try:
-        if os.path.exists('config.ini'):
-            config.configSettings = configparser.ConfigParser()
-            config.configSettings.read('config.ini')
-            config.enableDevMode = config.configSettings.getboolean('dev settings', 'enableDevMode')
-            config.enableLogging = config.configSettings.getboolean('dev settings', 'enableLogging')
-            config.max_logs = config.configSettings.getint('log settings', 'max_logs')
-            
-        loggingModule.start_logging(config.enableLogging)
-        loggingModule.write_to_log('Starting application')
+        get_PC_info()
+        start_logging()
+        restore_config(config.main_paths['config'])
+        ConfigModule.load_configs()
     
         app = QtWidgets.QApplication(sys.argv)
         app.setQuitOnLastWindowClosed(True)
         mainWindow = MainWindow()
         mainWindow.show()
+        
         sys.exit(app.exec_())
     except Exception as e:
         # Обработка стандартных ошибок
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        loggingModule.write_to_log(f"Handled exception: {error_message}")
-
+        config.logging_module.write_to_log('App System', f"Handled exception: {error_message}")
     except BaseException as e:
         # Обработка критических ошибок (например, Ctrl+C)
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
         if type(e) != SystemExit:
-            loggingModule.write_to_log(f"Critical exception: {error_message}")
-    
+            config.logging_module.write_to_log('App System', f"Critical exception: {error_message}")
     finally:
-        loggingModule.write_to_log("Closing application.")
-        loggingModule.stop_logging()
+        config.logging_module.write_to_log('App System', "Closing application.")
+        config.logging_module.stop_logging()
 
 # Standard code
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import sys
 import traceback
 from PyQt5.QtWidgets import QDialog
 from UI.FAQ import Ui_dialog
-import loggingModule
+import configs.config as config
 
 # FAQ window class
 class FAQWindow(QDialog):
@@ -20,4 +20,4 @@ class FAQWindow(QDialog):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-        loggingModule.write_to_log(f"Handled exception: {error_message}")
+        config.logging_module.write_to_log('FAQWindow', f"Handled exception: {error_message}")
