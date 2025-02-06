@@ -6,7 +6,7 @@ from pathlib import Path
 main_paths = {
     'CWD'     : Path(pathlib.Path.cwd()),
     'config'  : Path(pathlib.Path.cwd(), 'configs/config.ini'),
-    'version' : Path(pathlib.Path.cwd(), 'current_version.ini'),
+    'version' : Path(pathlib.Path.cwd(), 'configs/current_version.ini'),
     'logs'    : Path(pathlib.Path.cwd(), 'logs'),
     'temp'    : Path(pathlib.Path.cwd(), 'tmp'),
     'softsub' : '',
