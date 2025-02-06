@@ -1,1 +1,0 @@
-if os.path.exists('config.ini'):
