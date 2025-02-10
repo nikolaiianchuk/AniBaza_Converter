@@ -1,0 +1,64 @@
+				Apache License 2.0
+
+Copyright 2025 Mikhail Rykhlov (aka Miki-san)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+			=== ADDITIONAL RESTRICTIONS ===
+
+In addition to the terms of the Apache License 2.0, the following restrictions apply:
+
+1. Modification is allowed only for the visual part of the program (themes), 
+   as long as such modifications do not affect the core functionality of the application.
+
+2. Any redistribution of the modified code (except for user-created themes) is allowed 
+   **only with the author's written permission**.
+
+3. Commercial use of the program (including selling, renting, or using in paid services) 
+   is allowed **only with the author's written permission**.
+
+4. These restrictions do not affect the rights granted under the Apache License 2.0, 
+   but introduce additional conditions that must be complied with by users of this software.
+
+===========================================================================
+
+				Лицензия Apache 2.0
+
+Copyright 2025 Михаил Рыхлов (aka Miki-san)
+
+Лицензировано в рамках Лицензии Apache, версия 2.0 (далее — "Лицензия");
+вы не можете использовать этот файл, если не соблюдаете условия Лицензии.
+Вы можете получить копию Лицензии по следующему адресу:
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Если только действующее законодательство не требует иного или стороны не договорились об этом письменно, программное обеспечение,
+распространяемое по Лицензии, предоставляется "КАК ЕСТЬ", БЕЗ ГАРАНТИЙ И УСЛОВИЙ ЛЮБОГО РОДА, явных или подразумеваемых.
+См. Лицензию для получения подробной информации о разрешениях и ограничениях.
+
+			=== ДОПОЛНИТЕЛЬНЫЕ ОГРАНИЧЕНИЯ ===
+
+В дополнение к условиям Лицензии Apache 2.0, вводятся следующие ограничения:
+
+1. Разрешается модификация только визуальной части программы (тем оформления), 
+   при условии, что такие изменения не затрагивают основную функциональность приложения.
+
+2. Любое распространение изменённого кода (кроме пользовательских тем) возможно 
+   **только с письменного разрешения автора**.
+
+3. Коммерческое использование программы (включая продажу, аренду или использование в платных сервисах) 
+   возможно **только с письменного разрешения автора**.
+
+4. Эти ограничения не влияют на права, предоставляемые Лицензией Apache 2.0, 
+   но вводят дополнительные условия, которые должны соблюдаться пользователями данного программного обеспечения.
+
