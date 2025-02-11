@@ -52,17 +52,21 @@ def get_PC_info():
         'CPU'   : hardware.Win32_Processor()[0],
         'GPU'   : hardware.Win32_VideoController()[0]
     })
+    #config.logging_module.write_to_log('AppSystem', f"PC info: {config.PC_info}")
 
 def start_logging():
-    config.logging_module = LoggingModule()
-    config.logging_module.start_logging(config.dev_settings['logging']['state'])
+    config.logging_module.start_logging(
+        config.dev_settings['logging']['state'], 
+        config.main_paths['logs'], 
+        config.dev_settings['logging']['max_logs']
+    )
     config.logging_module.write_to_log('App System', 'Starting application')
     
 # Main function
 def main():
     try:
-        get_PC_info()
         start_logging()
+        get_PC_info()
         restore_config(config.main_paths['config'])
         ConfigModule.load_configs()
     

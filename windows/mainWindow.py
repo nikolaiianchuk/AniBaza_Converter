@@ -1,10 +1,15 @@
 import math
 import os
+from pathlib import Path
+import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import traceback
 import webbrowser
+
+import requests
 import modules.ConfigModule as ConfigModule
 import configs.config as config
 
@@ -61,9 +66,81 @@ class MainWindow(QMainWindow):
         if self.first_show:  # Проверяем, был ли уже вызван showEvent
             self.first_show = False  # Сбрасываем флаг, чтобы не выполнять повторно
             if config.update_search:
+                self.update_ffmpeg()
                 self.start_updater()
             else:
                 config.logging_module.write_to_log('mainWindow', "Updater disabled.")
+                
+    def get_installed_ffmpeg_version(self):
+        try:
+            process = subprocess.Popen(
+                "ffmpeg -version", 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                shell=True, 
+                encoding='utf-8', 
+                errors='replace'
+            )
+            output, _ = process.communicate()
+            match = re.search(r'ffmpeg\s+version\s+([0-9]+\.[0-9]+(?:\.[0-9]+)?)', output)
+            config.logging_module.write_to_log('mainWindow', f"Installed FFmpeg version: {match.group(1) if match else None}")
+            return match.group(1) if match else None
+        except Exception as e:
+            config.logging_module.write_to_log('mainWindow', f"Ошибка при получении версии FFmpeg: {e}")
+            return None
+        
+    def get_latest_ffmpeg_version(self):
+        try:
+            url = "https://www.ffmpeg.org/download.html"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            match = re.search(r'([0-9]+\.[0-9]+(?:\.[0-9]+)?) was released', response.text)
+            config.logging_module.write_to_log('mainWindow', f"Latest FFmpeg version: {match.group(1) if match else None}")
+            return match.group(1) if match else None
+        except Exception as e:
+            config.logging_module.write_to_log('mainWindow', f"Ошибка при получении последней версии FFmpeg: {e}")
+            return None
+        
+    def remove_old_ffmpeg_and_install(self):
+        ffmpeg_path = "C:\\ffmpeg"
+        if os.path.exists(ffmpeg_path):
+            config.logging_module.write_to_log('mainWindow', "Удаляю старую версию FFmpeg...")
+            try:
+                shutil.rmtree(ffmpeg_path)
+                config.logging_module.write_to_log('mainWindow', "Старая версия FFmpeg удалена.")
+            except Exception as e:
+                config.logging_module.write_to_log('mainWindow', f"Ошибка при удалении папки: {e}")
+        else:
+            config.logging_module.write_to_log('mainWindow', "Папка FFmpeg не найдена, установка новой версии...")
+        
+        os.system(Path(pathlib.Path.cwd(), "ffmpeginstall.bat"))
+            
+    def update_ffmpeg(self):
+        installed_version = self.get_installed_ffmpeg_version()
+        latest_version = self.get_latest_ffmpeg_version()
+        
+        if installed_version and latest_version:
+            if installed_version == latest_version:
+                config.logging_module.write_to_log('mainWindow', "У вас установлена актуальная версия FFmpeg.")
+            else:
+                config.logging_module.write_to_log('mainWindow', "Необходимо обновление FFmpeg!")
+                msg_box = QMessageBox()
+                msg_box.setIcon(QMessageBox.Icon.Information)
+                msg_box.setWindowTitle("FFmpegUpdater")
+                msg_box.setText(f"Доступна новая версия FFmpeg: {installed_version} -> {latest_version}!")
+                msg_box.setInformativeText("Вы хотите скачать и установить новую версию?")
+                msg_box.setStandardButtons(
+                    QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | 
+                    QMessageBox.StandardButtons(QMessageBox.StandardButton.No)
+                )
+                result = msg_box.exec()
+                config.logging_module.write_to_log('mainWindow', f"User chose to update: {result == QMessageBox.StandardButton.Yes}")
+                if result == QMessageBox.StandardButton.Yes:
+                    self.remove_old_ffmpeg_and_install()
+                else:
+                    config.logging_module.write_to_log('mainWindow', "Обновление FFmpeg было отложено!")
+        else:
+            config.logging_module.write_to_log('mainWindow', "Не удалось определить версии FFmpeg.")
 
     def start_updater(self):
         config.logging_module.write_to_log('mainWindow', "Starting updater...")
@@ -83,13 +160,16 @@ class MainWindow(QMainWindow):
         msg_box.exec()
 
     def show_update_dialog(self, latest_version, download_url, name):
-        config.logging_module.write_to_log('mainWindow', 'Showing update dialog...')
+        config.logging_module.write_to_log('mainWindow', 'Showing App update dialog...')
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Icon.Information)
         msg_box.setWindowTitle("ABCUpdater")
-        msg_box.setText(f"Доступна новая версия: {config.app_info['version_number']} -> {latest_version}!")
+        msg_box.setText(f"Доступна новая версия AniBaza Converter: {config.app_info['version_number']} -> {latest_version}!")
         msg_box.setInformativeText("Вы хотите скачать и установить новую версию?")
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg_box.setStandardButtons(
+            QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | 
+            QMessageBox.StandardButtons(QMessageBox.StandardButton.No)
+        )
         result = msg_box.exec()
         
         config.logging_module.write_to_log('mainWindow', f"User chose to update: {result == QMessageBox.StandardButton.Yes}")
@@ -100,15 +180,18 @@ class MainWindow(QMainWindow):
         config.logging_module.write_to_log('mainWindow', 'Starting download...')
         self.progress = QProgressDialog(f"Скачиваю обновление...\n{config.app_info['version_number']} -> {version}", "Отмена", 0, 100, self)
         self.progress.setWindowTitle("ABCUpdater")
-        self.progress.setWindowFlags(self.progress.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.progress.setWindowFlags(self.progress.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint) # type: ignore
         self.progress.setMinimumWidth(350)
         self.progress.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.cancel_button = QPushButton('Cancel', self.progress)
         self.cancel_button.clicked.connect(self.cancel_download)
         self.progress.setCancelButton(self.cancel_button)
         self.progress.show()
-        self.close_progress_signal.connect(self.progress.close)
-        installer_path = os.path.join(os.getenv("TEMP"), "update_installer.exe")
+        self.close_progress_signal.connect(self.progress.close) # type: ignore
+        temp_dir = os.getenv("TEMP")
+        if temp_dir is None:
+            raise EnvironmentError("TEMP environment variable is not set")
+        installer_path = os.path.join(temp_dir, "update_installer.exe")
 
         def update_progress(value):
             self.progress.setValue(value)
@@ -133,7 +216,7 @@ class MainWindow(QMainWindow):
     def cancel_download(self):
         if hasattr(config, 'download_thread'):
             config.logging_module.write_to_log('mainWindow', "Download canceled.")
-            config.download_thread.cancel()  # Останавливаем скачивание
+            config.download_thread.cancel()  # type: ignore # Останавливаем скачивание
             self.close_progress_signal.emit()  # Закрываем прогресс-диалог
 
     def handle_exception(self, exc_type, exc_value, exc_traceback):
@@ -195,9 +278,9 @@ class MainWindow(QMainWindow):
                 config.build_settings['episode_name'].rfind(']')],''
             ) if '[' in config.build_settings['episode_name'] else config.build_settings['episode_name']
             self.ui.episodeLine.setText(config.build_settings['episode_name'])
-            self.update_render_paths()
         else:
             config.logging_module.write_to_log('mainWindow', f"Softsub base path updated to: {config.main_paths['softsub']}")
+        self.update_render_paths()
 
     # Episode name updater
     def update_episode(self):
@@ -397,15 +480,15 @@ class MainWindow(QMainWindow):
             self.coding_error('raw')
             return
 
-        if not os.path.exists(config.rendering_paths['audio']) and config.build_settings['build_state'] != 3:
+        if not os.path.exists(config.rendering_paths['audio']) and config.build_settings['build_state'] in [0, 1, 2]:
             self.coding_error('sound')
             return
 
-        if not os.path.exists(config.rendering_paths['sub']) and (config.rendering_paths['sub'].replace(' ', '') != '' and config.rendering_paths['sub'] != None):
+        if not os.path.exists(config.rendering_paths['sub']) and config.rendering_paths['sub'].replace(' ', '') != '' and config.rendering_paths['sub'] != None:
             self.coding_error('subtitle')
             return
 
-        if not (os.path.exists(config.main_paths['softsub']) and config.build_settings['build_state'] in [0, 1]) and config.build_settings['build_state'] not in [2, 3]:
+        if not os.path.exists(config.main_paths['softsub']) and config.build_settings['build_state'] in [0, 1, 4]:
             self.coding_error('softsub')
             return
 

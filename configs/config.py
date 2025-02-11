@@ -1,7 +1,7 @@
 import pathlib
 
 from pathlib import Path
-
+from modules.LoggingModule import LoggingModule
 # Main paths 
 main_paths = {
     'CWD'     : Path(pathlib.Path.cwd()),
@@ -15,7 +15,7 @@ main_paths = {
 }
 
 # Main objects
-logging_module = None
+logging_module = LoggingModule()
 command_constructor = None
 updater_thread = None
 download_thread = None
@@ -61,12 +61,15 @@ build_states = {
     'Софт и хард'      : 0, 
     'Только софт'      : 1, 
     'Только хард'      : 2, 
-    'Для хардсабберов' : 3
+    'Для хардсабберов' : 3,
+    'Починить равку'   : 4
 }
 
 update_search = True
+total_duration_sec = 0
 total_frames = 0
 current_state = ''
+video_res = ''
 
 # Build settings
 build_settings = {

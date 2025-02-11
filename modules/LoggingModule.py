@@ -1,4 +1,3 @@
-import configs.config as config
 import os
 
 from datetime import datetime
@@ -7,11 +6,13 @@ class LoggingModule:
     def __init__(self):
         self.log_file = None
         self.log_filename = None
-        self.logs_dir = config.main_paths['logs']
+        self.logs_dir = None
         self.log_flag = False
-        self.max_logs = config.dev_settings['logging']['max_logs']
+        self.max_logs = None
     
-    def start_logging(self, input_flag):
+    def start_logging(self, input_flag, logs_dir, max_logs):
+        self.logs_dir = logs_dir
+        self.max_logs = max_logs
         self.log_flag = input_flag
         if self.log_flag:
             # Создание папки logs, если её нет
@@ -38,12 +39,12 @@ class LoggingModule:
             self.write_to_log("LoggingModule", f"Logging started in {self.log_filename}")
         
     def write_to_log(self, topic="", message=""):
-        if self.log_flag:
+        if self.log_flag and self.log_file:
             print(f"[{topic}]: {message}")
             self.log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}][{topic}]: {message}\n".encode("utf-8", "replace").decode("utf-8"))
         
     def stop_logging(self):
-        if self.log_flag:
+        if self.log_flag and self.log_file:
             self.write_to_log("LoggingModule", "Logging stopped.")
             self.log_file.close()
             self.remove_empty_lines_from_log(self.log_filename)

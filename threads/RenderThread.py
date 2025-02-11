@@ -25,6 +25,15 @@ class ThreadClassRender(QThread):
         super(ThreadClassRender, self).__init__()
         sys.excepthook = self.handle_exception
         config.command_constructor = FFmpegConstructor()
+        self.encoding_params = {
+            "avg_bitrate": "6M",
+            "max_bitrate": "9M",
+            "buffer_size": "18M",
+            "crf": "18",
+            "cq": "18",
+            "qmin": "17",
+            "qmax": "25"
+        }
         
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
@@ -74,6 +83,9 @@ class ThreadClassRender(QThread):
                 sound_path    = config.rendering_paths['audio'],
                 sub_path      = config.rendering_paths['sub'],
                 output_path   = config.rendering_paths['softsub'],
+                crf_rate      = self.encoding_params['crf'],
+                max_bitrate   = self.encoding_params['max_bitrate'],
+                max_buffer    = self.encoding_params['buffer_size'],
                 video_profile = config.build_settings['softsub_settings']['video_profile'],
                 profile_level = config.build_settings['softsub_settings']['profile_level'],
                 pixel_format  = config.build_settings['softsub_settings']['pixel_format'],
@@ -102,12 +114,14 @@ class ThreadClassRender(QThread):
                 sub_path      = config.rendering_paths['sub'], 
                 output_path   = config.rendering_paths['hardsub'], 
                 nvenc         = config.build_settings['hardsub_settings']['nvenc'], 
-                crf_rate      = '18', 
-                cqmin         = '17', 
-                cq            = '18', 
-                cqmax         = '25', 
-                preset        = 'faster' if not config.build_settings['hardsub_settings']['nvenc'] else 'p5', 
-                tune          = config.build_settings['hardsub_settings']['video_tune'] if not config.build_settings['hardsub_settings']['nvenc'] else 'uhq',
+                crf_rate      = self.encoding_params['crf'], 
+                cqmin         = self.encoding_params['qmin'], 
+                cq            = self.encoding_params['cq'], 
+                cqmax         = self.encoding_params['qmax'], 
+                max_bitrate   = self.encoding_params['max_bitrate'],
+                max_buffer    = self.encoding_params['buffer_size'],
+                preset        = 'faster' if not config.build_settings['hardsub_settings']['nvenc'] else 'p4', 
+                tune          = config.build_settings['hardsub_settings']['video_tune'] if not config.build_settings['hardsub_settings']['nvenc'] else 'hq',
                 video_profile = config.build_settings['hardsub_settings']['video_profile'], 
                 profile_level = config.build_settings['hardsub_settings']['profile_level'] if '10' in config.build_settings['hardsub_settings']['video_profile'] else '4.2', 
                 pixel_format  = config.build_settings['hardsub_settings']['pixel_format'], 
@@ -135,10 +149,12 @@ class ThreadClassRender(QThread):
                 sub_path      = config.rendering_paths['sub'], 
                 output_path   = config.rendering_paths['hardsub'], 
                 nvenc         = config.build_settings['hardsub_settings']['nvenc'], 
-                crf_rate      = '18', 
-                cqmin         = '17', 
-                cq            = '18', 
-                cqmax         = '25', 
+                crf_rate      = self.encoding_params['crf'], 
+                cqmin         = self.encoding_params['qmin'], 
+                cq            = self.encoding_params['cq'], 
+                cqmax         = self.encoding_params['qmax'], 
+                max_bitrate   = self.encoding_params['max_bitrate'],
+                max_buffer    = self.encoding_params['buffer_size'],
                 preset        = 'faster' if not config.build_settings['hardsub_settings']['nvenc'] else 'p5', 
                 tune          = config.build_settings['hardsub_settings']['video_tune'] if not config.build_settings['hardsub_settings']['nvenc'] else 'uhq',
                 video_profile = config.build_settings['hardsub_settings']['video_profile'], 
@@ -148,6 +164,26 @@ class ThreadClassRender(QThread):
             )
             config.logging_module.write_to_log('RenderThread', f"Generated command: {cmd}")
             config.current_state = "Собираю хардсаб для хардсабберов..."
+            self.state_update(config.current_state)
+            process = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                universal_newlines=True,
+                                shell=True,
+                                encoding='utf-8',
+                                errors='replace'
+                                )
+            self.frame_update(process)
+            
+    def raw_repairing(self):
+        config.logging_module.write_to_log('RenderThread', "Starting raw repairing...")
+        if config.build_settings['build_state'] == 4:
+            cmd = "ffmpeg -y -i {RAW} -c:v libx264 -c:a copy -c:s copy {OUTPUT}".format(
+                RAW    = config.rendering_paths['raw'],
+                OUTPUT = config.rendering_paths['softsub']
+            )
+            config.logging_module.write_to_log('RenderThread', f"Generated command: {cmd}")
+            config.current_state = "Востанавливаю равку..."
             self.state_update(config.current_state)
             process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -172,7 +208,46 @@ class ThreadClassRender(QThread):
                                 errors='replace'
                                 )
         self.ffmpeg_analysis_decoding(process)
+    
+    def calculate_encoding_params(self, file_size_gb, resolution):
+        output = {
+            "avg_bitrate": "{AVG}M",
+            "max_bitrate": "{MAX}M",
+            "buffer_size": "{BUFFER}M",
+            "crf": "{CRF}",
+            "cq": "{CQ}",
+            "qmin": "{QMIN}",
+            "qmax": "{QMAX}"
+        }
+        avg_bitrate = (file_size_gb * 1024 * 8) / config.total_duration_sec
+        avg_bitrate = avg_bitrate if avg_bitrate < 6 else 6
+        max_bitrate = avg_bitrate * 1.5
+        buffer_size = max_bitrate * 2
         
+        if resolution in ["1080p", "4K"]:
+            crf = 18
+            cq = 19
+        elif resolution == "720p":
+            crf = 20
+            cq = 21
+        else:
+            crf = 23
+            cq = 23
+
+        qmin = cq - 2
+        qmax = cq + 4
+        
+        output['avg_bitrate'] = output['avg_bitrate'].format(AVG=int(avg_bitrate))
+        output['max_bitrate'] = output['max_bitrate'].format(MAX=int(max_bitrate))
+        output['buffer_size'] = output['buffer_size'].format(BUFFER=int(buffer_size))
+        output['crf'] = output['crf'].format(CRF=crf)
+        output['cq'] = output['cq'].format(CQ=cq)
+        output['qmin'] = output['qmin'].format(QMIN=qmin)
+        output['qmax'] = output['qmax'].format(QMAX=qmax)
+        
+        config.logging_module.write_to_log('RenderThread', f"EncodingParams: {output}")
+        return output
+    
     def ffmpeg_analysis_decoding(self, proc):
         profiles = {
             '(Main)'    : ['main', 'main'], 
@@ -185,11 +260,16 @@ class ThreadClassRender(QThread):
             config.logging_module.write_to_log('RenderThread', line)
             duration_match = re.search(r'Duration:\s*(\d+):(\d+):([\d.]+)', line)
             codec_match = re.search(r'Stream.*Video:\s*(.*)', line)
+            resolution_match = re.search(r'(\d{3,4})x(\d{3,4})', line)
+            if resolution_match:
+                _, height = resolution_match.groups()
+                config.video_res = f"{height}p" if int(height) < 4096 else f"{int(height)/1024}K"
+                config.logging_module.write_to_log('RenderThread', f"Video resolution: {config.video_res}")
             
             if duration_match:
                 hrs, minutes, sec = map(float, duration_match.groups())
-                duration = hrs * 3600 + minutes * 60 + sec
-                config.total_frames = duration * 24000 / 1001.0
+                config.total_duration_sec =  hrs * 3600 + minutes * 60 + sec
+                config.total_frames = config.total_duration_sec * 24000 / 1001.0
                 self.time_upd.emit(config.total_frames)
             
             if codec_match:
@@ -215,9 +295,11 @@ class ThreadClassRender(QThread):
         try:
             config.logging_module.write_to_log('RenderThread', "Running ffmpeg thread...")
             self.ffmpeg_analysis()
+            self.encoding_params = self.calculate_encoding_params(2, config.video_res)
             self.softsub()
             self.hardsub()
-            self.hardsubbering()     
+            self.hardsubbering()  
+            self.raw_repairing()   
             config.command_constructor.remove_temp_sub()
 
         except Exception as e:

@@ -22,8 +22,8 @@ class FFmpegConstructor:
             'logo burning'         : '-vf "subtitles=\'{ESCAPED_LOGO_PATH}\'"',
             'video codec'          : '-c:v libx264',
             'video CRF'            : '-crf {CRF_RATE}',
-            'video max bitrate'    : '-maxrate 8M',
-            'video max bufsize'    : '-bufsize 32M',
+            'video max bitrate'    : '-maxrate {MAX}',
+            'video max bufsize'    : '-bufsize {BUFFER}',
             'render preset'        : '-preset {RENDER_PRESET}',
             'video tune'           : '-tune animation',
             'video profile'        : '-profile:v {VIDEO_PROFILE}',
@@ -48,8 +48,8 @@ class FFmpegConstructor:
             'video codec'          : '-c:v hevc{NVENC}',
             'video CRF'            : '-crf {CRF_RATE}',
             'video CQ'             : '-cq {CQ} -qmin {QMIN} -qmax {QMAX}',
-            'video max bitrate'    : '-maxrate 8M',
-            'video max bufsize'    : '-bufsize 32M',
+            'video max bitrate'    : '-maxrate {MAX}',
+            'video max bufsize'    : '-bufsize {BUFFER}',
             'render preset'        : '-preset {RENDER_PRESET}',
             'video tune'           : '-tune {TUNE}',
             'video profile'        : '-profile:v {VIDEO_PROFILE}',
@@ -86,13 +86,13 @@ class FFmpegConstructor:
         self.escaped_logo_path = f"{str(config.main_paths['logo']).replace(chr(92), '/').replace(':/', self.separator)}"
 
     def build_soft_command(self, raw_path='', sound_path='', sub_path=None, 
-                            output_path='', crf_rate='18', video_profile='main', 
+                            output_path='', crf_rate='18', max_bitrate='', max_buffer='', video_profile='main', 
                             profile_level='4.2', pixel_format='yuv420p', preset='faster',
                             include_logo=True):
         
         os.chdir(config.main_paths['CWD'])
         
-        if os.path.exists(sub_path):
+        if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
         self.logo_escaper()
         command_parts = [self.softsub_ffmpeg_commands['init']]
@@ -134,6 +134,8 @@ class FFmpegConstructor:
             SOUND_PATH_INPUT  = sound_path,
             ESCAPED_LOGO_PATH = self.escaped_logo_path,
             CRF_RATE          = crf_rate,
+            MAX               = max_bitrate,
+            BUFFER            = max_buffer,
             RENDER_PRESET     = preset,
             VIDEO_PROFILE     = video_profile,
             PROFILE_LEVEL     = profile_level,
@@ -146,13 +148,13 @@ class FFmpegConstructor:
     
     def build_hard_command(self, raw_path='', sound_path='', sub_path=None, 
                             output_path='', nvenc=False, crf_rate='18', cqmin='17', 
-                            cq='18', cqmax='25', preset='faster', tune='animation', video_profile='main', 
+                            cq='18', cqmax='25', max_bitrate='', max_buffer='', preset='faster', tune='animation', video_profile='main', 
                             profile_level='4.2', pixel_format='yuv420p', 
                             include_logo=True):
         
         os.chdir(config.main_paths['CWD'])
         
-        if os.path.exists(sub_path):
+        if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
         self.logo_escaper()
         command_parts = [self.hardsub_ffmpeg_commands['init']]
@@ -202,6 +204,8 @@ class FFmpegConstructor:
             QMIN              = cqmin,
             CQ                = cq,
             QMAX              = cqmax,
+            MAX               = max_bitrate,
+            BUFFER            = max_buffer,
             RENDER_PRESET     = preset,
             TUNE              = tune,
             VIDEO_PROFILE     = video_profile,
