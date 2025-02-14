@@ -1,40 +1,32 @@
 import math
 import os
-import pathlib
 import re
-import shutil
 import subprocess
 import sys
 import traceback
 import webbrowser
-import requests
+
 import modules.ConfigModule as ConfigModule
 
-from pathlib import Path
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QMessageBox, QApplication, QMainWindow, QProgressDialog, QPushButton
-from PyQt5.QtCore import Qt, pyqtSignal
-
+from PyQt5.QtWidgets import QMessageBox, QApplication, QMainWindow
 from UI.normUI2 import Ui_MainWindow
 from windows.FAQWindow import FAQWindow
 from threads.RenderThread import ThreadClassRender
-from modules.AppUpdater import UpdaterThread
-from threads.DownloaderThread import DownloadThread
+from modules.AppUpdater import UpdaterUI
 
 # Main window class
 class MainWindow(QMainWindow):
-    close_progress_signal = pyqtSignal()
     # Main window init
     def __init__(self, config):
         super().__init__()
+        sys.excepthook = self.handle_exception
         self.config = config
         self.finish_message = False
         self.threadMain = None
         self.faqWindow = None
-        self.first_show = True
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)  
-        sys.excepthook = self.handle_exception
         self.set_buttons()
         self.set_checkboxes()
         self.set_textboxes()
@@ -58,167 +50,13 @@ class MainWindow(QMainWindow):
             self.ui.config_save_button
         ]
         self.ui.render_stop_button.hide()
-        self.ui.app_version_label.setText(f"Version {self.config.app_info['version_number']} ({self.config.app_info['version_name']}) by {self.config.app_info['author']}")
+        self.ui.app_version_label.setText("Version {NUM} ({NAME}) by {AUTHOR}".format(
+            NUM    = self.config.app_info['version_number'],
+            NAME   = self.config.app_info['version_name'],
+            AUTHOR = self.config.app_info['author']
+        ))
         self.setWindowTitle(self.config.app_info['title'])
     
-    def showEvent(self, event):
-        super().showEvent(event)
-        if self.first_show:  # Проверяем, был ли уже вызван showEvent
-            self.first_show = False  # Сбрасываем флаг, чтобы не выполнять повторно
-            if self.config.update_search:
-                self.update_ffmpeg()
-                self.start_updater()
-            else:
-                self.config.log('mainWindow', "Updater disabled.")
-    
-    def get_installed_ffmpeg_version(self):
-        try:
-            process = subprocess.Popen(
-                "ffmpeg -version", 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                shell=True, 
-                encoding='utf-8', 
-                errors='replace'
-            )
-            output, _ = process.communicate()
-            match = re.search(r'ffmpeg\s+version\s+([0-9]+\.[0-9]+(?:\.[0-9]+)?)', output)
-            self.config.log('mainWindow', f"Installed FFmpeg version: {match.group(1) if match else None}")
-            return match.group(1) if match else None
-        except Exception as e:
-            self.config.log('mainWindow', f"Ошибка при получении версии FFmpeg: {e}")
-            return None
-    
-    def get_latest_ffmpeg_version(self):
-        try:
-            url = "https://www.ffmpeg.org/download.html"
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            match = re.search(r'([0-9]+\.[0-9]+(?:\.[0-9]+)?) was released', response.text)
-            self.config.log('mainWindow', f"Latest FFmpeg version: {match.group(1) if match else None}")
-            return match.group(1) if match else None
-        except Exception as e:
-            self.config.log('mainWindow', f"Ошибка при получении последней версии FFmpeg: {e}")
-            return None
-    
-    def remove_old_ffmpeg_and_install(self):
-        ffmpeg_path = "C:\\ffmpeg"
-        if os.path.exists(ffmpeg_path):
-            self.config.log('mainWindow', "Удаляю старую версию FFmpeg...")
-            try:
-                shutil.rmtree(ffmpeg_path)
-                self.config.log('mainWindow', "Старая версия FFmpeg удалена.")
-            except Exception as e:
-                self.config.log('mainWindow', f"Ошибка при удалении папки: {e}")
-        else:
-            self.config.log('mainWindow', "Папка FFmpeg не найдена, установка новой версии...")
-        
-        os.system(Path(pathlib.Path.cwd(), "ffmpeginstall.bat"))
-    
-    def update_ffmpeg(self):
-        installed_version = self.get_installed_ffmpeg_version()
-        latest_version = self.get_latest_ffmpeg_version()
-        
-        if installed_version and latest_version:
-            if installed_version == latest_version:
-                self.config.log('mainWindow', "У вас установлена актуальная версия FFmpeg.")
-            else:
-                self.config.log('mainWindow', "Необходимо обновление FFmpeg!")
-                msg_box = QMessageBox()
-                msg_box.setIcon(QMessageBox.Icon.Information)
-                msg_box.setWindowTitle("FFmpegUpdater")
-                msg_box.setText(f"Доступна новая версия FFmpeg: {installed_version} -> {latest_version}!")
-                msg_box.setInformativeText("Вы хотите скачать и установить новую версию?")
-                msg_box.setStandardButtons(
-                    QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | 
-                    QMessageBox.StandardButtons(QMessageBox.StandardButton.No)
-                )
-                result = msg_box.exec()
-                self.config.log('mainWindow', f"User chose to update: {result == QMessageBox.StandardButton.Yes}")
-                if result == QMessageBox.StandardButton.Yes:
-                    self.remove_old_ffmpeg_and_install()
-                else:
-                    self.config.log('mainWindow', "Обновление FFmpeg было отложено!")
-        else:
-            self.config.log('mainWindow', "Не удалось определить версии FFmpeg.")
-
-    def start_updater(self):
-        self.config.log('mainWindow', "Starting updater...")
-        self.config.updater_thread = UpdaterThread(self.config)
-        self.config.updater_thread.progress_signal.connect(self.show_update_dialog)
-        self.config.updater_thread.error_signal.connect(self.show_error_dialog)
-        self.config.updater_thread.start()
-    
-    def show_error_dialog(self, ex):
-        self.config.log('mainWindow', 'Showing error dialog...')
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Icon.Warning)
-        msg_box.setWindowTitle("ABCUpdater Error")
-        msg_box.setText("Произошла ошибка поиска или установки обновления! Повторите попытку обновления позже.")
-        msg_box.setInformativeText(f"ERROR: [{ex}]")
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes)
-        msg_box.exec()
-
-    def show_update_dialog(self, latest_version, download_url, name):
-        self.config.log('mainWindow', 'Showing App update dialog...')
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Icon.Information)
-        msg_box.setWindowTitle("ABCUpdater")
-        msg_box.setText(f"Доступна новая версия AniBaza Converter: {self.config.app_info['version_number']} -> {latest_version}!")
-        msg_box.setInformativeText("Вы хотите скачать и установить новую версию?")
-        msg_box.setStandardButtons(
-            QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | 
-            QMessageBox.StandardButtons(QMessageBox.StandardButton.No)
-        )
-        result = msg_box.exec()
-        
-        self.config.log('mainWindow', f"User chose to update: {result == QMessageBox.StandardButton.Yes}")
-        if result == QMessageBox.StandardButton.Yes:
-            self.start_download(download_url, latest_version)
-
-    def start_download(self, url, version):
-        self.config.log('mainWindow', 'Starting download...')
-        self.progress = QProgressDialog(f"Скачиваю обновление...\n{self.config.app_info['version_number']} -> {version}", "Отмена", 0, 100, self)
-        self.progress.setWindowTitle("ABCUpdater")
-        self.progress.setWindowFlags(self.progress.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint) # type: ignore
-        self.progress.setMinimumWidth(350)
-        self.progress.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.cancel_button = QPushButton('Cancel', self.progress)
-        self.cancel_button.clicked.connect(self.cancel_download)
-        self.progress.setCancelButton(self.cancel_button)
-        self.progress.show()
-        self.close_progress_signal.connect(self.progress.close) # type: ignore
-        temp_dir = os.getenv("TEMP")
-        if temp_dir is None:
-            raise EnvironmentError("TEMP environment variable is not set")
-        installer_path = os.path.join(temp_dir, "update_installer.exe")
-
-        def update_progress(value):
-            self.progress.setValue(value)
-            if self.progress.wasCanceled():  # Проверка на отмену скачивания
-                self.config.log('mainWindow', "Download canceled.")
-                self.cancel_download()  # Останавливаем скачивание, без передачи 'canceled'
-
-        def download_finished(path):
-            self.config.log('mainWindow', f"Download complete: {path}")
-            if path:  # Если путь не пустой
-                self.close_progress_signal.emit()  # Закрываем прогресс-диалог
-                self.config.log('mainWindow', "Starting installer...")
-                subprocess.Popen([path], shell=True)
-                self.close()
-
-        self.config.download_thread = DownloadThread(self.config, url, installer_path)
-        self.config.download_thread.progress_signal.connect(update_progress)
-        self.config.download_thread.finished_signal.connect(download_finished)
-        self.config.download_thread.error_signal.connect(self.show_error_dialog)
-        self.config.download_thread.start()
-
-    def cancel_download(self):
-        if hasattr(self.config, 'download_thread'):
-            self.config.log('mainWindow', "Download canceled.")
-            self.config.download_thread.cancel()  # type: ignore # Останавливаем скачивание
-            self.close_progress_signal.emit()  # Закрываем прогресс-диалог
-
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
             # Для прерываний типа Ctrl+C
@@ -227,8 +65,18 @@ class MainWindow(QMainWindow):
         error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         self.config.log('mainWindow', f"Handled exception: {error_message}")
         self.ui.app_state_label.setText("ОШИБКА! См. лог файлы.")
-
-    def universal_update(self, setting_path, value, log_message, type):
+    
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self.config.first_show:  # Проверяем, был ли уже вызван showEvent
+            self.config.first_show = False  # Сбрасываем флаг, чтобы не выполнять повторно
+            self.updater_ui = UpdaterUI(self, self.config)
+            if self.config.update_search:
+                self.updater_ui.start_updater()
+            else:
+                self.config.log('mainWindow', "Updater disabled.")
+    
+    def universal_update(self, setting_path, value, log_message, type, post_operation=None):
         keys = setting_path.split('.')
         setting = self.config
         for key in keys[:-1]:
@@ -246,7 +94,18 @@ class MainWindow(QMainWindow):
             self.config.log('mainWindow', log_message.format(VALUE="enabled" if value else "disabled"))
         elif type == "textbox":
             self.config.log('mainWindow', log_message.format(VALUE=value))
-
+        elif type == "combobox":
+            self.config.log('mainWindow', log_message)
+        
+        post_operation() if post_operation else None
+        
+    def universal_setter(self, ui, value, log_message, type, post_operation=None):
+        match type:
+            case "checkbox":
+                ui.setChecked(value)
+                self.config.log('mainWindow', log_message.format(VALUE="enabled" if value else "disabled"))
+        
+        post_operation() if post_operation else None
 
     # Softsub path updater
     def update_soft_path(self):
@@ -276,15 +135,14 @@ class MainWindow(QMainWindow):
         self.config.log('mainWindow', 'Render paths updated!')
 
     def lock_mode(self):
-        ui_for_disable = (self.ui.audio_path_editline, self.ui.audio_path_open_button, self.ui.softsub_path_editline, self.ui.softsub_path_open_button)
+        ui_for_disable = (
+            self.ui.audio_path_editline, 
+            self.ui.audio_path_open_button, 
+            self.ui.softsub_path_editline, 
+            self.ui.softsub_path_open_button
+        )
         for ui in ui_for_disable:
             ui.setDisabled(self.config.build_settings['build_state'] == 3)
-
-    # Mode updater
-    def update_mode(self):
-        self.config.build_settings['build_state'] = self.config.build_states.get(self.ui.render_mode_box.currentText())
-        self.lock_mode()
-        self.config.log('mainWindow', f"Mode updated to: {self.config.build_settings['build_state']}")
 
     # FAQ window opener
     def open_faq(self):
@@ -316,75 +174,121 @@ class MainWindow(QMainWindow):
 
     # Checkboxes definition
     def set_checkboxes(self):
-        #self.ui.log_mode_enable.setEnabled(self.config.dev_settings['dev_mode'])
-        
         checkboxes = {
-            self.ui.dev_mode_enable: (lambda: self.universal_update(
-                'dev_settings.dev_mode', 
-                self.ui.dev_mode_enable.isChecked(), 
-                "Dev mode {VALUE}.",
-                "checkbox"
-            )),
-            self.ui.logo_check: (lambda: self.universal_update(
-                'build_settings.logo', 
-                self.ui.logo_check.isChecked(), 
-                "Logo {VALUE}.",
-                "checkbox"
-            )),
-            self.ui.app_ffmpeg_update_check: (lambda: self.universal_update(
-                'update_search', 
-                self.ui.app_ffmpeg_update_check.isChecked(),
-                "Update search {VALUE}.",
-                "checkbox"
-            )),
-            self.ui.soft_nvenc_check: (lambda: self.universal_update(
-                'build_settings.softsub_settings.nvenc', 
-                self.ui.soft_nvenc_check.isChecked(),
-                "Softsub NVENC {VALUE}.",
-                "checkbox"
-            )),
-            self.ui.hard_nvenc_check: (lambda: self.universal_update(
-                'build_settings.hardsub_settings.nvenc', 
-                self.ui.hard_nvenc_check.isChecked(),
-                "Hardsub NVENC {VALUE}.",
-                "checkbox"
-            ))
+            self.ui.dev_mode_enable: (
+                lambda: self.universal_update(
+                    'dev_settings.dev_mode', 
+                    self.ui.dev_mode_enable.isChecked(), 
+                    "Dev mode {VALUE}.",
+                    "checkbox",
+                    lambda: self.ui.log_mode_enable.setEnabled(self.config.dev_settings['dev_mode'])
+                ), 
+                lambda: self.universal_setter(
+                    self.ui.dev_mode_enable,
+                    self.config.dev_settings['dev_mode'],
+                    "Dev mode {VALUE}.",
+                    "checkbox"
+                )
+            ),
+            self.ui.log_mode_enable: (
+                lambda: self.universal_update(
+                    'dev_settings.logging.state', 
+                    self.ui.log_mode_enable.isChecked(), 
+                    "Logging mode {VALUE}.",
+                    "checkbox"
+                ), 
+                lambda: self.universal_setter(
+                    self.ui.log_mode_enable,
+                    self.config.dev_settings['logging']['state'],
+                    "Logging mode {VALUE}.",
+                    "checkbox"
+                )
+            ),
+            self.ui.logo_check: (
+                lambda: self.universal_update(
+                    'build_settings.logo', 
+                    self.ui.logo_check.isChecked(), 
+                    "Logo {VALUE}.",
+                    "checkbox"
+                ),
+                lambda: self.universal_setter(
+                    self.ui.logo_check,
+                    self.config.build_settings['logo'],
+                    "Logo add {VALUE}.",
+                    "checkbox"
+                )
+            ),
+            self.ui.app_ffmpeg_update_check: (
+                lambda: self.universal_update(
+                    'update_search', 
+                    self.ui.app_ffmpeg_update_check.isChecked(),
+                    "Update search {VALUE}.",
+                    "checkbox"
+                ),
+                lambda: self.universal_setter(
+                    self.ui.app_ffmpeg_update_check,
+                    self.config.update_search,
+                    "Updater {VALUE}.",
+                    "checkbox"
+                )
+            ),
+            self.ui.soft_nvenc_check: (
+                lambda: self.universal_update(
+                    'build_settings.softsub_settings.nvenc', 
+                    self.ui.soft_nvenc_check.isChecked(),
+                    "Softsub NVENC {VALUE}.",
+                    "checkbox"
+                ),
+                lambda: self.universal_setter(
+                    self.ui.soft_nvenc_check,
+                    self.config.build_settings['softsub_settings']['nvenc'],
+                    "Softsub NVENC {VALUE}.",
+                    "checkbox"
+                )
+            ),
+            self.ui.hard_nvenc_check: (
+                lambda: self.universal_update(
+                    'build_settings.hardsub_settings.nvenc', 
+                    self.ui.hard_nvenc_check.isChecked(),
+                    "Hardsub NVENC {VALUE}.",
+                    "checkbox"
+                ),
+                lambda: self.universal_setter(
+                    self.ui.hard_nvenc_check,
+                    self.config.build_settings['hardsub_settings']['nvenc'],
+                    "Hardsub NVENC {VALUE}.",
+                    "checkbox"
+                )
+            )
         }
-
-        for checkbox, handler in checkboxes.items():
+        for checkbox, (handler, operation) in checkboxes.items():
             checkbox.stateChanged.connect(handler)
-            
-        self.ui.log_mode_enable.setChecked(self.config.dev_settings['logging']['state'])
-        self.ui.logo_check.setChecked(self.config.build_settings['logo'])
-        self.ui.soft_nvenc_check.setChecked(self.config.build_settings['hardsub_settings']['nvenc'])
-        self.ui.hard_nvenc_check.setChecked(self.config.build_settings['softsub_settings']['nvenc'])
-        self.ui.app_ffmpeg_update_check.setChecked(self.config.update_search)
-
+            operation()
         self.config.log('mainWindow', "Checkboxes set.")
 
     # Textboxes definition
     def set_textboxes(self):
         paths = {
-            self.ui.audio_path_editline: (lambda: self.universal_update(
+            self.ui.audio_path_editline: lambda: self.universal_update(
                 'rendering_paths.audio', 
                 self.ui.audio_path_editline.text(),
                 "Audio path updated to: {VALUE}.",
                 "textbox"
-            )),
-            self.ui.raw_path_editline: (lambda: self.universal_update(
+            ),
+            self.ui.raw_path_editline: lambda: self.universal_update(
                 'rendering_paths.raw', 
                 self.ui.raw_path_editline.text(),
                 "Raw path updated to: {VALUE}.",
                 "textbox"
-            )),
-            self.ui.softsub_path_editline: self.update_soft_path,
-            self.ui.subtitle_path_editline: (lambda: self.universal_update(
+            ),
+            self.ui.subtitle_path_editline: lambda: self.universal_update(
                 'rendering_paths.sub', 
                 self.ui.subtitle_path_editline.text(),
                 "Subtitle path updated to: {VALUE}.",
                 "textbox"
-            )),
+            ),
             self.ui.episode_line: self.update_episode,
+            self.ui.softsub_path_editline: self.update_soft_path,
         }
 
         for textbox, handler in paths.items():
@@ -395,7 +299,15 @@ class MainWindow(QMainWindow):
     # Comboboxes definition
     def set_comboboxes(self):
         comboboxes = {
-            self.ui.render_mode_box: self.update_mode,
+            self.ui.render_mode_box: lambda: self.universal_update(
+                'build_settings.build_state', 
+                self.ui.render_mode_box.currentIndex(),
+                "Build state updated to: {VALUE}.".format(
+                    VALUE=self.ui.render_mode_box.currentText()
+                ),
+                "combobox",
+                lambda: self.lock_mode()
+            ),
         }
 
         for combobox, handler in comboboxes.items():

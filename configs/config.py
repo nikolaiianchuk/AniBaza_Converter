@@ -23,6 +23,7 @@ class Config:
         self.command_constructor = None
         self.updater_thread = None
         self.download_thread = None
+        self.ffmpeg_thread = None
 
         # PC info
         self.computer = wmi.WMI()
@@ -75,6 +76,7 @@ class Config:
         self.total_frames = 0
         self.current_state = ''
         self.video_res = ''
+        self.first_show = True
 
         # Build settings
         self.build_settings = {
