@@ -133,9 +133,9 @@ background-color: rgb(47, 49, 54);
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="8" column="1" colspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <layout class="QVBoxLayout" name="episodeline_Vlayout">
           <item>
-           <widget class="QLineEdit" name="episodeLine">
+           <widget class="QLineEdit" name="episode_line">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -163,9 +163,9 @@ padding-bottom:7px;</string>
          </layout>
         </item>
         <item row="2" column="1" colspan="2">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QHBoxLayout" name="header_buttons_Hlayout">
           <item>
-           <widget class="QPushButton" name="pushButton_rick">
+           <widget class="QPushButton" name="rickroll_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -209,7 +209,7 @@ border:none;
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="settingsSaving">
+           <widget class="QPushButton" name="config_save_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -260,9 +260,9 @@ padding-top: -5px;
          </layout>
         </item>
         <item row="16" column="1" rowspan="2" colspan="2">
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QHBoxLayout" name="footer_buttons_Hlayout">
           <item>
-           <widget class="QPushButton" name="faqButton">
+           <widget class="QPushButton" name="FAQ_open_button">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -319,7 +319,7 @@ padding-top: -5px;
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="siteButton">
+           <widget class="QPushButton" name="anibaza_site_open_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -373,7 +373,7 @@ padding-top: -5px;
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="hardfolderButton">
+           <widget class="QPushButton" name="hardsub_folder_open_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -429,9 +429,9 @@ padding-top: -5px;
          </layout>
         </item>
         <item row="18" column="1" colspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <layout class="QVBoxLayout" name="app_version_line_Vlayout">
           <item>
-           <widget class="QLabel" name="versionLabel">
+           <widget class="QLabel" name="app_version_label">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -464,9 +464,9 @@ border:none;
          </layout>
         </item>
         <item row="4" column="1" colspan="2">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <layout class="QHBoxLayout" name="render_control_Hlayout">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_12">
+           <layout class="QVBoxLayout" name="render_settings_Vlayout">
             <item>
              <spacer name="verticalSpacer_6">
               <property name="orientation">
@@ -479,6 +479,37 @@ border:none;
                </size>
               </property>
              </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="render_settings_label">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>12</pointsize>
+                <weight>75</weight>
+                <italic>true</italic>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color: rgb(98, 114, 164);
+background-color: rgba(0, 0, 0, 0);
+border:none;
+</string>
+              </property>
+              <property name="text">
+               <string>Настройки</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="logo_check">
@@ -511,7 +542,7 @@ border:none;
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="nvencCheck">
+             <widget class="QCheckBox" name="soft_nvenc_check">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -533,7 +564,7 @@ border:none;
 </string>
               </property>
               <property name="text">
-               <string>Nvenc</string>
+               <string>Софт NVENC</string>
               </property>
               <property name="checked">
                <bool>false</bool>
@@ -541,9 +572,9 @@ border:none;
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="codec">
+             <widget class="QCheckBox" name="hard_nvenc_check">
               <property name="enabled">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -565,13 +596,13 @@ background-color: rgba(0, 0, 0, 0);
 border:none;</string>
               </property>
               <property name="text">
-               <string>HEVC</string>
+               <string>Хард NVENC</string>
               </property>
               <property name="checkable">
                <bool>true</bool>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -591,7 +622,7 @@ border:none;</string>
            </spacer>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_11">
+           <layout class="QVBoxLayout" name="render_mode_Vlayout">
             <item>
              <spacer name="verticalSpacer_5">
               <property name="orientation">
@@ -606,7 +637,7 @@ border:none;</string>
              </spacer>
             </item>
             <item>
-             <widget class="QLabel" name="modeLabel">
+             <widget class="QLabel" name="render_mode_label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -634,7 +665,7 @@ border:none;
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="modeBox">
+             <widget class="QComboBox" name="render_mode_box">
               <property name="enabled">
                <bool>true</bool>
               </property>
@@ -726,7 +757,7 @@ border-bottom: 2px solid rgba(105, 118, 132, 255);
            </spacer>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_9">
+           <layout class="QVBoxLayout" name="render_startstop_Vlayout">
             <item>
              <spacer name="verticalSpacer_13">
               <property name="orientation">
@@ -741,7 +772,7 @@ border-bottom: 2px solid rgba(105, 118, 132, 255);
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="startButton">
+             <widget class="QPushButton" name="render_start_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -790,7 +821,7 @@ padding-top: -5px;
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="stopButton">
+             <widget class="QPushButton" name="render_stop_button">
               <property name="enabled">
                <bool>false</bool>
               </property>
@@ -865,9 +896,9 @@ padding-top: -5px;
          </layout>
         </item>
         <item row="14" column="1" colspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <layout class="QVBoxLayout" name="render_status_Vlayout">
           <item>
-           <widget class="QLabel" name="stateLabel">
+           <widget class="QLabel" name="app_state_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -909,7 +940,7 @@ border:none;
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="elapsed_time">
+           <widget class="QLabel" name="elapsed_time_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -940,9 +971,9 @@ border:none;
          </layout>
         </item>
         <item row="11" column="1" colspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_8">
+         <layout class="QVBoxLayout" name="render_progress_Vlayout">
           <item>
-           <widget class="QProgressBar" name="progressBar">
+           <widget class="QProgressBar" name="render_progress_bar">
             <property name="styleSheet">
              <string notr="true">QProgressBar {
 	background-color: rgb(98, 114, 164);
@@ -965,9 +996,9 @@ QProgressBar::chunk{
          </layout>
         </item>
         <item row="6" column="1" colspan="2">
-         <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <layout class="QHBoxLayout" name="render_inout_data_Hlayout">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout">
+           <layout class="QVBoxLayout" name="render_inout_paths_Vlayout">
             <item>
              <spacer name="verticalSpacer_7">
               <property name="orientation">
@@ -982,7 +1013,7 @@ QProgressBar::chunk{
              </spacer>
             </item>
             <item>
-             <widget class="QLineEdit" name="soundPath">
+             <widget class="QLineEdit" name="audio_path_editline">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1024,7 +1055,7 @@ padding-bottom:7px;</string>
              </spacer>
             </item>
             <item>
-             <widget class="QLineEdit" name="rawPath">
+             <widget class="QLineEdit" name="raw_path_editline">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1066,7 +1097,7 @@ padding-bottom:7px;</string>
              </spacer>
             </item>
             <item>
-             <widget class="QLineEdit" name="subPath">
+             <widget class="QLineEdit" name="subtitle_path_editline">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1108,7 +1139,7 @@ padding-bottom:7px;</string>
              </spacer>
             </item>
             <item>
-             <widget class="QLineEdit" name="softPath">
+             <widget class="QLineEdit" name="softsub_path_editline">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1152,7 +1183,7 @@ padding-bottom:7px;</string>
            </layout>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <layout class="QVBoxLayout" name="render_inout_buttons_Vlayout">
             <item>
              <spacer name="verticalSpacer_14">
               <property name="orientation">
@@ -1167,7 +1198,7 @@ padding-bottom:7px;</string>
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="soundButton">
+             <widget class="QPushButton" name="audio_path_open_button">
               <property name="minimumSize">
                <size>
                 <width>30</width>
@@ -1231,7 +1262,7 @@ padding-top: -5px;
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="rawButton">
+             <widget class="QPushButton" name="raw_path_open_button">
               <property name="minimumSize">
                <size>
                 <width>30</width>
@@ -1295,7 +1326,7 @@ padding-top: -5px;
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="subButton">
+             <widget class="QPushButton" name="subtitle_path_open_button">
               <property name="minimumSize">
                <size>
                 <width>30</width>
@@ -1359,7 +1390,7 @@ padding-top: -5px;
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="softButton">
+             <widget class="QPushButton" name="softsub_path_open_button">
               <property name="minimumSize">
                <size>
                 <width>30</width>
@@ -1527,7 +1558,7 @@ padding-top: -5px;
        </attribute>
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
-         <widget class="QLabel" name="tempLabel">
+         <widget class="QLabel" name="temp_label">
           <property name="font">
            <font>
             <family>Segoe UI</family>
@@ -1557,9 +1588,9 @@ border-bottom: 2px solid rgba(105, 118, 132, 255);
        </attribute>
        <layout class="QGridLayout" name="gridLayout_6">
         <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_7">
+         <layout class="QVBoxLayout" name="settings_Vlayout">
           <item>
-           <widget class="QCheckBox" name="update_check">
+           <widget class="QCheckBox" name="app_ffmpeg_update_check">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -1605,13 +1636,13 @@ border:none;
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="whatsnew_tab">
+      <widget class="QWidget" name="whats_new_tab">
        <attribute name="title">
         <string>Что нового?</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="QTextBrowser" name="textBrowser">
+         <widget class="QTextBrowser" name="version_history_browser">
           <property name="font">
            <font>
             <family>Segoe UI</family>
@@ -1703,9 +1734,9 @@ p, li { white-space: pre-wrap; }
          </spacer>
         </item>
         <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <layout class="QVBoxLayout" name="dev_settings_Vlayout">
           <item>
-           <widget class="QCheckBox" name="enableDevMode">
+           <widget class="QCheckBox" name="dev_mode_enable">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -1736,38 +1767,7 @@ border:none;
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="folderAutodecting">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(98, 114, 164);
-background-color: rgba(0, 0, 0, 0);
-border:none;
-</string>
-            </property>
-            <property name="text">
-             <string>Автодетектинг папок (Экспериментальное)</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="enableLogging">
+           <widget class="QCheckBox" name="log_mode_enable">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -1794,6 +1794,68 @@ border:none;
             </property>
             <property name="checked">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="episodeline_autodetect_enable">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(98, 114, 164);
+background-color: rgba(0, 0, 0, 0);
+border:none;
+</string>
+            </property>
+            <property name="text">
+             <string>Автодетектинг названия тайтла по торрент папке (Экспериментальное)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="folders_autodetect_enable">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>Segoe UI</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(98, 114, 164);
+background-color: rgba(0, 0, 0, 0);
+border:none;
+</string>
+            </property>
+            <property name="text">
+             <string>Автодетектинг папок (Экспериментальное)</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
             </property>
            </widget>
           </item>

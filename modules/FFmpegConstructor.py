@@ -115,14 +115,14 @@ class FFmpegConstructor:
                 'render preset',
                 'video tune',
                 'video profile',
-                'profile level',
+                
                 'video pixel format',
                 'audio codec',
                 'audio bitrate',
                 'audio discretization',
                 'subtitle codec' if self.sub['exists'] else '',
                 'video output'
-            ]
+            ]#'profile level',
         
         for command in cmds:
             if command:
@@ -180,13 +180,13 @@ class FFmpegConstructor:
                 'render preset',
                 'video tune',
                 'video profile',
-                'profile level',
+                
                 'video pixel format',
                 'audio codec' if sound_path else '',
                 'audio bitrate' if sound_path else '',
                 'audio discretization' if sound_path else '',
                 'video output'
-            ]
+            ]#'profile level',
         
         for command in cmds:
             if command:
