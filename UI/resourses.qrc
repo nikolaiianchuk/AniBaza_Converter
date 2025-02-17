@@ -1,13 +1,18 @@
 <RCC>
   <qresource prefix="icons">
-    <file>res/ICONS/arrows_down_icon_193534.svg</file>
-    <file>res/ICONS/arrows_right_icon_193548.svg</file>
-    <file>res/ICONS/close_cross_delete_remove_icon_193566.svg</file>
-    <file>res/ICONS/faq_question_icon_149479.svg</file>
-    <file>res/ICONS/folder.svg</file>
-    <file>res/ICONS/folder_storage_file_icon_193553.svg</file>
-    <file>res/ICONS/start-button_icon-icons.com_53873.svg</file>
-    <file>res/ICONS/stop.svg</file>
-    <file>res/ICONS/web_120072.svg</file>
+    <file>icons/10site.png</file>
+    <file>icons/arrows_down_icon_193534.svg</file>
+    <file>icons/arrows_right_icon_193548.svg</file>
+    <file>icons/close_cross_delete_remove_icon_193566.svg</file>
+    <file>icons/cross_81577.svg</file>
+    <file>icons/down_icon.svg</file>
+    <file>icons/faq_question_icon_149479.svg</file>
+    <file>icons/folder.svg</file>
+    <file>icons/folder2.svg</file>
+    <file>icons/start-button_icon-icons.com_53873.svg</file>
+    <file>icons/stop.svg</file>
+    <file>icons/tg.png</file>
+    <file>icons/up_icon.svg</file>
+    <file>icons/web_120072.svg</file>
   </qresource>
 </RCC>

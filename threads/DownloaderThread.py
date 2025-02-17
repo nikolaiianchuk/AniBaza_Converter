@@ -9,8 +9,9 @@ class DownloadThread(QThread):
     finished_signal = pyqtSignal(str)
     error_signal    = pyqtSignal(Exception)
 
-    def __init__(self, url, installer_path):
+    def __init__(self, config, url, installer_path):
         super().__init__()
+        self.config = config
         self.url = url
         self.installer_path = installer_path
         self.cancel_download = False
@@ -41,9 +42,9 @@ class DownloadThread(QThread):
 
     def handle_exception(self, e):
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        config.logging_module.write_to_log('DownloaderThread', f"DownloadThread Error: {error_message}")
+        self.config.log('DownloaderThread', f"DownloadThread Error: {error_message}")
         self.error_signal.emit(e)
 
     def cancel(self):
         self.cancel_download = True  # Устанавливаем флаг отмены
-        config.logging_module.write_to_log('DownloaderThread', "DownloadThread: Download canceled.")
+        self.config.log('DownloaderThread', "DownloadThread: Download canceled.")
