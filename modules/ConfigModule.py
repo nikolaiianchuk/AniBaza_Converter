@@ -61,8 +61,8 @@ def save_config(config):
     if parser:
         parser.set('main settings', 'logo', str(config.build_settings['logo']))
         parser.set('main settings', 'build_state', str(config.build_settings['build_state']))
-        parser.set('main settings', 'nvenc', str(config.build_settings['hardsub_settings']['nvenc']))
-        parser.set('main settings', 'hevc', str(config.build_settings['hardsub_settings']['hevc']))
+        parser.set('main settings', 'soft_nvenc', str(config.build_settings['softsub_settings']['nvenc']))
+        parser.set('main settings', 'hard_nvenc', str(config.build_settings['hardsub_settings']['nvenc']))
         parser.set('main settings', 'update_search', str(config.update_search))
         with open(config.main_paths['config'], 'w') as config_file:
             parser.write(config_file)

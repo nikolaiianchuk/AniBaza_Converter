@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>509</width>
-    <height>618</height>
+    <width>584</width>
+    <height>628</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -313,8 +313,8 @@ padding-top: -5px;
              <string> Инструкция тут </string>
             </property>
             <property name="icon">
-             <iconset>
-              <normaloff>:/icons/res/ICONS/faq_question_icon_149479.svg</normaloff>:/icons/res/ICONS/faq_question_icon_149479.svg</iconset>
+             <iconset resource="resourses.qrc">
+              <normaloff>:/icons/icons/faq_question_icon_149479.svg</normaloff>:/icons/icons/faq_question_icon_149479.svg</iconset>
             </property>
            </widget>
           </item>
@@ -367,8 +367,44 @@ padding-top: -5px;
              <string> На сайт </string>
             </property>
             <property name="icon">
-             <iconset>
-              <normaloff>:/icons/res/ICONS/web_120072.svg</normaloff>:/icons/res/ICONS/web_120072.svg</iconset>
+             <iconset resource="resourses.qrc">
+              <normaloff>:/icons/icons/10site.png</normaloff>:/icons/icons/10site.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logs_folder_open_button">
+            <property name="styleSheet">
+             <string notr="true">QPushButton{
+border: none;
+padding-top: 3px;
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-bottom: 3px solid  rgb(37, 40, 44);
+font: 75 12pt &quot;Segoe UI&quot;;
+color: rgb(98, 114, 164);
+}
+QPushButton:hover{
+background-color: rgb(62, 65, 72);
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-bottom: 3px solid  rgb(37, 40, 44);
+}
+QPushButton:pressed{
+background-color: rgb(44, 47, 52);
+border-left: 1px solid  rgb(37, 40, 44);
+border-right: 1px solid  rgb(37, 40, 44);
+border-top: 3px solid  rgb(37, 40, 44);
+border-bottom: none;
+padding-top: -5px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Папка Logs</string>
+            </property>
+            <property name="icon">
+             <iconset resource="resourses.qrc">
+              <normaloff>:/icons/icons/folder2.svg</normaloff>:/icons/icons/folder2.svg</iconset>
             </property>
            </widget>
           </item>
@@ -421,8 +457,8 @@ padding-top: -5px;
              <string> Папка Hardsub </string>
             </property>
             <property name="icon">
-             <iconset>
-              <normaloff>:/icons/res/ICONS/folder_storage_file_icon_193553.svg</normaloff>:/icons/res/ICONS/folder_storage_file_icon_193553.svg</iconset>
+             <iconset resource="resourses.qrc">
+              <normaloff>:/icons/icons/folder2.svg</normaloff>:/icons/icons/folder2.svg</iconset>
             </property>
            </widget>
           </item>
@@ -510,6 +546,19 @@ border:none;
                <set>Qt::AlignCenter</set>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_20">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
              <widget class="QCheckBox" name="logo_check">
@@ -624,19 +673,6 @@ border:none;</string>
           <item>
            <layout class="QVBoxLayout" name="render_mode_Vlayout">
             <item>
-             <spacer name="verticalSpacer_5">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
              <widget class="QLabel" name="render_mode_label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -663,6 +699,19 @@ border:none;
                <set>Qt::AlignCenter</set>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
              <widget class="QComboBox" name="render_mode_box">

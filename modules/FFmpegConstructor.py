@@ -1,11 +1,11 @@
 import os
 import shutil
-import configs.config as config
 
 from pathlib import Path
 
 class FFmpegConstructor:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.softsub_ffmpeg_commands = {
             'init'                 : 'ffmpeg',
             'override output'      : '-y',
@@ -20,12 +20,13 @@ class FFmpegConstructor:
             'audio metadata'       : '-metadata:s:a:0 title="AniBaza" -metadata:s:a:0 language=rus',
             'subtitle metadata'    : '-metadata:s:s:0 title="Caption" -metadata:s:s:0 language=rus',
             'logo burning'         : '-vf "subtitles=\'{ESCAPED_LOGO_PATH}\'"',
-            'video codec'          : '-c:v libx264',
+            'video codec'          : '-c:v {CODEC}',
             'video CRF'            : '-crf {CRF_RATE}',
+            'video CQ'             : '-cq {CQ} -qmin {QMIN} -qmax {QMAX}',
             'video max bitrate'    : '-maxrate {MAX}',
             'video max bufsize'    : '-bufsize {BUFFER}',
             'render preset'        : '-preset {RENDER_PRESET}',
-            'video tune'           : '-tune animation',
+            'video tune'           : '-tune {TUNE}',
             'video profile'        : '-profile:v {VIDEO_PROFILE}',
             'profile level'        : '-level:v {PROFILE_LEVEL}',
             'video pixel format'   : '-pix_fmt {PIXEL_FORMAT}',
@@ -77,20 +78,21 @@ class FFmpegConstructor:
         self.sub['exists'] = True
         self.sub['name'] = os.path.basename(self.sub['path'])
         self.sub['sanitized_name'] = str(self.sub['name']).replace('[', '').replace(']', '')
-        os.makedirs(config.main_paths['temp'], exist_ok=True)
-        self.sub['temp_path'] = os.path.join(config.main_paths['temp'], self.sub['sanitized_name'])
+        os.makedirs(self.config.main_paths['temp'], exist_ok=True)
+        self.sub['temp_path'] = os.path.join(self.config.main_paths['temp'], self.sub['sanitized_name'])
         shutil.copyfile(self.sub['path'], self.sub['temp_path'])
         self.sub['escaped_path'] = f"{str(self.sub['temp_path']).replace(chr(92), '/').replace(':/', self.separator)}"
     
     def logo_escaper(self):
-        self.escaped_logo_path = f"{str(config.main_paths['logo']).replace(chr(92), '/').replace(':/', self.separator)}"
+        self.escaped_logo_path = f"{str(self.config.main_paths['logo']).replace(chr(92), '/').replace(':/', self.separator)}"
 
     def build_soft_command(self, raw_path='', sound_path='', sub_path=None, 
-                            output_path='', crf_rate='18', max_bitrate='', max_buffer='', video_profile='main', 
-                            profile_level='4.2', pixel_format='yuv420p', preset='faster',
+                            output_path='', nvenc=False, crf_rate='18', cqmin='17', 
+                            cq='18', cqmax='25', max_bitrate='', max_buffer='', video_profile='main', 
+                            profile_level='4.2', pixel_format='yuv420p', preset='faster', tune='animation',
                             include_logo=True):
         
-        os.chdir(config.main_paths['CWD'])
+        os.chdir(self.config.main_paths['CWD'])
         
         if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
@@ -109,7 +111,7 @@ class FFmpegConstructor:
                 'subtitle metadata' if self.sub['exists'] else '',
                 'logo burning' if include_logo else '',
                 'video codec',
-                'video CRF',
+                'video CRF' if not nvenc else 'video CQ',
                 'video max bitrate',
                 'video max bufsize',
                 'render preset',
@@ -133,17 +135,22 @@ class FFmpegConstructor:
             RAW_PATH_INPUT    = raw_path,
             SOUND_PATH_INPUT  = sound_path,
             ESCAPED_LOGO_PATH = self.escaped_logo_path,
+            CODEC             = 'libx264' if not nvenc else 'h264_nvenc',
             CRF_RATE          = crf_rate,
+            QMIN              = cqmin,
+            CQ                = cq,
+            QMAX              = cqmax,
             MAX               = max_bitrate,
             BUFFER            = max_buffer,
             RENDER_PRESET     = preset,
+            TUNE              = tune,
             VIDEO_PROFILE     = video_profile,
             PROFILE_LEVEL     = profile_level,
             PIXEL_FORMAT      = pixel_format,
             SUB_PATH_INPUT    = sub_path,
             OUTPUT_FILE_PATH  = output_path
         )
-        config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor softsub: {str_out}')
+        self.config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor softsub: {str_out}')
         return str_out
     
     def build_hard_command(self, raw_path='', sound_path='', sub_path=None, 
@@ -152,7 +159,7 @@ class FFmpegConstructor:
                             profile_level='4.2', pixel_format='yuv420p', 
                             include_logo=True):
         
-        os.chdir(config.main_paths['CWD'])
+        os.chdir(self.config.main_paths['CWD'])
         
         if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
@@ -213,7 +220,7 @@ class FFmpegConstructor:
             PIXEL_FORMAT      = pixel_format,
             OUTPUT_FILE_PATH  = output_path
         )
-        config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor hardsub: {str_out}')
+        self.config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor hardsub: {str_out}')
         return str_out
     
     def remove_temp_sub(self):

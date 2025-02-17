@@ -22,7 +22,7 @@ class ThreadClassRender(QThread):
         super(ThreadClassRender, self).__init__()
         self.config = config
         sys.excepthook = self.handle_exception
-        self.config.command_constructor = FFmpegConstructor()
+        self.config.command_constructor = FFmpegConstructor(self.config)
         self.encoding_params = {
             "avg_bitrate": "6M",
             "max_bitrate": "9M",
@@ -81,9 +81,15 @@ class ThreadClassRender(QThread):
                 sound_path    = self.config.rendering_paths['audio'],
                 sub_path      = self.config.rendering_paths['sub'],
                 output_path   = self.config.rendering_paths['softsub'],
+                nvenc         = self.config.build_settings['softsub_settings']['nvenc'], 
                 crf_rate      = self.encoding_params['crf'],
+                cqmin         = self.encoding_params['qmin'], 
+                cq            = self.encoding_params['cq'], 
+                cqmax         = self.encoding_params['qmax'],
                 max_bitrate   = self.encoding_params['max_bitrate'],
                 max_buffer    = self.encoding_params['buffer_size'],
+                preset        = 'faster' if not self.config.build_settings['softsub_settings']['nvenc'] else 'p4', 
+                tune          = self.config.build_settings['softsub_settings']['video_tune'] if not self.config.build_settings['softsub_settings']['nvenc'] else 'hq',
                 video_profile = self.config.build_settings['softsub_settings']['video_profile'],
                 profile_level = self.config.build_settings['softsub_settings']['profile_level'],
                 pixel_format  = self.config.build_settings['softsub_settings']['pixel_format'],
@@ -248,10 +254,10 @@ class ThreadClassRender(QThread):
     
     def ffmpeg_analysis_decoding(self, proc):
         profiles = {
-            '(Main)'    : ['main', 'main'], 
-            '(Main 10)' : ['high10', 'main10'], 
-            '(High)'    : ['high', 'main10'], 
-            '(High 10)' : ['high10', 'main10']
+            '(Main)'    : ['main', 'main', 'main'], 
+            '(Main 10)' : ['high10', 'high', 'main10'], 
+            '(High)'    : ['high', 'high', 'main10'], 
+            '(High 10)' : ['high10', 'high', 'main10']
         }
         
         for line in proc.stdout:
@@ -278,14 +284,14 @@ class ThreadClassRender(QThread):
                             self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p'
                             self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p'
                         elif item[:-1] in ['yuv420p10le', 'p010le']:
-                            self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p10le'
+                            self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p' #'yuv420p10le' if self.config.build_settings['softsub_settings']['nvenc'] == False else 'p010le'
                             self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p10le' if self.config.build_settings['hardsub_settings']['nvenc'] == False else 'p010le'
                     
-                for item in ['(Main)', '(Main 10)', '(High)', '(High 10)']:
+                for item in profiles.keys():
                     if item in codec_match.group(0):
                         self.config.log('RenderThread', f"found {item[1:-1]}")
-                        self.config.build_settings['softsub_settings']['video_profile'] = profiles[item][0]
-                        self.config.build_settings['hardsub_settings']['video_profile'] = profiles[item][1]
+                        self.config.build_settings['softsub_settings']['video_profile'] = profiles[item][0 if not self.config.build_settings['softsub_settings']['nvenc'] else 1]
+                        self.config.build_settings['hardsub_settings']['video_profile'] = profiles[item][2]
                         self.config.log('RenderThread', f"Settings set: {profiles[item]}")
 
     # Coding commands

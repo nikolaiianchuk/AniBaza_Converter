@@ -85,6 +85,7 @@ class Config:
             'logo'             : True,
             'softsub_settings' : {
                 'nvenc'         : False,
+                'video_tune'    : 'animation',
                 'video_profile' : 'high10',
                 'profile_level' : '4.1',
                 'pixel_format'  : 'yuv420p10le'

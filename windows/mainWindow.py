@@ -90,12 +90,13 @@ class MainWindow(QMainWindow):
         else:
             setattr(setting, last_key, value)
             
-        if type == "checkbox":
-            self.config.log('mainWindow', log_message.format(VALUE="enabled" if value else "disabled"))
-        elif type == "textbox":
-            self.config.log('mainWindow', log_message.format(VALUE=value))
-        elif type == "combobox":
-            self.config.log('mainWindow', log_message)
+        if log_message:
+            if type == "checkbox":
+                self.config.log('mainWindow', log_message.format(VALUE="enabled" if value else "disabled"))
+            elif type == "textbox":
+                self.config.log('mainWindow', log_message.format(VALUE=value))
+            elif type == "combobox":
+                self.config.log('mainWindow', log_message)
         
         post_operation() if post_operation else None
         
@@ -106,10 +107,9 @@ class MainWindow(QMainWindow):
                 self.config.log('mainWindow', log_message.format(VALUE="enabled" if value else "disabled"))
         
         post_operation() if post_operation else None
-
+        
     # Softsub path updater
-    def update_soft_path(self):
-        self.config.main_paths['softsub'] = self.ui.softsub_path_editline.text()
+    def soft_path_constructor(self):
         if '[AniBaza]' in self.config.main_paths['softsub']:
             self.config.build_settings['episode_name'] = self.config.main_paths['softsub'].split('/')[-1]
             self.config.build_settings['episode_name'] = self.config.build_settings['episode_name'].replace(
@@ -119,12 +119,6 @@ class MainWindow(QMainWindow):
             self.ui.episode_line.setText(self.config.build_settings['episode_name'])
         else:
             self.config.log('mainWindow', f"Softsub base path updated to: {self.config.main_paths['softsub']}")
-        self.update_render_paths()
-
-    # Episode name updater
-    def update_episode(self):
-        self.config.build_settings['episode_name'] = self.ui.episode_line.text()
-        self.config.log('mainWindow', f"Episode name updated to: {self.config.build_settings['episode_name']}")
         self.update_render_paths()
         
     def update_render_paths(self):
@@ -155,6 +149,7 @@ class MainWindow(QMainWindow):
     def set_buttons(self):
         buttons = {
             self.ui.hardsub_folder_open_button: self.open_hardsub,
+            self.ui.logs_folder_open_button: self.open_logsdir,
             self.ui.render_stop_button: self.proc_kill,
             self.ui.render_start_button: self.ffmpeg_thread,
             self.ui.softsub_path_open_button: self.soft_folder_path,
@@ -287,8 +282,20 @@ class MainWindow(QMainWindow):
                 "Subtitle path updated to: {VALUE}.",
                 "textbox"
             ),
-            self.ui.episode_line: self.update_episode,
-            self.ui.softsub_path_editline: self.update_soft_path,
+            self.ui.episode_line: lambda: self.universal_update(
+                'build_settings.episode_name',
+                self.ui.episode_line.text(),
+                "Episode name updated to: {VALUE}.",
+                "textbox",
+                self.update_render_paths
+            ),
+            self.ui.softsub_path_editline: lambda: self.universal_update(
+                'main_paths.softsub',
+                self.ui.softsub_path_editline.text(),
+                None,
+                "textbox",
+                self.soft_path_constructor
+            ),
         }
 
         for textbox, handler in paths.items():
@@ -306,7 +313,7 @@ class MainWindow(QMainWindow):
                     VALUE=self.ui.render_mode_box.currentText()
                 ),
                 "combobox",
-                lambda: self.lock_mode()
+                self.lock_mode
             ),
         }
 
@@ -323,6 +330,13 @@ class MainWindow(QMainWindow):
         else:
             self.coding_error('hardsub_folder')
         self.config.log('mainWindow', "Hardsub folder opened.")
+        
+    def open_logsdir(self):
+        if os.path.exists(self.config.main_paths['logs']):
+            os.startfile(self.config.main_paths['logs'])
+        else:
+            self.coding_error('logs_folder')
+        self.config.log('mainWindow', "Logs folder opened.")
 
     # Softsub saving path
     def soft_folder_path(self):
@@ -360,7 +374,8 @@ class MainWindow(QMainWindow):
             'sound': ("Выбери существующий путь к дорожке звука!", self.sound_folder_path),
             'name': ("Напиши корректное имя релиза!", None),
             'hardsub_folder': ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
-            'stop': ("Зачем остановил?!", None)
+            'stop': ("Зачем остановил?!", None),
+            'logs_folder' : ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
         }
 
         self.ui.app_state_label.setText("МЕГАПЛОХ!")
