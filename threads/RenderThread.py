@@ -23,6 +23,7 @@ class ThreadClassRender(QThread):
         self.config = config
         sys.excepthook = self.handle_exception
         self.config.command_constructor = FFmpegConstructor(self.config)
+        self.render_speed = -1 if self.config.potato_PC else 1
         self.encoding_params = {
             "avg_bitrate": "6M",
             "max_bitrate": "9M",
@@ -39,12 +40,12 @@ class ThreadClassRender(QThread):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-        self.config.log('RenderThread', f"Handled exception: {error_message}")
+        self.config.log('RenderThread', 'handle_exception', f"Handled exception: {error_message}")
 
     # Frame updater
     def frame_update(self, proc):
         for line in proc.stdout:
-            self.config.log('RenderThread', line)
+            self.config.log('RenderThread', 'frame_update', line)
             frame_match = re.search(r'frame=\s*(\d+)\s+fps=\s*(\d+)', line)
 
             if frame_match:
@@ -74,28 +75,29 @@ class ThreadClassRender(QThread):
 
     # Softsubbing
     def softsub(self):
-        self.config.log('RenderThread', "Starting softsubbing...")
+        self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
         if self.config.build_settings['build_state'] in [0, 1]:
             cmd = self.config.command_constructor.build_soft_command(
                 raw_path      = self.config.rendering_paths['raw'],
                 sound_path    = self.config.rendering_paths['audio'],
                 sub_path      = self.config.rendering_paths['sub'],
                 output_path   = self.config.rendering_paths['softsub'],
-                nvenc         = self.config.build_settings['softsub_settings']['nvenc'], 
+                nvenc         = True if self.config.build_settings['nvenc_state'] in [0, 1] else False,
                 crf_rate      = self.encoding_params['crf'],
                 cqmin         = self.encoding_params['qmin'], 
                 cq            = self.encoding_params['cq'], 
                 cqmax         = self.encoding_params['qmax'],
                 max_bitrate   = self.encoding_params['max_bitrate'],
                 max_buffer    = self.encoding_params['buffer_size'],
-                preset        = 'faster' if not self.config.build_settings['softsub_settings']['nvenc'] else 'p4', 
-                tune          = self.config.build_settings['softsub_settings']['video_tune'] if not self.config.build_settings['softsub_settings']['nvenc'] else 'hq',
+                preset        = self.config.render_speed[self.render_speed][0] if self.config.build_settings['nvenc_state'] in [2, 3] else self.config.render_speed[self.render_speed][1], 
+                tune          = self.config.build_settings['softsub_settings']['video_tune'] if self.config.build_settings['nvenc_state'] in [2, 3] else 'hq',
                 video_profile = self.config.build_settings['softsub_settings']['video_profile'],
                 profile_level = self.config.build_settings['softsub_settings']['profile_level'],
                 pixel_format  = self.config.build_settings['softsub_settings']['pixel_format'],
-                include_logo  = self.config.build_settings['logo']
+                include_logo  = True if self.config.build_settings['logo_state'] in [0, 1] else False,
+                potato_mode   = self.config.potato_PC
             )
-            self.config.log('RenderThread', f"Generated command: {cmd}")
+            self.config.log('RenderThread', 'softsub', f"Generated command: {cmd}")
             self.config.current_state = "Собираю софтсаб..."
             self.state_update(self.config.current_state)
             process = subprocess.Popen(cmd,
@@ -110,28 +112,29 @@ class ThreadClassRender(QThread):
 
     # Hardsubbing
     def hardsub(self):
-        self.config.log('RenderThread', "Starting hardsubbing...")
+        self.config.log('RenderThread', 'hardsub', "Starting hardsubbing...")
         if self.config.build_settings['build_state'] in [0, 2]:
             cmd = self.config.command_constructor.build_hard_command(
                 raw_path      = self.config.rendering_paths['raw'], 
                 sound_path    = self.config.rendering_paths['audio'], 
                 sub_path      = self.config.rendering_paths['sub'], 
                 output_path   = self.config.rendering_paths['hardsub'], 
-                nvenc         = self.config.build_settings['hardsub_settings']['nvenc'], 
+                nvenc         = True if self.config.build_settings['nvenc_state'] in [0, 2] else False,
                 crf_rate      = self.encoding_params['crf'], 
                 cqmin         = self.encoding_params['qmin'], 
                 cq            = self.encoding_params['cq'], 
                 cqmax         = self.encoding_params['qmax'], 
                 max_bitrate   = self.encoding_params['max_bitrate'],
                 max_buffer    = self.encoding_params['buffer_size'],
-                preset        = 'faster' if not self.config.build_settings['hardsub_settings']['nvenc'] else 'p4', 
-                tune          = self.config.build_settings['hardsub_settings']['video_tune'] if not self.config.build_settings['hardsub_settings']['nvenc'] else 'hq',
+                preset        = self.config.render_speed[self.render_speed][0] if self.config.build_settings['nvenc_state'] in [1, 3] else self.config.render_speed[self.render_speed][1], 
+                tune          = self.config.build_settings['hardsub_settings']['video_tune'] if self.config.build_settings['nvenc_state'] in [1, 3] else 'hq',
                 video_profile = self.config.build_settings['hardsub_settings']['video_profile'], 
                 profile_level = self.config.build_settings['hardsub_settings']['profile_level'] if '10' in self.config.build_settings['hardsub_settings']['video_profile'] else '4.2', 
                 pixel_format  = self.config.build_settings['hardsub_settings']['pixel_format'], 
-                include_logo  = self.config.build_settings['logo']
+                include_logo  = True if self.config.build_settings['logo_state'] in [0, 2] else False,
+                potato_mode   = self.config.potato_PC
             )
-            self.config.log('RenderThread', f"Generated command: {cmd}")
+            self.config.log('RenderThread', 'hardsub', f"Generated command: {cmd}")
             self.config.current_state = "Собираю хардсаб..."
             self.state_update(self.config.current_state)
             process = subprocess.Popen(cmd,
@@ -146,27 +149,27 @@ class ThreadClassRender(QThread):
 
     # Hardsubbing special
     def hardsubbering(self):
-        self.config.log('RenderThread', "Starting special hardsubbing...")
+        self.config.log('RenderThread', 'hardsubbering', "Starting special hardsubbing...")
         if self.config.build_settings['build_state'] == 3:
             cmd = self.config.command_constructor.build_hard_command(
                 raw_path      = self.config.rendering_paths['raw'],  
                 sub_path      = self.config.rendering_paths['sub'], 
                 output_path   = self.config.rendering_paths['hardsub'], 
-                nvenc         = self.config.build_settings['hardsub_settings']['nvenc'], 
+                nvenc         = True if self.config.build_settings['nvenc_state'] in [0, 2] else False, 
                 crf_rate      = self.encoding_params['crf'], 
                 cqmin         = self.encoding_params['qmin'], 
                 cq            = self.encoding_params['cq'], 
                 cqmax         = self.encoding_params['qmax'], 
                 max_bitrate   = self.encoding_params['max_bitrate'],
                 max_buffer    = self.encoding_params['buffer_size'],
-                preset        = 'faster' if not self.config.build_settings['hardsub_settings']['nvenc'] else 'p5', 
-                tune          = self.config.build_settings['hardsub_settings']['video_tune'] if not self.config.build_settings['hardsub_settings']['nvenc'] else 'uhq',
+                preset        = 'faster' if self.config.build_settings['nvenc_state'] in [1, 3] else 'p4', 
+                tune          = self.config.build_settings['hardsub_settings']['video_tune'] if self.config.build_settings['nvenc_state'] in [1, 3] else 'hq',
                 video_profile = self.config.build_settings['hardsub_settings']['video_profile'], 
                 profile_level = self.config.build_settings['hardsub_settings']['profile_level'] if '10' in self.config.build_settings['hardsub_settings']['video_profile'] else '4.2', 
                 pixel_format  = self.config.build_settings['hardsub_settings']['pixel_format'], 
-                include_logo  = self.config.build_settings['logo']
+                include_logo  = True if self.config.build_settings['logo_state'] in [0, 2] else False,
             )
-            self.config.log('RenderThread', f"Generated command: {cmd}")
+            self.config.log('RenderThread', 'hardsubbering', f"Generated command: {cmd}")
             self.config.current_state = "Собираю хардсаб для хардсабберов..."
             self.state_update(self.config.current_state)
             process = subprocess.Popen(cmd,
@@ -180,13 +183,13 @@ class ThreadClassRender(QThread):
             self.frame_update(process)
             
     def raw_repairing(self):
-        self.config.log('RenderThread', "Starting raw repairing...")
+        self.config.log('RenderThread', 'raw_repairing', "Starting raw repairing...")
         if self.config.build_settings['build_state'] == 4:
             cmd = "ffmpeg -y -i {RAW} -c:v libx264 -c:a copy -c:s copy {OUTPUT}".format(
                 RAW    = self.config.rendering_paths['raw'],
                 OUTPUT = self.config.rendering_paths['softsub']
             )
-            self.config.log('RenderThread', f"Generated command: {cmd}")
+            self.config.log('RenderThread', 'raw_repairing', f"Generated command: {cmd}")
             self.config.current_state = "Востанавливаю равку..."
             self.state_update(self.config.current_state)
             process = subprocess.Popen(cmd,
@@ -200,9 +203,9 @@ class ThreadClassRender(QThread):
             self.frame_update(process)
 
     def ffmpeg_analysis(self):
-        self.config.log('RenderThread', "Starting ffmpeg analysis...")
+        self.config.log('RenderThread', 'ffmpeg_analysis', "Starting ffmpeg analysis...")
         cmd = 'ffprobe "' + self.config.rendering_paths['raw'] +'"'
-        self.config.log('RenderThread', f"Generated command: {cmd}")
+        self.config.log('RenderThread', 'ffmpeg_analysis', f"Generated command: {cmd}")
         process = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
@@ -225,6 +228,10 @@ class ThreadClassRender(QThread):
         }
         avg_bitrate = (file_size_gb * 1024 * 8) / self.config.total_duration_sec
         avg_bitrate = avg_bitrate if avg_bitrate < 6 else 6
+        
+        if self.config.potato_PC:
+            avg_bitrate /= 2
+            
         max_bitrate = avg_bitrate * 1.5
         buffer_size = max_bitrate * 2
         
@@ -237,7 +244,11 @@ class ThreadClassRender(QThread):
         else:
             crf = 23
             cq = 23
-
+            
+        if self.config.potato_PC:
+            crf = 23
+            cq = 21
+            
         qmin = cq - 2
         qmax = cq + 4
         
@@ -249,7 +260,7 @@ class ThreadClassRender(QThread):
         output['qmin'] = output['qmin'].format(QMIN=qmin)
         output['qmax'] = output['qmax'].format(QMAX=qmax)
         
-        self.config.log('RenderThread', f"EncodingParams: {output}")
+        self.config.log('RenderThread', 'calculate_encoding_params', f"EncodingParams: {output}")
         return output
     
     def ffmpeg_analysis_decoding(self, proc):
@@ -261,14 +272,14 @@ class ThreadClassRender(QThread):
         }
         
         for line in proc.stdout:
-            self.config.log('RenderThread', line)
+            self.config.log('RenderThread', 'ffmpeg_analysis_decoding', line)
             duration_match = re.search(r'Duration:\s*(\d+):(\d+):([\d.]+)', line)
             codec_match = re.search(r'Stream.*Video:\s*(.*)', line)
             resolution_match = re.search(r'(\d{3,4})x(\d{3,4})', line)
             if resolution_match:
                 _, height = resolution_match.groups()
                 self.config.video_res = f"{height}p" if int(height) < 4096 else f"{int(height)/1024}K"
-                self.config.log('RenderThread', f"Video resolution: {self.config.video_res}")
+                self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Video resolution: {self.config.video_res}")
             
             if duration_match:
                 hrs, minutes, sec = map(float, duration_match.groups())
@@ -279,25 +290,31 @@ class ThreadClassRender(QThread):
             if codec_match:
                 for item in ['yuv420p,', 'yuv420p(', 'yuv420p ', 'yuv420p10le,', 'yuv420p10le(', 'yuv420p10le ', 'p010le,', 'p010le(', 'p010le ']:
                     if item in codec_match.group(0):
-                        self.config.log('RenderThread', f"found {item[:-1]}")
+                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"found {item[:-1]}")
                         if item[:-1] == 'yuv420p':
                             self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p'
                             self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p'
                         elif item[:-1] in ['yuv420p10le', 'p010le']:
                             self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p' #'yuv420p10le' if self.config.build_settings['softsub_settings']['nvenc'] == False else 'p010le'
-                            self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p10le' if self.config.build_settings['hardsub_settings']['nvenc'] == False else 'p010le'
+                            self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p10le' if self.config.build_settings['nvenc_state'] in [1, 3] else 'p010le'
                     
                 for item in profiles.keys():
                     if item in codec_match.group(0):
-                        self.config.log('RenderThread', f"found {item[1:-1]}")
-                        self.config.build_settings['softsub_settings']['video_profile'] = profiles[item][0 if not self.config.build_settings['softsub_settings']['nvenc'] else 1]
+                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"found {item[1:-1]}")
+                        self.config.build_settings['softsub_settings']['video_profile'] = profiles[item][0 if self.config.build_settings['nvenc_state'] in [2, 3] else 1]
                         self.config.build_settings['hardsub_settings']['video_profile'] = profiles[item][2]
-                        self.config.log('RenderThread', f"Settings set: {profiles[item]}")
+                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Settings set: {profiles[item]}")
+        
+        if self.config.potato_PC:
+            self.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p'
+            self.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p'
+            self.config.build_settings['softsub_settings']['video_profile'] = 'main'
+            self.config.build_settings['hardsub_settings']['video_profile'] = 'main'
 
     # Coding commands
     def run(self):
         try:
-            self.config.log('RenderThread', "Running ffmpeg thread...")
+            self.config.log('RenderThread', 'run', "Running ffmpeg thread...")
             self.ffmpeg_analysis()
             self.encoding_params = self.calculate_encoding_params(2, self.config.video_res)
             self.softsub()

@@ -20,4 +20,4 @@ class FAQWindow(QDialog):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
         error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-        self.config.log('FAQWindow', f"Handled exception: {error_message}")
+        self.config.log('FAQWindow', 'handle_exception', f"Handled exception: {error_message}")

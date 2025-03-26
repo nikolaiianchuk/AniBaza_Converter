@@ -42,9 +42,9 @@ class DownloadThread(QThread):
 
     def handle_exception(self, e):
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        self.config.log('DownloaderThread', f"DownloadThread Error: {error_message}")
+        self.config.log('DownloaderThread', 'handle_exception', f"DownloadThread Error: {error_message}")
         self.error_signal.emit(e)
 
     def cancel(self):
         self.cancel_download = True  # Устанавливаем флаг отмены
-        self.config.log('DownloaderThread', "DownloadThread: Download canceled.")
+        self.config.log('DownloaderThread', 'cancel', "DownloadThread: Download canceled.")

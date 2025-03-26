@@ -36,16 +36,16 @@ class LoggingModule:
             # Открываем файл для записи логов
             self.log_file = open(self.log_filename, 'a', encoding="utf-8")
             
-            self.write_to_log("LoggingModule", f"Logging started in {self.log_filename}")
+            self.write_to_log("LoggingModule", "start_logging", f"Logging started in {self.log_filename}")
         
-    def write_to_log(self, topic="", message=""):
+    def write_to_log(self, prog_file="", function="", message=""):
         if self.log_flag and self.log_file:
-            print(f"[{topic}]: {message}")
-            self.log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}][{topic}]: {message}\n".encode("utf-8", "replace").decode("utf-8"))
+            print(f"[{prog_file}][{function}]: {message}")
+            self.log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}][{prog_file}][{function}]: {message}\n".encode("utf-8", "replace").decode("utf-8"))
         
     def stop_logging(self):
         if self.log_flag and self.log_file:
-            self.write_to_log("LoggingModule", "Logging stopped.")
+            self.write_to_log("LoggingModule", "stop_logging", "Logging stopped.")
             self.log_file.close()
             self.remove_empty_lines_from_log(self.log_filename)
 

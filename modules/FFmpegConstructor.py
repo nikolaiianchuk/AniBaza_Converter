@@ -21,6 +21,7 @@ class FFmpegConstructor:
             'subtitle metadata'    : '-metadata:s:s:0 title="Caption" -metadata:s:s:0 language=rus',
             'logo burning'         : '-vf "subtitles=\'{ESCAPED_LOGO_PATH}\'"',
             'video codec'          : '-c:v {CODEC}',
+            'video bitrate'        : '-b:v {BITRATE}',
             'video CRF'            : '-crf {CRF_RATE}',
             'video CQ'             : '-cq {CQ} -qmin {QMIN} -qmax {QMAX}',
             'video max bitrate'    : '-maxrate {MAX}',
@@ -47,6 +48,7 @@ class FFmpegConstructor:
             '1burning'             : '-vf "subtitles=\'{LOGO_OR_SUB_PATH}\'"',
             '2burning'             : '-vf "subtitles=\'{ESCAPED_LOGO_PATH}\', subtitles=\'{ESCAPED_SUB_PATH}\'"',
             'video codec'          : '-c:v hevc{NVENC}',
+            'video bitrate'        : '-b:v {BITRATE}',
             'video CRF'            : '-crf {CRF_RATE}',
             'video CQ'             : '-cq {CQ} -qmin {QMIN} -qmax {QMAX}',
             'video max bitrate'    : '-maxrate {MAX}',
@@ -90,7 +92,7 @@ class FFmpegConstructor:
                             output_path='', nvenc=False, crf_rate='18', cqmin='17', 
                             cq='18', cqmax='25', max_bitrate='', max_buffer='', video_profile='main', 
                             profile_level='4.2', pixel_format='yuv420p', preset='faster', tune='animation',
-                            include_logo=True):
+                            include_logo=True, potato_mode=False):
         
         os.chdir(self.config.main_paths['CWD'])
         
@@ -98,6 +100,7 @@ class FFmpegConstructor:
             self.sub_escaper(sub_path)
         self.logo_escaper()
         command_parts = [self.softsub_ffmpeg_commands['init']]
+        
         cmds = ['override output', 
                 'video input',
                 'audio input',
@@ -111,13 +114,12 @@ class FFmpegConstructor:
                 'subtitle metadata' if self.sub['exists'] else '',
                 'logo burning' if include_logo else '',
                 'video codec',
-                'video CRF' if not nvenc else 'video CQ',
-                'video max bitrate',
-                'video max bufsize',
-                'render preset',
-                'video tune',
+                'video CQ' if nvenc else 'video CRF',
+                'video max bitrate' ,
+                'video max bufsize' ,
+                'render preset' ,
+                'video tune' if not potato_mode else '',   
                 'video profile',
-                
                 'video pixel format',
                 'audio codec',
                 'audio bitrate',
@@ -136,6 +138,7 @@ class FFmpegConstructor:
             SOUND_PATH_INPUT  = sound_path,
             ESCAPED_LOGO_PATH = self.escaped_logo_path,
             CODEC             = 'libx264' if not nvenc else 'h264_nvenc',
+            BITRATE           = '3500k',
             CRF_RATE          = crf_rate,
             QMIN              = cqmin,
             CQ                = cq,
@@ -150,14 +153,14 @@ class FFmpegConstructor:
             SUB_PATH_INPUT    = sub_path,
             OUTPUT_FILE_PATH  = output_path
         )
-        self.config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor softsub: {str_out}')
+        self.config.logging_module.write_to_log('FFmpegConstructor', 'build_soft_command', f'FFmpeg constructor softsub: {str_out}')
         return str_out
     
     def build_hard_command(self, raw_path='', sound_path='', sub_path=None, 
                             output_path='', nvenc=False, crf_rate='18', cqmin='17', 
                             cq='18', cqmax='25', max_bitrate='', max_buffer='', preset='faster', tune='animation', video_profile='main', 
                             profile_level='4.2', pixel_format='yuv420p', 
-                            include_logo=True):
+                            include_logo=True, potato_mode=False):
         
         os.chdir(self.config.main_paths['CWD'])
         
@@ -172,7 +175,6 @@ class FFmpegConstructor:
             burning = '1burning'
         else:
             burning = ''
-            
         cmds = ['override output', 
                 'video input',
                 'audio input' if sound_path else '',
@@ -181,13 +183,12 @@ class FFmpegConstructor:
                 'garbage deleter',
                 f"{burning}",
                 'video codec',
-                'video CRF' if not nvenc else 'video CQ',
+                'video CQ' if nvenc else 'video CRF',
                 'video max bitrate',
                 'video max bufsize',
                 'render preset',
-                'video tune',
+                'video tune' if not potato_mode else '',
                 'video profile',
-                
                 'video pixel format',
                 'audio codec' if sound_path else '',
                 'audio bitrate' if sound_path else '',
@@ -207,6 +208,7 @@ class FFmpegConstructor:
             ESCAPED_SUB_PATH  = self.sub['escaped_path'],
             LOGO_OR_SUB_PATH  = self.escaped_logo_path if include_logo else self.sub['escaped_path'],
             NVENC             = '_nvenc' if nvenc else '',
+            BITRATE           = '3500k',
             CRF_RATE          = crf_rate,
             QMIN              = cqmin,
             CQ                = cq,
@@ -220,7 +222,7 @@ class FFmpegConstructor:
             PIXEL_FORMAT      = pixel_format,
             OUTPUT_FILE_PATH  = output_path
         )
-        self.config.logging_module.write_to_log('FFmpegConstructor', f'FFmpeg constructor hardsub: {str_out}')
+        self.config.logging_module.write_to_log('FFmpegConstructor', 'build_hard_command', f'FFmpeg constructor hardsub: {str_out}')
         return str_out
     
     def remove_temp_sub(self):
