@@ -36,7 +36,7 @@ def get_PC_info(config):
         'RAM'        : f"{system_ram}",
         'GPU'        : f"{gpu_info.Name}"
     })
-    config.log('AppSystem', f"PC info: {config.PC_info}")
+    config.log('AppSystem', 'get_PC_info', f"PC info: {config.PC_info}")
     
 def restore_config(config, config_path):
     if not os.path.exists(config.main_paths['config']):
@@ -51,10 +51,10 @@ def restore_config(config, config_path):
                             max_logs = 10
 
                             [main settings]
-                            logo = True
-                            soft_nvenc = False
-                            hard_nvenc = False
+                            logo_state = 0
+                            nvenc_state = 0
                             build_state = 0
+                            potato_PC = False
                             update_search = True
                         """
         with open(config_path, 'w', encoding='utf-8') as config_file:
@@ -66,7 +66,7 @@ def main():
     try:
         config = Config()
         config.start_log()
-        config.log('App System', 'Starting application')
+        config.log('App System', 'main', 'Starting application')
         get_PC_info(config)
         restore_config(config, config.main_paths['config'])
         ConfigModule.load_configs(config)
@@ -79,14 +79,14 @@ def main():
     except Exception as e:
         # Обработка стандартных ошибок
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        config.log('App System', f"Handled exception: {error_message}")
+        config.log('App System', 'main', f"Handled exception: {error_message}")
     except BaseException as e:
         # Обработка критических ошибок (например, Ctrl+C)
         error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
         if type(e) != SystemExit:
-            config.log('App System', f"Critical exception: {error_message}")
+            config.log('App System', 'main', f"Critical exception: {error_message}")
     finally:
-        config.log('App System', "Closing application.")
+        config.log('App System', 'main', "Closing application.")
         config.stop_log()
 
 # Standard code
