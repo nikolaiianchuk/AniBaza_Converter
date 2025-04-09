@@ -1,13 +1,16 @@
+
 import os
 import pathlib
-import wmi
+import sys
+import platform
 
+from dataclasses import dataclass
 from pathlib import Path
 from modules.LoggingModule import LoggingModule
 
 class Config:
     def __init__(self):
-        # Main paths 
+        # Main paths
         self.main_paths = {
             'AppData' : os.getenv('APPDATA'),
             'CWD'     : Path(pathlib.Path.cwd()),
@@ -26,16 +29,6 @@ class Config:
         self.updater_thread = None
         self.download_thread = None
         self.ffmpeg_thread = None
-
-        # PC info
-        self.computer = wmi.WMI()
-        self.PC_info = {
-            'OS Name'    : "",
-            'OS Version' : "",
-            'CPU'        : "",
-            'RAM'        : "",
-            'GPU'        : ""
-        }
 
         # Application info
         self.app_info = {
@@ -66,13 +59,13 @@ class Config:
 
         # Working variables
         self.build_states = {
-            'Софт и хард'      : 0, 
-            'Только софт'      : 1, 
-            'Только хард'      : 2, 
+            'Софт и хард'      : 0,
+            'Только софт'      : 1,
+            'Только хард'      : 2,
             'Для хардсабберов' : 3,
             'Починить равку'   : 4
         }
-        
+
         self.render_speed = {
             -1 : ('ultrafast', 'p1'),
             0  : ('superfast', 'p2'),
@@ -80,7 +73,6 @@ class Config:
             2  : ('faster', 'p4'),
             3  : ('fast', 'p5')
         }
-        
 
         self.update_search = True
         self.total_duration_sec = 0
@@ -109,18 +101,57 @@ class Config:
                 'pixel_format'  : 'yuv420p10le'
             }
         }
-    
+
     def start_log(self):
         self.logging_module.start_logging(
-            self.dev_settings['logging']['state'], 
-            self.main_paths['logs'], 
+            self.dev_settings['logging']['state'],
+            self.main_paths['logs'],
             self.dev_settings['logging']['max_logs']
         )
-    
+
     def log(self, module, function, message):
         # Упрощённый метод для логирования.
         self.logging_module.write_to_log(module, function, message)
-    
+
     def stop_log(self):
         self.logging_module.stop_logging()
 
+@dataclass()
+class PCInfo:
+    Platform: str = sys.platform
+    OSName: str = ''
+    OSVersion: str = ''
+    CPU: str = ''
+    RAM: str = ''
+    GPU: str = ''
+
+    def __post_init__(self):
+        if self.is_windows():
+            self._init_win32()
+        else:
+            self._init_default()
+
+    def _init_win32(self):
+        import wmi
+        hardware = wmi.WMI()
+        os_info = hardware.Win32_OperatingSystem()[0]
+        proc_info = hardware.Win32_Processor()[0]
+        gpu_info = hardware.Win32_VideoController()[0]
+
+        os_name = os_info.Name.encode('utf-8').split(b'|')[0].decode('utf-8')
+        os_version = ' '.join([os_info.Version, os_info.BuildNumber])
+        system_ram = int(float(os_info.TotalVisibleMemorySize) // (1024 * 1024)) + 1  # KB to GB
+
+        self.OSName = os_name
+        self.OSVersion = os_version
+        self.CPU = proc_info.Name
+        self.RAM = str(system_ram)
+        self.GPU = gpu_info.Name
+
+    def _init_default(self):
+        self.OSName = platform.system()
+        self.OSVersion = platform.platform()
+        self.CPU = platform.processor()
+
+    def is_windows(self) -> bool:
+        return self.Platform == 'win32'

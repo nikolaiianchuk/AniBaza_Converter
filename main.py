@@ -5,11 +5,11 @@ import ctypes
 import modules.ConfigModule as ConfigModule
 import traceback
 
-from configs.config import Config
+from configs.config import Config, PCInfo
 from PyQt5 import QtWidgets
 from windows.mainWindow import MainWindow
 
-# Admin check
+# Admin check (Windows-only)
 def is_admin():
     # Проверяет, запущен ли скрипт с правами администратора
     try:
@@ -17,27 +17,7 @@ def is_admin():
     except Exception as e:
         print(f"Ошибка проверки прав администратора: {e}")
         return False
-    
-def get_PC_info(config):
-    hardware = config.computer
-    #computer_info = hardware.Win32_ComputerSystem()[0]
-    os_info = hardware.Win32_OperatingSystem()[0]
-    proc_info = hardware.Win32_Processor()[0]
-    gpu_info = hardware.Win32_VideoController()[0]
 
-    os_name = os_info.Name.encode('utf-8').split(b'|')[0].decode('utf-8')
-    os_version = ' '.join([os_info.Version, os_info.BuildNumber])
-    system_ram = int(float(os_info.TotalVisibleMemorySize) // (1024 * 1024)) + 1  # KB to GB
-    
-    config.PC_info.update({
-        'OS Name'    : f"{os_name}",
-        'OS Version' : f"{os_version}",
-        'CPU'        : f"{proc_info.Name}",
-        'RAM'        : f"{system_ram}",
-        'GPU'        : f"{gpu_info.Name}"
-    })
-    config.log('AppSystem', 'get_PC_info', f"PC info: {config.PC_info}")
-    
 def restore_config(config, config_path):
     if not os.path.exists(config.main_paths['config']):
         config.log('App System', "Config file not found.")
@@ -63,18 +43,26 @@ def restore_config(config, config_path):
 
 # Main function
 def main():
+    pc_info = PCInfo()
+
+    if pc_info.is_windows() and not is_admin():
+        # Перезапускаем скрипт с правами администратора
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+        return
+
+    config = Config()
+
     try:
-        config = Config()
         config.start_log()
         config.log('App System', 'main', 'Starting application')
-        get_PC_info(config)
+        config.log('AppSystem', 'get_PC_info', f"PC info: {pc_info}")
         restore_config(config, config.main_paths['config'])
         ConfigModule.load_configs(config)
         app = QtWidgets.QApplication(sys.argv)
         app.setQuitOnLastWindowClosed(True)
         mainWindow = MainWindow(config)
         mainWindow.show()
-        
+
         sys.exit(app.exec_())
     except Exception as e:
         # Обработка стандартных ошибок
@@ -91,8 +79,4 @@ def main():
 
 # Standard code
 if __name__ == "__main__":
-    if not is_admin():
-        # Перезапускаем скрипт с правами администратора
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-    else:
-        main()
+    main()
