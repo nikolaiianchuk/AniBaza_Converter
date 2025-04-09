@@ -20,8 +20,8 @@ def is_admin():
 
 def restore_config(config, config_path):
     if not os.path.exists(config.main_paths['config']):
-        config.log('App System', "Config file not found.")
-        config.log('App System', "Creating new config file.")
+        config.log('App System', 'restore_config', "Config file not found.")
+        config.log('App System', 'restore_config', "Creating new config file.")
         default_config = """
                             [dev settings]
                             enabledevmode = True
@@ -39,7 +39,7 @@ def restore_config(config, config_path):
                         """
         with open(config_path, 'w', encoding='utf-8') as config_file:
             config_file.write(default_config)
-        config.log('App System', "Config file restored.")
+        config.log('App System', 'restore_config', "Config file restored.")
 
 # Main function
 def main():
@@ -55,7 +55,7 @@ def main():
     try:
         config.start_log()
         config.log('App System', 'main', 'Starting application')
-        config.log('AppSystem', 'get_PC_info', f"PC info: {pc_info}")
+        config.log('App System', 'get_PC_info', f"PC info: {pc_info}")
         restore_config(config, config.main_paths['config'])
         ConfigModule.load_configs(config)
         app = QtWidgets.QApplication(sys.argv)
