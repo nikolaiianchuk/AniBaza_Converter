@@ -5,7 +5,7 @@ import ctypes
 import modules.ConfigModule as ConfigModule
 import traceback
 
-from configs.config import Config, PCInfo
+from configs.config import Config, PCInfo, Paths
 from PyQt5 import QtWidgets
 from windows.mainWindow import MainWindow
 
@@ -18,28 +18,30 @@ def is_admin():
         print(f"Ошибка проверки прав администратора: {e}")
         return False
 
-def restore_config(config, config_path):
-    if not os.path.exists(config.main_paths['config']):
-        config.log('App System', 'restore_config', "Config file not found.")
-        config.log('App System', 'restore_config', "Creating new config file.")
-        default_config = """
-                            [dev settings]
-                            enabledevmode = True
-                            enablelogging = True
+def restore_config(config: Config):
+    if os.path.exists(config.main_paths.config):
+        return
 
-                            [log settings]
-                            max_logs = 10
+    config.log('App System', 'restore_config', "Config file not found.")
+    config.log('App System', 'restore_config', "Creating new config file.")
+    default_config = """
+                        [dev settings]
+                        enabledevmode = True
+                        enablelogging = True
 
-                            [main settings]
-                            logo_state = 0
-                            nvenc_state = 0
-                            build_state = 0
-                            potato_PC = False
-                            update_search = True
-                        """
-        with open(config_path, 'w', encoding='utf-8') as config_file:
-            config_file.write(default_config)
-        config.log('App System', 'restore_config', "Config file restored.")
+                        [log settings]
+                        max_logs = 10
+
+                        [main settings]
+                        logo_state = 0
+                        nvenc_state = 0
+                        build_state = 0
+                        potato_PC = False
+                        update_search = True
+                    """
+    with open(config.main_paths.config, 'w', encoding='utf-8') as config_file:
+        config_file.write(default_config)
+    config.log('App System', 'restore_config', "Config file restored.")
 
 # Main function
 def main():
@@ -50,13 +52,21 @@ def main():
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         return
 
-    config = Config()
+    cwd = ''
+    # determine if application is a script file or frozen exe, from the PyInstaller doc
+    if getattr(sys, 'frozen', False):
+        cwd = os.path.dirname(sys.executable)
+    elif __file__:
+        cwd = os.path.dirname(__file__)
+
+    config = Config(Paths(cwd))
 
     try:
         config.start_log()
+        config.log('App System', 'main', f"CWD: {cwd}")
         config.log('App System', 'main', 'Starting application')
         config.log('App System', 'get_PC_info', f"PC info: {pc_info}")
-        restore_config(config, config.main_paths['config'])
+        restore_config(config)
         ConfigModule.load_configs(config)
         app = QtWidgets.QApplication(sys.argv)
         app.setQuitOnLastWindowClosed(True)

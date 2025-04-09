@@ -1,6 +1,4 @@
-
 import os
-import pathlib
 import sys
 import platform
 
@@ -8,20 +6,41 @@ from dataclasses import dataclass
 from pathlib import Path
 from modules.LoggingModule import LoggingModule
 
+@dataclass
+class Paths:
+    appdata: Path
+    cwd: Path
+    config_dir: Path
+    config: Path
+    version: Path
+    logs: Path
+    temp: Path
+    softsub: Path
+    hardsub: Path
+    logo: Path
+
+    def __init__(self, cwd: str):
+        self.appdata = Path(os.getenv('APPDATA') or '')
+        self.cwd = Path(cwd)
+        self.config_dir = Path(cwd, 'configs')
+        self.config = Path(self.config_dir, 'config.ini')
+        self.version = Path(self.config_dir, 'current_version.ini')
+        self.logs = Path(cwd, 'logs')
+        self.temp = Path(cwd, 'tmp')
+        self.softsub = Path('')
+        self.hardsub = Path(cwd, 'HARDSUB')
+        self.logo = Path(cwd, 'logo/AniBaza_Logo16x9.ass')
+        self.create_missing_folders()
+
+    def create_missing_folders(self):
+        for dir in [self.config_dir, self.logs, self.temp, self.hardsub]:
+            if not os.path.exists(dir):
+                os.mkdir(dir)
+
 class Config:
-    def __init__(self):
+    def __init__(self, paths: Paths):
         # Main paths
-        self.main_paths = {
-            'AppData' : os.getenv('APPDATA'),
-            'CWD'     : Path(pathlib.Path.cwd()),
-            'config'  : Path(pathlib.Path.cwd(), 'configs/config.ini'),
-            'version' : Path(pathlib.Path.cwd(), 'configs/current_version.ini'),
-            'logs'    : Path(pathlib.Path.cwd(), 'logs'),
-            'temp'    : Path(pathlib.Path.cwd(), 'tmp'),
-            'softsub' : '',
-            'hardsub' : Path(pathlib.Path.cwd(), 'HARDSUB'),
-            'logo'    : Path(pathlib.Path.cwd(), 'logo/AniBaza_Logo16x9.ass')
-        }
+        self.main_paths: Paths = paths
 
         # Main objects
         self.logging_module = LoggingModule()
@@ -105,7 +124,7 @@ class Config:
     def start_log(self):
         self.logging_module.start_logging(
             self.dev_settings['logging']['state'],
-            self.main_paths['logs'],
+            self.main_paths.logs,
             self.dev_settings['logging']['max_logs']
         )
 
