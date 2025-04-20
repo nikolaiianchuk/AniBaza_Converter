@@ -465,7 +465,10 @@ class MainWindow(QMainWindow):
     def proc_kill(self):
         os.chdir(self.config.main_paths.cwd)
         self.finish_message = True
-        subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
+        if self.config.pc_info.is_windows():
+            subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
+        else:
+            subprocess.run('kill $(pgrep ffmpeg)', shell=True)
         self.config.log('mainWindow', 'proc_kill', "Killed ffmpeg process")
 
     # After coding
