@@ -45,13 +45,13 @@ jobs:
         run: |
           mkdir -p release
           cp dist/* release/
-          mkdir -p release/config
-          cp config/config.ini release/config/config.ini
-          cp config/current_version.ini release/config/current_version.ini
+          mkdir -p release/configs
+          cp configs/config.ini release/configs/config.ini
+          cp configs/current_version.ini release/configs/current_version.ini
           mkdir -p release/logo
-          cp config/logo/AniBaza_Logo16x9.ass release/logo/AniBaza_Logo16x9.ass
+          cp logo/AniBaza_Logo16x9.ass release/logo/AniBaza_Logo16x9.ass
           mkdir -p release/fonts
-          cp config/fonts/AniBaza-Regular.otf release/fonts/AniBaza-Regular.otf
+          cp fonts/AniBaza-Regular.otf release/fonts/AniBaza-Regular.otf
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             cp ffmpeginstall.bat release/ffmpeginstall.bat
