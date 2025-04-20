@@ -47,7 +47,7 @@ jobs:
           cp dist/* release/
           mkdir -p release/configs
           cp configs/config.ini release/configs/config.ini
-          echo "\nversion = ${{ github.ref_name }}" >> configs/current_version.ini
+          echo "version = ${{ github.ref_name }}" >> configs/current_version.ini
           cp configs/current_version.ini release/configs/current_version.ini
           mkdir -p release/logo
           cp logo/AniBaza_Logo16x9.ass release/logo/AniBaza_Logo16x9.ass
