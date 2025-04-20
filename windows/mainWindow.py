@@ -319,17 +319,25 @@ class MainWindow(QMainWindow):
 
         self.config.log('mainWindow', 'set_comboboxes', "Comboboxes set.")
 
+    def open_file(self, filename):
+        if self.config.pc_info.is_windows():
+            os.startfile(filename)
+            return
+
+        opener = "open" if self.config.pc_info.Platform == "darwin" else "xdg-open"
+        subprocess.call([opener, filename])
+
     # Open hardsub directory
     def open_hardsub(self):
         if os.path.exists(self.config.main_paths.hardsub):
-            os.startfile(self.config.main_paths.hardsub)
+            self.open_file(self.config.main_paths.hardsub)
         else:
             self.coding_error('hardsub_folder')
         self.config.log('mainWindow', 'open_hardsub', "Hardsub folder opened.")
 
     def open_logsdir(self):
         if os.path.exists(self.config.main_paths.logs):
-            os.startfile(self.config.main_paths.logs)
+            self.open_file(self.config.main_paths.logs)
         else:
             self.coding_error('logs_folder')
         self.config.log('mainWindow', 'open_logsdir', "Logs folder opened.")
