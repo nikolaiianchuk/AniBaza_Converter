@@ -92,12 +92,19 @@ jobs:
         with:
           path: artifacts/
 
+      - name: Changelog
+        uses: Bullrich/generate-release-changelog@2.0.2
+        id: Changelog
+        env:
+          REPO: ${{ github.repository }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
           files: artifacts/**/*.*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
