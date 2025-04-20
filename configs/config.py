@@ -109,24 +109,29 @@ class FFMpegConfig:
 
     def __parse_ffmpeg_output(self):
         process = subprocess.Popen(
-            f"{self.path} -codecs",
+            f"{self.path} -version",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
             encoding='utf-8',
             errors='replace'
         )
-        stdout, stderr = process.communicate()
-        match = re.search(r'ffmpeg\s+version\s+([0-9]+\.[0-9]+(?:\.[0-9]+)?)', stderr)
+        stdout, _ = process.communicate()
+        match = re.search(r'ffmpeg\s+version\s+([a-zA-Z0-9]+\.[0-9]+(?:\.[0-9]+)?)', stdout)
         if match:
             self.version = match.group(1)
 
         # validate nvenc availability
-        #                                 v--- we check for E, to be sure that we have an encoder for this codec
-        nvenc_match_x264 = re.search(r'^.*E.* h264.* (h264_nvenc)[ \)].*$', stdout, re.M)
-        nvenc_match_hevc = re.search(r'^.*E.* hevc *H.265 \/ HEVC \(High Efficiency Video Coding\).* (hevc_nvenc)[ \)].*$', stdout, re.M)
-        if nvenc_match_x264 and nvenc_match_hevc:
-            self.nvenc = True
+        process = subprocess.Popen(
+            f"{self.path} -loglevel error -f lavfi -i color=black:s=1080x1080 -vframes 1 -an -c:v hevc_nvenc -f null -",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            encoding='utf-8',
+            errors='replace'
+        )
+        _, stderr = process.communicate()
+        self.nvenc = not stderr
 
 
 class Config:
