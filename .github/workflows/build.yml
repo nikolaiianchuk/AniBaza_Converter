@@ -109,7 +109,8 @@ jobs:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
-          append_body: |
+          append_body: true
+          body: |
             ${{ steps.Changelog.outputs.changelog }}
           files: artifacts/**/*.*
         env:
