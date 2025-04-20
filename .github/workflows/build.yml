@@ -53,14 +53,22 @@ jobs:
           mkdir -p release/fonts
           cp fonts/AniBaza-Regular.otf release/fonts/AniBaza-Regular.otf
 
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cp ffmpeginstall.bat release/ffmpeginstall.bat
-            powershell Compress-Archive -Path release\* -DestinationPath ${{ runner.os }}.zip
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            zip -r ${{ runner.os }}.zip release
-          else
-            tar -czf ${{ runner.os }}.tar.gz -C release .
-          fi
+      - name: Archive for Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cp ffmpeginstall.bat release/ffmpeginstall.bat
+          Compress-Archive -Path release\* -DestinationPath windows.zip
+
+      - name: Archive for macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          zip -r macos.zip release
+
+      - name: Archive for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czf linux.tar.gz -C release .
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
