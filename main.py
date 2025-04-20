@@ -59,13 +59,14 @@ def main():
     elif __file__:
         cwd = os.path.dirname(__file__)
 
-    config = Config(Paths(cwd))
+    config = Config(Paths(cwd), pc_info)
 
     try:
         config.start_log()
         config.log('App System', 'main', f"CWD: {cwd}")
         config.log('App System', 'main', 'Starting application')
         config.log('App System', 'get_PC_info', f"PC info: {pc_info}")
+        config.log('App System', 'ffmpeg', f"Version: {config.ffmpeg.version}, Supports NVENC: {config.ffmpeg.nvenc}")
         restore_config(config)
         ConfigModule.load_configs(config)
         app = QtWidgets.QApplication(sys.argv)

@@ -1,10 +1,14 @@
 import os
-import sys
 import platform
+import re
+import subprocess
+import sys
 
 from dataclasses import dataclass
 from pathlib import Path
 from modules.LoggingModule import LoggingModule
+from shutil import which
+from typing import Optional
 
 @dataclass
 class Paths:
@@ -37,10 +41,100 @@ class Paths:
             if not os.path.exists(dir):
                 os.mkdir(dir)
 
+
+@dataclass()
+class PCInfo:
+    Platform: str = sys.platform
+    OSName: str = ''
+    OSVersion: str = ''
+    CPU: str = ''
+    RAM: str = ''
+    GPU: str = ''
+
+    def __post_init__(self):
+        if self.is_windows():
+            self._init_win32()
+        else:
+            self._init_default()
+
+    def _init_win32(self):
+        import wmi
+        hardware = wmi.WMI()
+        os_info = hardware.Win32_OperatingSystem()[0]
+        proc_info = hardware.Win32_Processor()[0]
+        gpu_info = hardware.Win32_VideoController()[0]
+
+        os_name = os_info.Name.encode('utf-8').split(b'|')[0].decode('utf-8')
+        os_version = ' '.join([os_info.Version, os_info.BuildNumber])
+        system_ram = int(float(os_info.TotalVisibleMemorySize) // (1024 * 1024)) + 1  # KB to GB
+
+        self.OSName = os_name
+        self.OSVersion = os_version
+        self.CPU = proc_info.Name
+        self.RAM = str(system_ram)
+        self.GPU = gpu_info.Name
+
+    def _init_default(self):
+        self.OSName = platform.system()
+        self.OSVersion = platform.platform()
+        self.CPU = platform.processor()
+
+    def is_windows(self) -> bool:
+        return self.Platform == 'win32'
+
+
+@dataclass
+class FFMpegConfig:
+    installed: bool
+    path: Optional[Path]
+    version: Optional[str]
+    nvenc: bool
+
+    def __init__(self):
+        self.installed = False
+        self.path = None
+        self.version = None
+        self.nvenc = False
+
+        path = which('ffmpeg')
+        if not path:
+            path = "C:\\ffmpeg\\bin\\ffmpeg.exe"
+        self.installed = os.path.exists(path)
+
+        if not self.installed:
+            return
+
+        self.path = Path(path)
+        self.__parse_ffmpeg_output()
+
+    def __parse_ffmpeg_output(self):
+        process = subprocess.Popen(
+            f"{self.path} -codecs",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            encoding='utf-8',
+            errors='replace'
+        )
+        stdout, stderr = process.communicate()
+        match = re.search(r'ffmpeg\s+version\s+([0-9]+\.[0-9]+(?:\.[0-9]+)?)', stderr)
+        if match:
+            self.version = match.group(1)
+
+        # validate nvenc availability
+        #                                 v--- we check for E, to be sure that we have an encoder for this codec
+        nvenc_match_x264 = re.search(r'^.*E.* h264.* (h264_nvenc)[ \)].*$', stdout, re.M)
+        nvenc_match_hevc = re.search(r'^.*E.* hevc *H.265 \/ HEVC \(High Efficiency Video Coding\).* (hevc_nvenc)[ \)].*$', stdout, re.M)
+        if nvenc_match_x264 and nvenc_match_hevc:
+            self.nvenc = True
+
+
 class Config:
-    def __init__(self, paths: Paths):
+    def __init__(self, paths: Paths, pc_info: PCInfo):
         # Main paths
         self.main_paths: Paths = paths
+        self.pc_info: PCInfo = pc_info
+        self.ffmpeg: FFMpegConfig = FFMpegConfig()
 
         # Main objects
         self.logging_module = LoggingModule()
@@ -134,43 +228,3 @@ class Config:
 
     def stop_log(self):
         self.logging_module.stop_logging()
-
-@dataclass()
-class PCInfo:
-    Platform: str = sys.platform
-    OSName: str = ''
-    OSVersion: str = ''
-    CPU: str = ''
-    RAM: str = ''
-    GPU: str = ''
-
-    def __post_init__(self):
-        if self.is_windows():
-            self._init_win32()
-        else:
-            self._init_default()
-
-    def _init_win32(self):
-        import wmi
-        hardware = wmi.WMI()
-        os_info = hardware.Win32_OperatingSystem()[0]
-        proc_info = hardware.Win32_Processor()[0]
-        gpu_info = hardware.Win32_VideoController()[0]
-
-        os_name = os_info.Name.encode('utf-8').split(b'|')[0].decode('utf-8')
-        os_version = ' '.join([os_info.Version, os_info.BuildNumber])
-        system_ram = int(float(os_info.TotalVisibleMemorySize) // (1024 * 1024)) + 1  # KB to GB
-
-        self.OSName = os_name
-        self.OSVersion = os_version
-        self.CPU = proc_info.Name
-        self.RAM = str(system_ram)
-        self.GPU = gpu_info.Name
-
-    def _init_default(self):
-        self.OSName = platform.system()
-        self.OSVersion = platform.platform()
-        self.CPU = platform.processor()
-
-    def is_windows(self) -> bool:
-        return self.Platform == 'win32'

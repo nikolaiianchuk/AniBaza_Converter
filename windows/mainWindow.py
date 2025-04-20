@@ -312,6 +312,11 @@ class MainWindow(QMainWindow):
         self.ui.render_mode_box.setCurrentIndex(self.config.build_settings['build_state'])
         self.ui.logo_box.setCurrentIndex(self.config.build_settings['logo_state'])
         self.ui.nvenc_box.setCurrentIndex(self.config.build_settings['nvenc_state'])
+        if not self.config.ffmpeg.nvenc:
+            self.ui.nvenc_box.setCurrentIndex(3)
+            self.ui.nvenc_box.hide()
+            self.ui.nvenc_label.setText('NVENC: Не доступен')
+
         self.config.log('mainWindow', 'set_comboboxes', "Comboboxes set.")
 
     # Open hardsub directory
