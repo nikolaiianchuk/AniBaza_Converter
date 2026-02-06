@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
             self.ui.hardsub_folder_open_button: self.open_hardsub,
             self.ui.logs_folder_open_button: self.open_logsdir,
             self.ui.render_stop_button: self.proc_kill,
-            self.ui.render_start_button: self.ffmpeg_thread,
+            self.ui.render_start_button: self.on_start_button_clicked,
             self.ui.softsub_path_open_button: self.soft_folder_path,
             self.ui.audio_path_open_button: self.sound_folder_path,
             self.ui.raw_path_open_button: self.raw_folder_path,
@@ -493,44 +493,6 @@ class MainWindow(QMainWindow):
             self.config.log('mainWindow', '_validate_before_render', error_msg)
             return False
 
-    # Thread start with ffmpeg
-    def ffmpeg_thread(self):
-        # Directory checks
-        if not os.path.exists(self.config.main_paths.hardsub):
-            self.coding_error('hardsub_folder')
-            return
-
-        if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
-            self.coding_error('softsub')
-            return
-
-        # Episode name validation
-        if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
-            self.coding_error('name')
-            return
-
-        self.ui.app_state_label.setText("Работаю....(наверное)")
-        self.ui.render_progress_bar.setValue(0)
-
-        # Validate input paths using new centralized validation
-        if not self._validate_before_render():
-            return
-
-        # Create validated, immutable paths
-        paths = self._create_render_paths()
-
-        self.config.log('mainWindow', 'ffmpeg_thread', "Starting ffmpeg with validated paths...")
-        self.threadMain = ThreadClassRender(self.config, runner=self.runner, paths=paths)
-        self.threadMain.finished.connect(self.finished)
-        self.threadMain.frame_upd.connect(self.frame_update)
-        self.threadMain.time_upd.connect(self.time_update)
-        self.threadMain.state_upd.connect(self.state_update)
-        self.threadMain.elapsed_time_upd.connect(self.elapsed_time_update)
-        self.locker(True)
-        self.ui.render_start_button.hide()
-        self.ui.render_stop_button.show()
-        self.threadMain.start()
-
     # Kill ffmpeg process
     def proc_kill(self):
         self.finish_message = True
@@ -687,6 +649,60 @@ class MainWindow(QMainWindow):
         """Refresh the queue widget to show current queue state."""
         jobs = self.job_queue.get_all_jobs()
         self.queue_widget.update_jobs(jobs)
+
+    def on_start_button_clicked(self):
+        """Handle Start button click with smart behavior.
+
+        If queue has waiting jobs, start queue processor.
+        Otherwise, start immediate render.
+        """
+        if self.job_queue.has_waiting_jobs():
+            # Start queue processor
+            self.config.log('mainWindow', 'on_start_button_clicked', "Starting queue processor")
+            self.queue_processor.start()
+        else:
+            # No jobs in queue, start immediate render
+            self.config.log('mainWindow', 'on_start_button_clicked', "No queue jobs, starting immediate render")
+            self.start_immediate_render()
+
+    def start_immediate_render(self):
+        """Start immediate render with current UI state (legacy ffmpeg_thread behavior)."""
+        # This is the existing ffmpeg_thread logic
+        # Directory checks
+        if not os.path.exists(self.config.main_paths.hardsub):
+            self.coding_error('hardsub_folder')
+            return
+
+        if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
+            self.coding_error('softsub')
+            return
+
+        # Episode name validation
+        if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
+            self.coding_error('name')
+            return
+
+        self.ui.app_state_label.setText("Работаю....(наверное)")
+        self.ui.render_progress_bar.setValue(0)
+
+        # Validate input paths using new centralized validation
+        if not self._validate_before_render():
+            return
+
+        # Create validated, immutable paths
+        paths = self._create_render_paths()
+
+        self.config.log('mainWindow', 'start_immediate_render', "Starting ffmpeg with validated paths...")
+        self.threadMain = ThreadClassRender(self.config, runner=self.runner, paths=paths)
+        self.threadMain.finished.connect(self.finished)
+        self.threadMain.frame_upd.connect(self.frame_update)
+        self.threadMain.time_upd.connect(self.time_update)
+        self.threadMain.state_upd.connect(self.state_update)
+        self.threadMain.elapsed_time_upd.connect(self.elapsed_time_update)
+        self.locker(True)
+        self.ui.render_start_button.hide()
+        self.ui.render_stop_button.show()
+        self.threadMain.start()
 
     def on_add_to_queue_clicked(self):
         """Handle Add to Queue button click.

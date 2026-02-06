@@ -227,3 +227,87 @@ class TestAddToQueueValidation:
 
         # Should refresh display
         window.refresh_queue_display.assert_called_once()
+
+
+class TestStartButtonSmartBehavior:
+    """Test start button smart behavior - queue processing vs immediate render."""
+
+    def test_start_button_starts_queue_when_jobs_exist(self, qapp, mock_config, tmp_path):
+        """on_start_button_clicked starts queue processor when jobs are waiting."""
+        from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
+
+        window = MainWindow(mock_config)
+
+        # Add jobs to queue
+        from models.job import RenderJob
+        from models.render_paths import RenderPaths
+        from models.enums import BuildState, NvencState, LogoState
+        from models.encoding import EncodingParams
+
+        raw_path = tmp_path / "raw.mkv"
+        softsub_dir = tmp_path / 'softsub'
+        hardsub_dir = tmp_path / 'hardsub'
+        raw_path.touch()
+        softsub_dir.mkdir(exist_ok=True)
+        hardsub_dir.mkdir(exist_ok=True)
+
+        paths = RenderPaths.from_ui_state(
+            raw_path=str(raw_path),
+            audio_path='',
+            sub_path='',
+            episode_name='Episode_01',
+            softsub_dir=softsub_dir,
+            hardsub_dir=hardsub_dir,
+        )
+
+        encoding_params = EncodingParams(
+            avg_bitrate="6M",
+            max_bitrate="9M",
+            buffer_size="18M",
+            crf=18,
+            cq=19,
+            qmin=17,
+            qmax=23
+        )
+
+        job = RenderJob(
+            paths=paths,
+            episode_name='Episode_01',
+            build_state=BuildState.HARD_ONLY,
+            nvenc_state=NvencState.NVENC_BOTH,
+            logo_state=LogoState.LOGO_BOTH,
+            encoding_params=encoding_params,
+            video_settings=mock_config.build_settings.softsub_settings,
+            potato_mode=False
+        )
+
+        window.job_queue.add(job)
+
+        # Mock queue processor start
+        window.queue_processor.start = Mock()
+
+        # Call on_start_button_clicked
+        window.on_start_button_clicked()
+
+        # Queue processor should be started
+        window.queue_processor.start.assert_called_once()
+
+    def test_start_button_immediate_render_when_no_jobs(self, qapp, mock_config, tmp_path):
+        """on_start_button_clicked starts immediate render when queue is empty."""
+        from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
+
+        window = MainWindow(mock_config)
+
+        # Ensure queue is empty
+        assert len(window.job_queue.get_all_jobs()) == 0
+
+        # Mock start_immediate_render
+        window.start_immediate_render = Mock()
+
+        # Call on_start_button_clicked
+        window.on_start_button_clicked()
+
+        # Immediate render should be called
+        window.start_immediate_render.assert_called_once()
