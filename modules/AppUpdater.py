@@ -5,6 +5,8 @@ import sys
 import traceback
 import requests
 
+from modules.GlobalExceptionHandler import get_global_handler
+from packaging.version import Version, InvalidVersion
 from PyQt5.QtWidgets import QMessageBox,QProgressDialog, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 
@@ -19,7 +21,7 @@ class UpdaterThread(QThread):
 
     def __init__(self, config):
         super().__init__()
-        sys.excepthook = self.handle_exception
+        get_global_handler().register_callback(self.handle_exception)
         self.config = config
 
     def handle_exception(self, e):
@@ -64,22 +66,30 @@ class UpdaterThread(QThread):
         installed_version = self.config.ffmpeg.version or '0.0'
         self.config.log('AppUpdater', 'get_installed_ffmpeg_version', f"Installed FFmpeg version: {installed_version}")
         latest_version = self.get_latest_ffmpeg_version()
-        if latest_version and installed_version and latest_version > installed_version:
-            return True, latest_version, installed_version
+        if latest_version and installed_version:
+            try:
+                if Version(latest_version) > Version(installed_version):
+                    return True, latest_version, installed_version
+            except InvalidVersion as e:
+                self.config.log('AppUpdater', 'should_update_ffmpeg', f"Invalid version format: {e}")
         return False, None, None
 
     def check_for_app_update(self):
         try:
             self.config.log('AppUpdater', 'check_for_app_update', "Checking for updates...")
-            response = requests.get(self.config.app_info['update_link'], timeout=5)
+            response = requests.get(self.config.app_info.update_link, timeout=5)
             response.raise_for_status()
             data = response.json()
             self.config.log('AppUpdater', 'check_for_app_update', f"Data found: {data}")
             latest_version = data.get("version")
             download_url = data.get("url")
             name = data.get("name")
-            if latest_version and download_url and name and latest_version > self.config.app_info['version_number']:
-                return latest_version, download_url, name
+            if latest_version and download_url and name:
+                try:
+                    if Version(latest_version) > Version(self.config.app_info.version_number):
+                        return latest_version, download_url, name
+                except InvalidVersion as e:
+                    self.config.log('AppUpdater', 'check_for_app_update', f"Invalid version format: {e}")
         except Exception as e:
             self.handle_exception(e)
         return None, None, None
@@ -88,14 +98,17 @@ class UpdaterUI:
     def __init__(self, main_window, config):
         self.main_window = main_window
         self.config = config
+        self.updater_thread = None
+        self.download_thread = None
+        self.ffmpeg_thread = None
 
     def start_updater(self):
         self.config.log('AppUpdater', 'start_updater', "Starting updater...")
-        self.config.updater_thread = UpdaterThread(self.config)
-        self.config.updater_thread.app_update_signal.connect(self.show_app_update_dialog)
-        self.config.updater_thread.ffmpeg_update_signal.connect(self.show_ffmpeg_update_dialog)
-        self.config.updater_thread.error_signal.connect(self.show_error_dialog)
-        self.config.updater_thread.start()
+        self.updater_thread = UpdaterThread(self.config)
+        self.updater_thread.app_update_signal.connect(self.show_app_update_dialog)
+        self.updater_thread.ffmpeg_update_signal.connect(self.show_ffmpeg_update_dialog)
+        self.updater_thread.error_signal.connect(self.show_error_dialog)
+        self.updater_thread.start()
 
     def universal_message_box(self, icon, title, text, infotext, buttons, log_message=None):
         self.config.log('AppUpdater', 'universal_message_box', log_message) if log_message else None
@@ -108,9 +121,9 @@ class UpdaterUI:
         return msg_box.exec()
 
     def cancel_app_download(self):
-        if hasattr(self.config, 'download_thread'):
+        if self.download_thread:
             self.config.log('AppUpdater', 'cancel_app_download', "Download canceled.")
-            self.config.download_thread.cancel()  # type: ignore # Останавливаем скачивание
+            self.download_thread.cancel()  # type: ignore # Останавливаем скачивание
             self.progress.close()  # Закрываем прогресс-диалог
 
     def app_update_progress(self, value):
@@ -124,13 +137,13 @@ class UpdaterUI:
         if path:  # Если путь не пустой
             self.progress.close()  # Закрываем прогресс-диалог
             self.config.log('AppUpdater', 'app_download_finished', "Starting installer...")
-            subprocess.Popen([path], shell=True)
+            subprocess.Popen([path])
             self.main_window.close()
 
     def start_app_download(self, url, version):
         self.config.log('AppUpdater', 'start_app_download', 'Starting download...')
         self.progress = QProgressDialog(
-            f"Скачиваю обновление...\n{self.config.app_info['version_number']} -> {version}",
+            f"Скачиваю обновление...\n{self.config.app_info.version_number} -> {version}",
             "Отмена",
             0, 100,
             self.main_window
@@ -148,15 +161,15 @@ class UpdaterUI:
         if temp_dir is None:
             raise EnvironmentError("TEMP environment variable is not set")
         installer_path = os.path.join(temp_dir, "update_installer.exe")
-        self.config.download_thread = DownloadThread(self.config, url, installer_path)
-        self.config.download_thread.progress_signal.connect(self.app_update_progress)
-        self.config.download_thread.finished_signal.connect(self.app_download_finished)
-        self.config.download_thread.error_signal.connect(self.show_error_dialog)
-        self.config.download_thread.start()
+        self.download_thread = DownloadThread(self.config, url, installer_path)
+        self.download_thread.progress_signal.connect(self.app_update_progress)
+        self.download_thread.finished_signal.connect(self.app_download_finished)
+        self.download_thread.error_signal.connect(self.show_error_dialog)
+        self.download_thread.start()
 
     def cancel_ffmpeg_installation(self):
-        if hasattr(self.config, "ffmpeg_thread"):
-            self.config.ffmpeg_thread.cancel()
+        if self.ffmpeg_thread:
+            self.ffmpeg_thread.cancel()
 
     def ffmpeg_install_finished(self, success):
         if hasattr(self, 'progress') and self.progress is not None:
@@ -181,18 +194,18 @@ class UpdaterUI:
         self.cancel_button = QPushButton('Отмена', self.progress)
         self.cancel_button.clicked.connect(self.cancel_ffmpeg_installation)
         self.progress.setCancelButton(self.cancel_button)
-        self.config.ffmpeg_thread = FFmpegInstallThread(self.config)
-        self.config.ffmpeg_thread.progress_signal.connect(lambda msg: self.progress.setLabelText(msg))
-        self.config.ffmpeg_thread.finished_signal.connect(self.ffmpeg_install_finished)
-        self.config.ffmpeg_thread.error_signal.connect(self.show_error_dialog)
-        self.config.ffmpeg_thread.start()
+        self.ffmpeg_thread = FFmpegInstallThread(self.config)
+        self.ffmpeg_thread.progress_signal.connect(lambda msg: self.progress.setLabelText(msg))
+        self.ffmpeg_thread.finished_signal.connect(self.ffmpeg_install_finished)
+        self.ffmpeg_thread.error_signal.connect(self.show_error_dialog)
+        self.ffmpeg_thread.start()
         self.progress.show()
 
     def show_app_update_dialog(self, latest_version, download_url, name):
         result = self.universal_message_box(
             QMessageBox.Icon.Information,
             "ABCUpdater",
-            f"Доступна новая версия AniBaza Converter: {self.config.app_info['version_number']} -> {latest_version}!",
+            f"Доступна новая версия AniBaza Converter: {self.config.app_info.version_number} -> {latest_version}!",
             "Вы хотите скачать и установить новую версию?",
             QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | QMessageBox.StandardButtons(QMessageBox.StandardButton.No),
             'Showing App update dialog...'

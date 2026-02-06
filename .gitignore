@@ -6,7 +6,18 @@
 /AppBuilder/
 /HARDSUB/
 /logs/
-/tests/
 /tmp/
 *.log
 .DS_Store
+
+# Build artifacts
+/build/
+/dist/
+*.spec
+
+# Claude Code and agent files
+/.claude/
+/.agents/
+
+# Pytest cache
+/.pytest_cache/

@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anibaza-converter"
+version = "0.1.0"
+description = "AniBaza video assembly tool with audio and subtitles"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "PyQt5>=5.15.0",
+    "requests>=2.31.0",
+    "wmi>=1.5.1; platform_system=='Windows'",
+]
+
+[tool.setuptools.packages.find]
+include = ["configs*", "modules*", "threads*", "windows*", "models*", "UI*"]
+exclude = ["tests*", "build*", "dist*", "logs*", "tmp*", "HARDSUB*", "icons*", "fonts*", "logo*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.4.0",
+    "pytest-mock>=3.14.0",
+    "packaging>=24.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "windows_only: marks tests that only run on Windows",
+]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
