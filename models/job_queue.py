@@ -91,3 +91,55 @@ class JobQueue:
         """
         with self._lock:
             return self._jobs.copy()
+
+    def move_up(self, job_id: str) -> bool:
+        """Move job up in queue (swap with previous job).
+
+        Only WAITING jobs can be moved. Cannot move first job.
+
+        Args:
+            job_id: ID of job to move up
+
+        Returns:
+            True if job was moved, False if not found, is RUNNING, or is first
+        """
+        with self._lock:
+            for i, queued_job in enumerate(self._jobs):
+                if queued_job.id == job_id:
+                    # Cannot move RUNNING jobs
+                    if queued_job.status == JobStatus.RUNNING:
+                        return False
+                    # Cannot move first job up
+                    if i == 0:
+                        return False
+                    # Swap with previous job
+                    self._jobs[i], self._jobs[i - 1] = self._jobs[i - 1], self._jobs[i]
+                    return True
+            # Job not found
+            return False
+
+    def move_down(self, job_id: str) -> bool:
+        """Move job down in queue (swap with next job).
+
+        Only WAITING jobs can be moved. Cannot move last job.
+
+        Args:
+            job_id: ID of job to move down
+
+        Returns:
+            True if job was moved, False if not found, is RUNNING, or is last
+        """
+        with self._lock:
+            for i, queued_job in enumerate(self._jobs):
+                if queued_job.id == job_id:
+                    # Cannot move RUNNING jobs
+                    if queued_job.status == JobStatus.RUNNING:
+                        return False
+                    # Cannot move last job down
+                    if i == len(self._jobs) - 1:
+                        return False
+                    # Swap with next job
+                    self._jobs[i], self._jobs[i + 1] = self._jobs[i + 1], self._jobs[i]
+                    return True
+            # Job not found
+            return False

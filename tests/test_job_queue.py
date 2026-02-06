@@ -125,3 +125,99 @@ class TestJobQueue:
 
         assert result is True
         assert len(queue.get_all_jobs()) == 0
+
+    def test_move_up_waiting_job(self):
+        """Can move WAITING job up in queue."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+        id3 = queue.add(Mock(name="job3"))
+
+        # Move job2 up (should swap with job1)
+        result = queue.move_up(id2)
+
+        assert result is True
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id2
+        assert jobs[1].id == id1
+        assert jobs[2].id == id3
+
+    def test_move_down_waiting_job(self):
+        """Can move WAITING job down in queue."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+        id3 = queue.add(Mock(name="job3"))
+
+        # Move job2 down (should swap with job3)
+        result = queue.move_down(id2)
+
+        assert result is True
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id1
+        assert jobs[1].id == id3
+        assert jobs[2].id == id2
+
+    def test_move_up_first_job_fails(self):
+        """Cannot move first job up."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+
+        # Try to move first job up
+        result = queue.move_up(id1)
+
+        assert result is False
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id1
+        assert jobs[1].id == id2
+
+    def test_move_down_last_job_fails(self):
+        """Cannot move last job down."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+
+        # Try to move last job down
+        result = queue.move_down(id2)
+
+        assert result is False
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id1
+        assert jobs[1].id == id2
+
+    def test_move_up_running_job_fails(self):
+        """Cannot move RUNNING job."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+
+        # Set job2 to RUNNING
+        jobs = queue.get_all_jobs()
+        jobs[1].status = JobStatus.RUNNING
+
+        # Try to move running job up
+        result = queue.move_up(id2)
+
+        assert result is False
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id1
+        assert jobs[1].id == id2
+
+    def test_move_down_running_job_fails(self):
+        """Cannot move RUNNING job."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+
+        # Set job1 to RUNNING
+        jobs = queue.get_all_jobs()
+        jobs[0].status = JobStatus.RUNNING
+
+        # Try to move running job down
+        result = queue.move_down(id1)
+
+        assert result is False
+        jobs = queue.get_all_jobs()
+        assert jobs[0].id == id1
+        assert jobs[1].id == id2
