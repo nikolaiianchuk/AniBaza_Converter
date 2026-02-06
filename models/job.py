@@ -5,6 +5,7 @@ from pathlib import Path
 
 from models.encoding import EncodingParams
 from models.enums import BuildState, LogoState, NvencState
+from models.render_paths import RenderPaths
 
 
 @dataclass(frozen=True)
@@ -59,14 +60,8 @@ class RenderJob:
     eliminating the need to pass around the giant Config object.
     """
 
-    # Input files
-    raw_path: Path
-    audio_path: Path | None
-    sub_path: Path | None
-
-    # Output files
-    softsub_output: Path | None
-    hardsub_output: Path | None
+    # File paths (input and output)
+    paths: RenderPaths
 
     # Metadata
     episode_name: str

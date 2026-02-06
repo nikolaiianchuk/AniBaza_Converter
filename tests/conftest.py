@@ -21,6 +21,7 @@ from configs.config import (
     Paths,
 )
 from models.enums import BuildState, LogoState, NvencState
+from models.render_paths import RenderPaths
 
 
 @pytest.fixture(scope="session")
@@ -152,3 +153,24 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
     )
 
     return config
+
+
+@pytest.fixture
+def mock_render_paths(tmp_path):
+    """Fixture: mock RenderPaths for testing."""
+    raw = tmp_path / "raw.mkv"
+    audio = tmp_path / "audio.mka"
+    sub = tmp_path / "sub.ass"
+
+    # Create files so validation passes
+    raw.touch()
+    audio.touch()
+    sub.touch()
+
+    return RenderPaths(
+        raw=raw,
+        audio=audio,
+        sub=sub,
+        softsub=tmp_path / "soft.mkv",
+        hardsub=tmp_path / "hard.mp4",
+    )

@@ -5,6 +5,7 @@ from pathlib import Path
 from models.encoding import EncodingParams
 from models.enums import BuildState, LogoState, NvencState
 from models.job import RenderJob, VideoPresets, VideoSettings
+from models.render_paths import RenderPaths
 
 
 class TestVideoSettings:
@@ -56,7 +57,7 @@ class TestRenderJob:
     """Test RenderJob dataclass."""
 
     def test_render_job_construction(self):
-        """RenderJob can be constructed from current Config state."""
+        """RenderJob can be constructed with RenderPaths."""
         params = EncodingParams(
             avg_bitrate="6M",
             max_bitrate="9M",
@@ -67,12 +68,16 @@ class TestRenderJob:
             qmax=23,
         )
 
+        paths = RenderPaths(
+            raw=Path("/input/raw.mkv"),
+            audio=Path("/input/audio.wav"),
+            sub=Path("/input/sub.ass"),
+            softsub=Path("/output/soft.mkv"),
+            hardsub=Path("/output/hard.mp4"),
+        )
+
         job = RenderJob(
-            raw_path=Path("/input/raw.mkv"),
-            audio_path=Path("/input/audio.wav"),
-            sub_path=Path("/input/sub.ass"),
-            softsub_output=Path("/output/soft.mkv"),
-            hardsub_output=Path("/output/hard.mp4"),
+            paths=paths,
             episode_name="Episode_01",
             build_state=BuildState.SOFT_AND_HARD,
             nvenc_state=NvencState.NVENC_BOTH,
@@ -82,7 +87,7 @@ class TestRenderJob:
             potato_mode=False,
         )
 
-        assert job.raw_path == Path("/input/raw.mkv")
+        assert job.paths.raw == Path("/input/raw.mkv")
         assert job.episode_name == "Episode_01"
         assert job.build_state == BuildState.SOFT_AND_HARD
         assert job.encoding_params.crf == 18
@@ -91,12 +96,16 @@ class TestRenderJob:
         """RenderJob allows None for optional paths."""
         params = EncodingParams("6M", "9M", "18M", 18, 19, 17, 23)
 
+        paths = RenderPaths(
+            raw=Path("/input/raw.mkv"),
+            audio=None,  # No audio
+            sub=None,  # No subtitles
+            softsub=Path("/output/soft.mkv"),
+            hardsub=Path("/output/hard.mp4"),
+        )
+
         job = RenderJob(
-            raw_path=Path("/input/raw.mkv"),
-            audio_path=None,  # No audio
-            sub_path=None,  # No subtitles
-            softsub_output=None,  # Not generating softsub
-            hardsub_output=Path("/output/hard.mp4"),
+            paths=paths,
             episode_name="Episode_01",
             build_state=BuildState.HARD_ONLY,
             nvenc_state=NvencState.NVENC_HARD_ONLY,
@@ -105,21 +114,24 @@ class TestRenderJob:
             video_settings=VideoPresets.HARDSUB,
         )
 
-        assert job.audio_path is None
-        assert job.sub_path is None
-        assert job.softsub_output is None
-        assert job.hardsub_output == Path("/output/hard.mp4")
+        assert job.paths.audio is None
+        assert job.paths.sub is None
+        assert job.paths.hardsub == Path("/output/hard.mp4")
 
     def test_render_job_runtime_state(self):
         """RenderJob has mutable runtime state fields."""
         params = EncodingParams("6M", "9M", "18M", 18, 19, 17, 23)
 
+        paths = RenderPaths(
+            raw=Path("/input/raw.mkv"),
+            audio=None,
+            sub=None,
+            softsub=Path("/output/soft.mkv"),
+            hardsub=Path("/output/hard.mp4"),
+        )
+
         job = RenderJob(
-            raw_path=Path("/input/raw.mkv"),
-            audio_path=None,
-            sub_path=None,
-            softsub_output=None,
-            hardsub_output=Path("/output/hard.mp4"),
+            paths=paths,
             episode_name="Episode_01",
             build_state=BuildState.HARD_ONLY,
             nvenc_state=NvencState.NVENC_HARD_ONLY,
