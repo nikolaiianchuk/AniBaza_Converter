@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["configs*", "modules*", "threads*", "windows*", "models*", "UI*"]
+include = ["configs*", "modules*", "threads*", "windows*", "models*", "UI*", "widgets*"]
 exclude = ["tests*", "build*", "dist*", "logs*", "tmp*", "HARDSUB*", "icons*", "fonts*", "logo*"]
 
 [project.optional-dependencies]
