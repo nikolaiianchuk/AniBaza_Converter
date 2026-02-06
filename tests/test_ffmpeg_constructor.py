@@ -250,3 +250,124 @@ class TestFFmpegConstructor:
         assert constructor.sub['exists'] is False
         assert constructor.sub['name'] == ''
         assert constructor.sub['temp_path'] == ''
+
+
+class TestFFmpegConstructorArgs:
+    """Test new arg-building methods (no shell=True needed)."""
+
+    @pytest.fixture
+    def constructor(self, mock_config):
+        """Create FFmpegConstructor with mock config."""
+        return FFmpegConstructor(mock_config)
+
+    @pytest.fixture
+    def test_files(self, tmp_path):
+        """Create test video/audio/sub files."""
+        raw = tmp_path / "test.mkv"
+        audio = tmp_path / "test.wav"
+        sub = tmp_path / "test.ass"
+        output = tmp_path / "output.mkv"
+        logo = tmp_path / "logo.ass"
+
+        for file in [raw, audio, sub, logo]:
+            file.write_text("")
+
+        return {
+            'raw': str(raw),
+            'audio': str(audio),
+            'sub': str(sub),
+            'output': str(output),
+            'logo': str(logo)
+        }
+
+    def test_build_soft_args_returns_list(self, constructor, test_files, mock_config):
+        """build_soft_args returns a list, not a string."""
+        mock_config.main_paths.logo = Path(test_files['logo'])
+
+        args = constructor.build_soft_args(
+            raw_path=test_files['raw'],
+            sound_path=test_files['audio'],
+            sub_path=None,
+            output_path=test_files['output'],
+            max_bitrate='9M',
+            max_buffer='18M'
+        )
+
+        assert isinstance(args, list)
+        assert all(isinstance(arg, str) for arg in args)
+
+    def test_build_soft_args_no_shell_needed(self, constructor, test_files, mock_config):
+        """Args can be passed directly to Popen (no shell=True)."""
+        mock_config.main_paths.logo = Path(test_files['logo'])
+
+        args = constructor.build_soft_args(
+            raw_path=test_files['raw'],
+            sound_path=test_files['audio'],
+            output_path=test_files['output'],
+            max_bitrate='9M',
+            max_buffer='18M'
+        )
+
+        # Should contain -y flag
+        assert '-y' in args
+        # Should contain input files
+        assert '-i' in args
+        assert test_files['raw'] in args
+        assert test_files['audio'] in args
+        # Should contain output
+        assert test_files['output'] in args
+
+    def test_build_soft_args_with_nvenc(self, constructor, test_files, mock_config):
+        """build_soft_args uses correct codec for nvenc."""
+        mock_config.main_paths.logo = Path(test_files['logo'])
+
+        args = constructor.build_soft_args(
+            raw_path=test_files['raw'],
+            sound_path=test_files['audio'],
+            output_path=test_files['output'],
+            nvenc=True,
+            cq='19',
+            cqmin='17',
+            cqmax='23',
+            max_bitrate='9M',
+            max_buffer='18M'
+        )
+
+        # Should use h264_nvenc codec
+        assert 'h264_nvenc' in args
+        # Should use CQ instead of CRF
+        assert '-cq' in args
+
+    def test_build_hard_args_returns_list(self, constructor, test_files, mock_config):
+        """build_hard_args returns a list."""
+        mock_config.main_paths.logo = Path(test_files['logo'])
+
+        args = constructor.build_hard_args(
+            raw_path=test_files['raw'],
+            sound_path=test_files['audio'],
+            sub_path=test_files['sub'],
+            output_path=test_files['output'],
+            max_bitrate='9M',
+            max_buffer='18M'
+        )
+
+        assert isinstance(args, list)
+        assert '-y' in args
+        assert test_files['output'] in args
+
+    def test_build_hard_args_uses_hevc(self, constructor, test_files, mock_config):
+        """build_hard_args uses hevc codec."""
+        mock_config.main_paths.logo = Path(test_files['logo'])
+
+        args = constructor.build_hard_args(
+            raw_path=test_files['raw'],
+            sound_path=test_files['audio'],
+            output_path=test_files['output'],
+            nvenc=False,
+            max_bitrate='9M',
+            max_buffer='18M'
+        )
+
+        # Should use hevc codec (not h264)
+        assert 'hevc' in args
+        assert 'h264' not in ' '.join(args)

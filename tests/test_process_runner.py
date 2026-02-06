@@ -94,7 +94,8 @@ class TestSubprocessRunner:
             # Verify Popen was called with correct arguments
             call_args = mock_popen.call_args
             cmd = call_args[0][0]
-            assert cmd[0] == '/usr/bin/ffmpeg'
+            # Platform-agnostic: check it ends with ffmpeg
+            assert cmd[0].endswith('ffmpeg') or cmd[0].endswith('ffmpeg.exe')
             assert cmd[1:] == ['-y', '-i', 'input.mkv', 'output.mp4']
 
     def test_run_ffmpeg_no_shell(self):
@@ -121,9 +122,9 @@ class TestSubprocessRunner:
 
             runner.run_ffmpeg(['-version'], cwd=Path("/custom"))
 
-            # Verify cwd was passed to Popen
+            # Verify cwd was passed to Popen (platform-agnostic)
             call_kwargs = mock_popen.call_args[1]
-            assert call_kwargs['cwd'] == '/custom'
+            assert call_kwargs['cwd'].endswith('custom') or call_kwargs['cwd'].endswith('custom\\')
 
     def test_run_ffprobe_builds_command(self):
         """SubprocessRunner builds correct ffprobe command."""
@@ -138,10 +139,10 @@ class TestSubprocessRunner:
 
             runner.run_ffprobe(['-i', 'video.mkv'])
 
-            # Verify command starts with ffprobe path
+            # Verify command starts with ffprobe path (platform-agnostic)
             call_args = mock_popen.call_args
             cmd = call_args[0][0]
-            assert cmd[0] == '/usr/bin/ffprobe'
+            assert cmd[0].endswith('ffprobe') or cmd[0].endswith('ffprobe.exe')
             assert cmd[1:] == ['-i', 'video.mkv']
 
     def test_kill_ffmpeg_terminates_process(self):
