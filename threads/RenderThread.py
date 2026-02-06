@@ -12,6 +12,7 @@ from modules.ffmpeg_builder import build_ffmpeg_args
 from models.encoding import EncodingParams
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
+from models.video_info import VideoInfo, parse_ffprobe_output
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
 
@@ -241,52 +242,111 @@ class ThreadClassRender(QThread):
         return params
     
     def ffmpeg_analysis_decoding(self, proc):
-        profiles = {
-            '(Main)'    : ['main', 'main', 'main'], 
-            '(Main 10)' : ['high10', 'high', 'main10'], 
-            '(High)'    : ['high', 'high', 'main10'], 
-            '(High 10)' : ['high10', 'high', 'main10']
-        }
-        
+        """Parse video metadata from ffprobe output and apply to config.
+
+        Wraps pure parsing function with logging and state application.
+        """
+        # Collect all output lines for parsing
+        lines = []
         for line in proc.stdout:
             self.config.log('RenderThread', 'ffmpeg_analysis_decoding', line)
-            duration_match = re.search(r'Duration:\s*(\d+):(\d+):([\d.]+)', line)
-            codec_match = re.search(r'Stream.*Video:\s*(.*)', line)
-            resolution_match = re.search(r'(\d{3,4})x(\d{3,4})', line)
-            if resolution_match:
-                _, height = resolution_match.groups()
-                self.video_res = f"{height}p" if int(height) < 4096 else f"{int(height)/1024}K"
-                self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Video resolution: {self.video_res}")
-            
-            if duration_match:
-                hrs, minutes, sec = map(float, duration_match.groups())
-                self.total_duration_sec =  hrs * 3600 + minutes * 60 + sec
-                self.total_frames = self.total_duration_sec * 24000 / 1001.0
-                self.time_upd.emit(self.total_frames)
-            
-            if codec_match:
-                for item in ['yuv420p,', 'yuv420p(', 'yuv420p ', 'yuv420p10le,', 'yuv420p10le(', 'yuv420p10le ', 'p010le,', 'p010le(', 'p010le ']:
-                    if item in codec_match.group(0):
-                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"found {item[:-1]}")
-                        if item[:-1] == 'yuv420p':
-                            self.config.build_settings.softsub_settings.pixel_format = 'yuv420p'
-                            self.config.build_settings.hardsub_settings.pixel_format = 'yuv420p'
-                        elif item[:-1] in ['yuv420p10le', 'p010le']:
-                            self.config.build_settings.softsub_settings.pixel_format = 'yuv420p' #'yuv420p10le' if self.config.build_settings['softsub_settings']['nvenc'] == False else 'p010le'
-                            self.config.build_settings.hardsub_settings.pixel_format = 'yuv420p10le' if self.config.build_settings.nvenc_state in [1, 3] else 'p010le'
-                    
-                for item in profiles.keys():
-                    if item in codec_match.group(0):
-                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"found {item[1:-1]}")
-                        self.config.build_settings.softsub_settings.video_profile = profiles[item][0 if self.config.build_settings.nvenc_state in [2, 3] else 1]
-                        self.config.build_settings.hardsub_settings.video_profile = profiles[item][2]
-                        self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Settings set: {profiles[item]}")
-        
+            lines.append(line)
+
+        # Parse using pure function
+        info = parse_ffprobe_output(lines)
+
+        # Log parsed results
+        self.config.log('RenderThread', 'ffmpeg_analysis_decoding',
+                       f"Parsed: {info.resolution}, {info.pixel_format}, {info.video_profile}")
+
+        # Apply parsed info to state
+        self._apply_video_info(info)
+
+    def _apply_video_info(self, info: VideoInfo):
+        """Apply parsed video info to config settings.
+
+        Separate from parsing for cleaner separation of concerns.
+        Handles potato mode overrides and format/profile mapping for codec compatibility.
+        """
+        # Set runtime state
+        self.total_duration_sec = info.duration_seconds
+        self.total_frames = info.total_frames
+        self.video_res = info.resolution
+        self.time_upd.emit(info.total_frames)
+
+        # Potato mode: force compatible settings
         if self.config.potato_PC:
-            self.config.build_settings.softsub_settings.pixel_format = 'yuv420p'
-            self.config.build_settings.hardsub_settings.pixel_format = 'yuv420p'
-            self.config.build_settings.softsub_settings.video_profile = 'main'
-            self.config.build_settings.hardsub_settings.video_profile = 'main'
+            soft_pixel_fmt = 'yuv420p'
+            hard_pixel_fmt = 'yuv420p'
+            soft_profile = 'main'
+            hard_profile = 'main'
+            self.config.log('RenderThread', '_apply_video_info',
+                          "Potato mode: forcing yuv420p and main profile")
+        else:
+            # Map parsed formats to output formats based on codec compatibility
+            soft_pixel_fmt, hard_pixel_fmt = self._map_pixel_formats(info.pixel_format)
+            soft_profile, hard_profile = self._map_profiles(info.video_profile)
+
+        # Apply to build settings
+        self.config.build_settings.softsub_settings.pixel_format = soft_pixel_fmt
+        self.config.build_settings.hardsub_settings.pixel_format = hard_pixel_fmt
+        self.config.build_settings.softsub_settings.video_profile = soft_profile
+        self.config.build_settings.hardsub_settings.video_profile = hard_profile
+
+        self.config.log('RenderThread', '_apply_video_info',
+                       f"Applied settings: soft({soft_pixel_fmt}, {soft_profile}), "
+                       f"hard({hard_pixel_fmt}, {hard_profile})")
+
+    def _map_pixel_formats(self, parsed_format: str) -> tuple[str, str]:
+        """Map parsed pixel format to softsub and hardsub formats.
+
+        Handles codec compatibility - 10-bit formats need conversion for softsub.
+
+        Args:
+            parsed_format: Pixel format from video metadata
+
+        Returns:
+            Tuple of (softsub_format, hardsub_format)
+        """
+        if parsed_format in ['yuv420p10le', 'p010le']:
+            # 10-bit formats: softsub uses 8-bit, hardsub preserves 10-bit
+            softsub_fmt = 'yuv420p'
+            # Hardsub format depends on nvenc usage
+            if self.config.build_settings.nvenc_state in [1, 3]:
+                hardsub_fmt = 'yuv420p10le'
+            else:
+                hardsub_fmt = 'p010le'
+            return softsub_fmt, hardsub_fmt
+        else:
+            # 8-bit: use as-is for both
+            return parsed_format, parsed_format
+
+    def _map_profiles(self, parsed_profile: str) -> tuple[str, str]:
+        """Map parsed video profile to softsub and hardsub profiles.
+
+        Different codecs need different profile mappings for compatibility.
+
+        Args:
+            parsed_profile: Video profile from metadata
+
+        Returns:
+            Tuple of (softsub_profile, hardsub_profile)
+        """
+        # Profile mapping based on parsed profile and nvenc usage
+        profile_map = {
+            'main': ('main', 'main'),
+            'main10': (
+                'high10' if self.config.build_settings.nvenc_state in [2, 3] else 'high',
+                'main10'
+            ),
+            'high': ('high', 'main10'),
+            'high10': (
+                'high10' if self.config.build_settings.nvenc_state in [2, 3] else 'high',
+                'main10'
+            )
+        }
+
+        return profile_map.get(parsed_profile, (parsed_profile, parsed_profile))
 
     def _run_process_safe(self, args: list[str], is_ffprobe: bool = False) -> subprocess.Popen:
         """Run ffmpeg/ffprobe using ProcessRunner if available, else fall back to old method.
