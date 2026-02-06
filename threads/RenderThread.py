@@ -4,8 +4,10 @@ import re
 import subprocess
 import sys
 import traceback
+from typing import Optional
 
 from modules.FFmpegConstructor import FFmpegConstructor
+from models.protocols import ProcessRunner
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
 
@@ -18,9 +20,17 @@ class ThreadClassRender(QThread):
     elapsed_time_upd = QtCore.pyqtSignal(object)
 
     # Thread init
-    def __init__(self, config):
+    def __init__(self, config, runner: Optional[ProcessRunner] = None):
+        """Initialize render thread.
+
+        Args:
+            config: Application configuration
+            runner: Optional ProcessRunner for safe subprocess execution.
+                    If not provided, falls back to old shell=True approach.
+        """
         super(ThreadClassRender, self).__init__()
         self.config = config
+        self.runner = runner  # New: Optional ProcessRunner for safe execution
         sys.excepthook = self.handle_exception
         self.config.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
@@ -311,6 +321,34 @@ class ThreadClassRender(QThread):
             self.config.build_settings['softsub_settings']['video_profile'] = 'main'
             self.config.build_settings['hardsub_settings']['video_profile'] = 'main'
 
+    def _run_process_safe(self, args: list[str]) -> subprocess.Popen:
+        """Run ffmpeg using ProcessRunner if available, else fall back to old method.
+
+        This enables incremental migration - new code uses safe ProcessRunner,
+        old code continues working with shell=True.
+
+        Args:
+            args: FFmpeg arguments as a list
+
+        Returns:
+            Process handle for frame_update()
+        """
+        if self.runner:
+            # New safe approach: no shell=True, no os.chdir()
+            return self.runner.run_ffmpeg(args)
+        else:
+            # Old approach: shell=True (kept for backward compatibility)
+            cmd = ' '.join(args)
+            return subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                encoding='utf-8',
+                errors='replace'
+            )
+
     # Coding commands
     def run(self):
         try:
@@ -319,8 +357,8 @@ class ThreadClassRender(QThread):
             self.encoding_params = self.calculate_encoding_params(2, self.config.video_res)
             self.softsub()
             self.hardsub()
-            self.hardsubbering()  
-            self.raw_repairing()   
+            self.hardsubbering()
+            self.raw_repairing()
             self.config.command_constructor.remove_temp_sub()
 
         except Exception as e:
