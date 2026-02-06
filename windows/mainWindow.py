@@ -493,18 +493,18 @@ class MainWindow(QMainWindow):
         if not self._validate_before_render():
             return
 
-        # Create validated paths (will be passed to RenderThread in Phase 4)
+        # Create validated, immutable paths
         paths = self._create_render_paths()
 
-        # Copy paths to config.rendering_paths for backward compatibility (Phase 4 cleanup)
+        # Copy paths to config.rendering_paths for backward compatibility (Phase 5 cleanup)
         self.config.rendering_paths['raw'] = str(paths.raw)
         self.config.rendering_paths['audio'] = str(paths.audio) if paths.audio else ''
         self.config.rendering_paths['sub'] = str(paths.sub) if paths.sub else ''
         self.config.rendering_paths['softsub'] = str(paths.softsub)
         self.config.rendering_paths['hardsub'] = str(paths.hardsub)
 
-        self.config.log('mainWindow', 'ffmpeg_thread', "Starting ffmpeg...")
-        self.threadMain = ThreadClassRender(self.config, runner=self.runner)
+        self.config.log('mainWindow', 'ffmpeg_thread', "Starting ffmpeg with validated paths...")
+        self.threadMain = ThreadClassRender(self.config, runner=self.runner, paths=paths)
         self.threadMain.finished.connect(self.finished)
         self.threadMain.frame_upd.connect(self.frame_update)
         self.threadMain.time_upd.connect(self.time_update)

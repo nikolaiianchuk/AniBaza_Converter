@@ -9,6 +9,7 @@ from typing import Optional
 from modules.FFmpegConstructor import FFmpegConstructor
 from modules.GlobalExceptionHandler import get_global_handler
 from models.protocols import ProcessRunner
+from models.render_paths import RenderPaths
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
 
@@ -21,17 +22,19 @@ class ThreadClassRender(QThread):
     elapsed_time_upd = QtCore.pyqtSignal(object)
 
     # Thread init
-    def __init__(self, config, runner: Optional[ProcessRunner] = None):
+    def __init__(self, config, runner: Optional[ProcessRunner] = None, paths: Optional[RenderPaths] = None):
         """Initialize render thread.
 
         Args:
             config: Application configuration
             runner: Optional ProcessRunner for safe subprocess execution.
-                    If not provided, falls back to old shell=True approach.
+            paths: Optional RenderPaths with validated file paths.
+                   If not provided, falls back to config.rendering_paths (backward compat).
         """
         super(ThreadClassRender, self).__init__()
         self.config = config
-        self.runner = runner  # New: Optional ProcessRunner for safe execution
+        self.runner = runner
+        self.paths = paths  # New: RenderPaths with validated paths
         get_global_handler().register_callback(self.handle_exception)
         self.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
@@ -91,11 +94,23 @@ class ThreadClassRender(QThread):
     def softsub(self):
         self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
         if self.config.build_settings.build_state in [0, 1]:
+            # Use validated paths if available, otherwise fall back to config
+            if self.paths:
+                raw_path = str(self.paths.raw)
+                sound_path = str(self.paths.audio) if self.paths.audio else ''
+                sub_path = str(self.paths.sub) if self.paths.sub else None
+                output_path = str(self.paths.softsub)
+            else:
+                raw_path = self.config.rendering_paths['raw']
+                sound_path = self.config.rendering_paths['audio']
+                sub_path = self.config.rendering_paths['sub']
+                output_path = self.config.rendering_paths['softsub']
+
             args = self.command_constructor.build_soft_args(
-                raw_path      = self.config.rendering_paths['raw'],
-                sound_path    = self.config.rendering_paths['audio'],
-                sub_path      = self.config.rendering_paths['sub'],
-                output_path   = self.config.rendering_paths['softsub'],
+                raw_path      = raw_path,
+                sound_path    = sound_path,
+                sub_path      = sub_path,
+                output_path   = output_path,
                 nvenc         = True if self.config.build_settings.nvenc_state in [0, 1] else False,
                 crf_rate      = self.encoding_params['crf'],
                 cqmin         = self.encoding_params['qmin'],
@@ -118,11 +133,23 @@ class ThreadClassRender(QThread):
     def hardsub(self):
         self.config.log('RenderThread', 'hardsub', "Starting hardsubbing...")
         if self.config.build_settings.build_state in [0, 2]:
+            # Use validated paths if available, otherwise fall back to config
+            if self.paths:
+                raw_path = str(self.paths.raw)
+                sound_path = str(self.paths.audio) if self.paths.audio else ''
+                sub_path = str(self.paths.sub) if self.paths.sub else None
+                output_path = str(self.paths.hardsub)
+            else:
+                raw_path = self.config.rendering_paths['raw']
+                sound_path = self.config.rendering_paths['audio']
+                sub_path = self.config.rendering_paths['sub']
+                output_path = self.config.rendering_paths['hardsub']
+
             args = self.command_constructor.build_hard_args(
-                raw_path      = self.config.rendering_paths['raw'],
-                sound_path    = self.config.rendering_paths['audio'],
-                sub_path      = self.config.rendering_paths['sub'],
-                output_path   = self.config.rendering_paths['hardsub'],
+                raw_path      = raw_path,
+                sound_path    = sound_path,
+                sub_path      = sub_path,
+                output_path   = output_path,
                 nvenc         = True if self.config.build_settings.nvenc_state in [0, 2] else False,
                 crf_rate      = self.encoding_params['crf'],
                 cqmin         = self.encoding_params['qmin'],
@@ -145,10 +172,20 @@ class ThreadClassRender(QThread):
     def hardsubbering(self):
         self.config.log('RenderThread', 'hardsubbering', "Starting special hardsubbing...")
         if self.config.build_settings.build_state == 3:
+            # Use validated paths if available, otherwise fall back to config
+            if self.paths:
+                raw_path = str(self.paths.raw)
+                sub_path = str(self.paths.sub) if self.paths.sub else None
+                output_path = str(self.paths.hardsub)
+            else:
+                raw_path = self.config.rendering_paths['raw']
+                sub_path = self.config.rendering_paths['sub']
+                output_path = self.config.rendering_paths['hardsub']
+
             args = self.command_constructor.build_hard_args(
-                raw_path      = self.config.rendering_paths['raw'],
-                sub_path      = self.config.rendering_paths['sub'],
-                output_path   = self.config.rendering_paths['hardsub'],
+                raw_path      = raw_path,
+                sub_path      = sub_path,
+                output_path   = output_path,
                 nvenc         = True if self.config.build_settings.nvenc_state in [0, 2] else False,
                 crf_rate      = self.encoding_params['crf'],
                 cqmin         = self.encoding_params['qmin'],
@@ -169,20 +206,34 @@ class ThreadClassRender(QThread):
     def raw_repairing(self):
         self.config.log('RenderThread', 'raw_repairing', "Starting raw repairing...")
         if self.config.build_settings.build_state == 4:
+            # Use validated paths if available, otherwise fall back to config
+            if self.paths:
+                raw_path = str(self.paths.raw)
+                softsub_path = str(self.paths.softsub)
+            else:
+                raw_path = self.config.rendering_paths['raw']
+                softsub_path = self.config.rendering_paths['softsub']
+
             args = [
                 '-y',
-                '-i', self.config.rendering_paths['raw'],
+                '-i', raw_path,
                 '-c:v', 'libx264',
                 '-c:a', 'copy',
                 '-c:s', 'copy',
-                self.config.rendering_paths['softsub']
+                softsub_path
             ]
             self.config.log('RenderThread', 'raw_repairing', f"Generated args: {args}")
             self._run_encode(args, "Востанавливаю равку...")
 
     def ffmpeg_analysis(self):
         self.config.log('RenderThread', 'ffmpeg_analysis', "Starting ffmpeg analysis...")
-        args = [self.config.rendering_paths['raw']]
+        # Use validated paths if available, otherwise fall back to config
+        if self.paths:
+            raw_path = str(self.paths.raw)
+        else:
+            raw_path = self.config.rendering_paths['raw']
+
+        args = [raw_path]
         self.config.log('RenderThread', 'ffmpeg_analysis', f"Generated args: {args}")
         process = self._run_process_safe(args, is_ffprobe=True)
         self.ffmpeg_analysis_decoding(process)
