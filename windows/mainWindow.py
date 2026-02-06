@@ -8,6 +8,7 @@ import webbrowser
 
 import modules.ConfigModule as ConfigModule
 
+from modules.GlobalExceptionHandler import get_global_handler
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QApplication, QMainWindow
 from UI.normUI2 import Ui_MainWindow
@@ -20,7 +21,8 @@ class MainWindow(QMainWindow):
     # Main window init
     def __init__(self, config):
         super().__init__()
-        sys.excepthook = self.handle_exception
+        # Phase 5: Register exception handler instead of overriding sys.excepthook
+        get_global_handler().register_callback(self.handle_exception)
         self.config = config
         self.finish_message = False
         self.threadMain = None

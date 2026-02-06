@@ -7,6 +7,7 @@ import traceback
 from typing import Optional
 
 from modules.FFmpegConstructor import FFmpegConstructor
+from modules.GlobalExceptionHandler import get_global_handler
 from models.protocols import ProcessRunner
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
@@ -31,7 +32,8 @@ class ThreadClassRender(QThread):
         super(ThreadClassRender, self).__init__()
         self.config = config
         self.runner = runner  # New: Optional ProcessRunner for safe execution
-        sys.excepthook = self.handle_exception
+        # Phase 5: Register exception handler instead of overriding sys.excepthook
+        get_global_handler().register_callback(self.handle_exception)
         self.config.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
         self.encoding_params = {

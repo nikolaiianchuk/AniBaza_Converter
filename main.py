@@ -6,6 +6,7 @@ import modules.ConfigModule as ConfigModule
 import traceback
 
 from configs.config import Config, PCInfo, Paths
+from modules.GlobalExceptionHandler import get_global_handler
 from PyQt5 import QtWidgets
 from windows.mainWindow import MainWindow
 
@@ -63,6 +64,19 @@ def main():
 
     try:
         config.start_log()
+
+        # Phase 5: Install global exception handler
+        exception_handler = get_global_handler()
+        exception_handler.install()
+
+        # Register callback to log exceptions
+        def log_exception(exc_type, exc_value, exc_traceback):
+            if exc_type != KeyboardInterrupt:
+                error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+                config.log('App System', 'exception_handler', f"Uncaught exception: {error_message}")
+
+        exception_handler.register_callback(log_exception)
+
         config.log('App System', 'main', f"CWD: {cwd}")
         config.log('App System', 'main', 'Starting application')
         config.log('App System', 'get_PC_info', f"PC info: {pc_info}")

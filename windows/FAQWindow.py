@@ -1,6 +1,7 @@
 # Lib import
 import sys
 import traceback
+from modules.GlobalExceptionHandler import get_global_handler
 from PyQt5.QtWidgets import QDialog
 from UI.FAQ import Ui_dialog
 
@@ -12,7 +13,8 @@ class FAQWindow(QDialog):
         self.config = config
         self.fui = Ui_dialog()
         self.fui.setupUi(self)
-        sys.excepthook = self.handle_exception
+        # Phase 5: Register exception handler instead of overriding sys.excepthook
+        get_global_handler().register_callback(self.handle_exception)
         
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):

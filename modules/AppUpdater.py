@@ -5,6 +5,7 @@ import sys
 import traceback
 import requests
 
+from modules.GlobalExceptionHandler import get_global_handler
 from packaging.version import Version, InvalidVersion
 from PyQt5.QtWidgets import QMessageBox,QProgressDialog, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
@@ -20,7 +21,8 @@ class UpdaterThread(QThread):
 
     def __init__(self, config):
         super().__init__()
-        sys.excepthook = self.handle_exception
+        # Phase 5: Register exception handler instead of overriding sys.excepthook
+        get_global_handler().register_callback(self.handle_exception)
         self.config = config
 
     def handle_exception(self, e):
