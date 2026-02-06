@@ -32,3 +32,12 @@ class LogoState(IntEnum):
     LOGO_BOTH = 0  # Burn logo into both softsub and hardsub
     LOGO_SOFT_ONLY = 1  # Burn logo only into softsub
     LOGO_HARD_ONLY = 2  # Burn logo only into hardsub
+
+
+class JobStatus(IntEnum):
+    """Job processing states."""
+    WAITING = 0
+    RUNNING = 1
+    COMPLETED = 2
+    FAILED = 3
+    CANCELLED = 4
