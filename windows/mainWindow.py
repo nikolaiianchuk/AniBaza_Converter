@@ -190,7 +190,7 @@ class MainWindow(QMainWindow):
         buttons = {
             self.ui.hardsub_folder_open_button: self.open_hardsub,
             self.ui.logs_folder_open_button: self.open_logsdir,
-            self.ui.render_stop_button: self.proc_kill,
+            self.ui.render_stop_button: self.on_stop_button_clicked,
             self.ui.render_start_button: self.on_start_button_clicked,
             self.ui.softsub_path_open_button: self.soft_folder_path,
             self.ui.audio_path_open_button: self.sound_folder_path,
@@ -664,6 +664,23 @@ class MainWindow(QMainWindow):
             # No jobs in queue, start immediate render
             self.config.log('mainWindow', 'on_start_button_clicked', "No queue jobs, starting immediate render")
             self.start_immediate_render()
+
+    def on_stop_button_clicked(self):
+        """Handle stop button click - cancel queue or immediate render.
+
+        If queue processor is running, cancel current job and pause queue.
+        Otherwise, kill immediate render process.
+        """
+        if self.queue_processor.isRunning():
+            # Cancel current job and pause queue
+            self.config.log('mainWindow', 'on_stop_button_clicked', "Cancelling queue processor")
+            self.queue_processor.cancel_current_job()
+            # Wait for thread to finish
+            self.queue_processor.wait()
+        else:
+            # Old behavior: kill immediate render
+            self.config.log('mainWindow', 'on_stop_button_clicked', "Killing immediate render process")
+            self.proc_kill()
 
     def start_immediate_render(self):
         """Start immediate render with current UI state (legacy ffmpeg_thread behavior)."""

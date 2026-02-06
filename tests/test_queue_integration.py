@@ -311,3 +311,90 @@ class TestStartButtonSmartBehavior:
 
         # Immediate render should be called
         window.start_immediate_render.assert_called_once()
+
+
+class TestStopButtonBehavior:
+    """Test stop button behavior - cancel queue vs kill immediate render."""
+
+    def test_stop_button_cancels_queue_when_running(self, qapp, mock_config, tmp_path):
+        """Stop button should cancel queue processor when running."""
+        from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
+
+        window = MainWindow(mock_config)
+
+        # Add job to queue
+        from models.job import RenderJob
+        from models.render_paths import RenderPaths
+        from models.enums import BuildState, NvencState, LogoState
+        from models.encoding import EncodingParams
+
+        raw_path = tmp_path / "raw.mkv"
+        softsub_dir = tmp_path / 'softsub'
+        hardsub_dir = tmp_path / 'hardsub'
+        raw_path.touch()
+        softsub_dir.mkdir(exist_ok=True)
+        hardsub_dir.mkdir(exist_ok=True)
+
+        paths = RenderPaths.from_ui_state(
+            raw_path=str(raw_path),
+            audio_path='',
+            sub_path='',
+            episode_name='Episode_01',
+            softsub_dir=softsub_dir,
+            hardsub_dir=hardsub_dir,
+        )
+
+        encoding_params = EncodingParams(
+            avg_bitrate="6M",
+            max_bitrate="9M",
+            buffer_size="18M",
+            crf=18,
+            cq=19,
+            qmin=17,
+            qmax=23
+        )
+
+        job = RenderJob(
+            paths=paths,
+            episode_name='Episode_01',
+            build_state=BuildState.HARD_ONLY,
+            nvenc_state=NvencState.NVENC_BOTH,
+            logo_state=LogoState.LOGO_BOTH,
+            encoding_params=encoding_params,
+            video_settings=mock_config.build_settings.softsub_settings,
+            potato_mode=False
+        )
+
+        window.job_queue.add(job)
+
+        # Mock queue processor methods
+        window.queue_processor.isRunning = Mock(return_value=True)
+        window.queue_processor.cancel_current_job = Mock()
+        window.queue_processor.wait = Mock()
+
+        # Call stop button handler
+        window.on_stop_button_clicked()
+
+        # Should cancel current job and wait for thread to finish
+        window.queue_processor.cancel_current_job.assert_called_once()
+        window.queue_processor.wait.assert_called_once()
+
+    def test_stop_button_kills_immediate_render_when_queue_not_running(self, qapp, mock_config):
+        """Stop button should call proc_kill when queue processor not running."""
+        from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
+
+        window = MainWindow(mock_config)
+
+        # Mock queue processor as not running
+        window.queue_processor.isRunning = Mock(return_value=False)
+
+        # Mock proc_kill
+        window.proc_kill = Mock()
+
+        # Call stop button handler
+        window.on_stop_button_clicked()
+
+        # Should call proc_kill for immediate render
+        window.proc_kill.assert_called_once()
