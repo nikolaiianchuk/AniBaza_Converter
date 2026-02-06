@@ -6,7 +6,6 @@ import sys
 import traceback
 from typing import Optional
 
-from modules.FFmpegConstructor import FFmpegConstructor
 from modules.GlobalExceptionHandler import get_global_handler
 from modules.ffmpeg_factory import FFmpegOptionsFactory
 from modules.ffmpeg_builder import build_ffmpeg_args
@@ -39,11 +38,8 @@ class ThreadClassRender(QThread):
         self.paths = paths
         get_global_handler().register_callback(self.handle_exception)
 
-        # New: Factory for creating FFmpegOptions
+        # Factory for creating FFmpegOptions
         self.ffmpeg_factory = FFmpegOptionsFactory(config, config.main_paths.temp)
-
-        # Legacy: Keep for backward compatibility (Phase 4 cleanup)
-        self.command_constructor = FFmpegConstructor(self.config)
 
         self.render_speed = -1 if self.config.potato_PC else 1
         self.total_duration_sec = 0
@@ -340,6 +336,22 @@ class ThreadClassRender(QThread):
         process = self._run_process_safe(args)
         self.frame_update(process)
 
+    def _cleanup_temp_files(self):
+        """Clean up temporary subtitle files created by FFmpegOptionsFactory."""
+        import shutil
+        temp_dir = self.config.main_paths.temp
+        if temp_dir.exists():
+            # Remove all files in temp directory (factory creates subtitle copies here)
+            for temp_file in temp_dir.glob('*'):
+                if temp_file.is_file():
+                    try:
+                        temp_file.unlink()
+                        self.config.log('RenderThread', '_cleanup_temp_files',
+                                      f"Removed temp file: {temp_file.name}")
+                    except Exception as e:
+                        self.config.log('RenderThread', '_cleanup_temp_files',
+                                      f"Failed to remove {temp_file.name}: {e}")
+
     # Coding commands
     def run(self):
         try:
@@ -350,7 +362,7 @@ class ThreadClassRender(QThread):
             self.hardsub()
             self.hardsubbering()
             self.raw_repairing()
-            self.command_constructor.remove_temp_sub()
+            self._cleanup_temp_files()
 
         except Exception as e:
             self.handle_exception(type(e), e, e.__traceback__)
