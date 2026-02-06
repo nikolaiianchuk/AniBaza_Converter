@@ -31,8 +31,9 @@ class LoggingModule:
                     print(f"Удален старый лог файл: {file_path}")
             
             # Генерация имени файла по дате и времени
-            self.log_filename = datetime.now().strftime(f"logs/mainlog_%Y-%m-%d_%H-%M-%S.txt")
-            
+            log_basename = datetime.now().strftime("mainlog_%Y-%m-%d_%H-%M-%S.txt")
+            self.log_filename = str(self.logs_dir / log_basename)
+
             # Открываем файл для записи логов
             self.log_file = open(self.log_filename, 'a', encoding="utf-8")
             

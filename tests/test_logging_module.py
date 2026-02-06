@@ -62,9 +62,10 @@ class TestLoggingModule:
         logger.start_logging(True, logs_dir, 10)
         logger.stop_logging()
 
-        # Check that only max_logs files remain
+        # Check that rotation happened: should have kept last 10 old files + 1 new file = 11 total
+        # The rotation deletes oldest files before creating the new one
         remaining_logs = list(logs_dir.glob("*.txt"))
-        assert len(remaining_logs) <= 10
+        assert len(remaining_logs) == 11  # 10 most recent old files + 1 new file
 
     def test_logging_disabled(self, tmp_path):
         """No file created when logging disabled."""
@@ -84,17 +85,17 @@ class TestLoggingModule:
         log_files = list(logs_dir.glob("*.txt"))
         assert len(log_files) == 0
 
-    def test_relative_path_bug(self, tmp_path):
-        """Documents that log_filename uses hardcoded 'logs/' prefix."""
+    def test_correct_path_usage(self, tmp_path):
+        """Verifies that log_filename uses the provided logs_dir parameter."""
         logger = LoggingModule()
         logs_dir = tmp_path / "custom_logs"
         logs_dir.mkdir()
 
         logger.start_logging(True, logs_dir, 10)
 
-        # BUG: log_filename has hardcoded "logs/" prefix
-        assert logger.log_filename.startswith("logs/")
-        # This is a known bug that will be fixed in Phase 5
+        # FIXED: log_filename should use the provided logs_dir
+        assert str(logs_dir) in logger.log_filename
+        assert logger.log_filename.startswith(str(logs_dir))
 
         logger.stop_logging()
 
