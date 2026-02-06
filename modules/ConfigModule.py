@@ -29,7 +29,6 @@ def load_configs(config):
 
     parser = load_parser(config, config.main_paths.config)
     if parser:
-        # Load dev_settings (Phase 4: now dataclass)
         dev_mode = get_config_value(config, parser, 'dev settings', 'enableDevMode', bool)
         logging_enabled = get_config_value(config, parser, 'dev settings', 'enableLogging', bool)
         max_logs = get_config_value(config, parser, 'log settings', 'max_logs', int)
@@ -39,7 +38,6 @@ def load_configs(config):
             max_logs=max_logs if max_logs is not None else 10
         )
 
-        # Load build_settings (Phase 4: now dataclass)
         logo_state = get_config_value(config, parser, 'main settings', 'logo_state', int)
         nvenc_state = get_config_value(config, parser, 'main settings', 'nvenc_state', int)
         build_state = get_config_value(config, parser, 'main settings', 'build_state', int)
@@ -66,7 +64,6 @@ def load_configs(config):
             'update_link'    : ('app data', 'update_url', str)
         }
 
-        # Load app_info (Phase 4: now dataclass)
         app_info_values = {}
         for key, (section, option, conv) in app_info_keys.items():
             value = get_config_value(config, parser, section, option, conv)

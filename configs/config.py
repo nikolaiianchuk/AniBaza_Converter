@@ -10,7 +10,6 @@ from modules.LoggingModule import LoggingModule
 from shutil import which
 from typing import Optional
 
-# Import enums from Phase 2
 from models.enums import BuildState, LogoState, NvencState
 
 @dataclass
@@ -209,12 +208,11 @@ class Config:
         self.download_thread = None
         self.ffmpeg_thread = None
 
-        # Typed dataclasses (Phase 4)
         self.app_info = AppInfo()
         self.dev_settings = DevSettings()
         self.build_settings = BuildSettings()
 
-        # Rendering paths (TODO Phase 4.3: move to RenderJob)
+        # TODO: Move to RenderJob
         self.rendering_paths = {
             'raw'     : '',
             'audio'   : '',
