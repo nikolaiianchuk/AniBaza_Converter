@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from models.enums import BuildState, NvencState
 from threads.RenderThread import ThreadClassRender
 
 
@@ -99,7 +100,7 @@ class TestRenderThread:
             mock_proc = MockProcess(ffprobe_output)
 
             # Reset nvenc state for test
-            render_thread.config.build_settings.nvenc_state = 2  # No nvenc for softsub
+            render_thread.config.build_settings.nvenc_state = NvencState.NVENC_HARD_ONLY
 
             render_thread.ffmpeg_analysis_decoding(mock_proc)
 
@@ -166,77 +167,77 @@ class TestRenderThread:
         assert avg_bitrate == 6  # Capped at 6M
 
     def test_softsub_runs_for_state_0_and_1(self, render_thread, mock_config):
-        """Softsub encoding runs for build_state 0 and 1."""
+        """Softsub encoding runs for SOFT_AND_HARD and SOFT_ONLY states."""
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
             mock_proc.stdout = []
             mock_popen.return_value = mock_proc
 
-            # Test state 0
-            mock_config.build_settings.build_state = 0
+            # Test SOFT_AND_HARD
+            mock_config.build_settings.build_state = BuildState.SOFT_AND_HARD
             render_thread.softsub()
             assert mock_popen.called
 
-            # Reset and test state 1
+            # Reset and test SOFT_ONLY
             mock_popen.reset_mock()
-            mock_config.build_settings.build_state = 1
+            mock_config.build_settings.build_state = BuildState.SOFT_ONLY
             render_thread.softsub()
             assert mock_popen.called
 
     def test_hardsub_runs_for_state_0_and_2(self, render_thread, mock_config):
-        """Hardsub encoding runs for build_state 0 and 2."""
+        """Hardsub encoding runs for SOFT_AND_HARD and HARD_ONLY states."""
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
             mock_proc.stdout = []
             mock_popen.return_value = mock_proc
 
-            # Test state 0
-            mock_config.build_settings.build_state = 0
+            # Test SOFT_AND_HARD
+            mock_config.build_settings.build_state = BuildState.SOFT_AND_HARD
             render_thread.hardsub()
             assert mock_popen.called
 
-            # Reset and test state 2
+            # Reset and test HARD_ONLY
             mock_popen.reset_mock()
-            mock_config.build_settings.build_state = 2
+            mock_config.build_settings.build_state = BuildState.HARD_ONLY
             render_thread.hardsub()
             assert mock_popen.called
 
     def test_hardsubbering_runs_for_state_3(self, render_thread, mock_config):
-        """Hardsubbering (for hardsubbers) runs only for state 3."""
+        """Hardsubbering (for hardsubbers) runs only for FOR_HARDSUBBERS state."""
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
             mock_proc.stdout = []
             mock_popen.return_value = mock_proc
 
-            # Test state 3
-            mock_config.build_settings.build_state = 3
+            # Test FOR_HARDSUBBERS
+            mock_config.build_settings.build_state = BuildState.FOR_HARDSUBBERS
             render_thread.hardsubbering()
             assert mock_popen.called
 
-            # Test state 2 (should not run)
+            # Test HARD_ONLY (should not run)
             mock_popen.reset_mock()
-            mock_config.build_settings.build_state = 2
+            mock_config.build_settings.build_state = BuildState.HARD_ONLY
             render_thread.hardsubbering()
             assert not mock_popen.called
 
     def test_raw_repairing_runs_for_state_4(self, render_thread, mock_config):
-        """Raw repairing runs only for state 4."""
+        """Raw repairing runs only for RAW_REPAIR state."""
         with patch('subprocess.Popen') as mock_popen:
             mock_proc = MagicMock()
             mock_proc.stdout = []
             mock_popen.return_value = mock_proc
 
-            # Test state 4
-            mock_config.build_settings.build_state = 4
+            # Test RAW_REPAIR
+            mock_config.build_settings.build_state = BuildState.RAW_REPAIR
             render_thread.raw_repairing()
             assert mock_popen.called
 
-            # Test state 0 (should not run)
+            # Test SOFT_AND_HARD (should not run)
             mock_popen.reset_mock()
-            mock_config.build_settings.build_state = 0
+            mock_config.build_settings.build_state = BuildState.SOFT_AND_HARD
             render_thread.raw_repairing()
             assert not mock_popen.called
 

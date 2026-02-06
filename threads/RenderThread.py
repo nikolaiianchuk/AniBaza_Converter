@@ -10,6 +10,7 @@ from modules.GlobalExceptionHandler import get_global_handler
 from modules.ffmpeg_factory import FFmpegOptionsFactory
 from modules.ffmpeg_builder import build_ffmpeg_args
 from models.encoding import EncodingParams
+from models.enums import BuildState, NvencState, LogoState
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
 from models.video_info import VideoInfo, parse_ffprobe_output
@@ -100,12 +101,13 @@ class ThreadClassRender(QThread):
     # Softsubbing
     def softsub(self):
         self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
-        if self.config.build_settings.build_state in [0, 1]:
+        # Only run if build_state includes softsub
+        if self.config.build_settings.build_state in [BuildState.SOFT_AND_HARD, BuildState.SOFT_ONLY]:
             # Create options using factory
-            use_nvenc = self.config.build_settings.nvenc_state in [0, 1]
-            include_logo = self.config.build_settings.logo_state in [0, 1]
+            use_nvenc = self.config.build_settings.nvenc_state in [NvencState.NVENC_BOTH, NvencState.NVENC_SOFT_ONLY]
+            include_logo = self.config.build_settings.logo_state in [LogoState.LOGO_BOTH, LogoState.LOGO_SOFT_ONLY]
             preset = (self.config.render_speed[self.render_speed][0]
-                     if self.config.build_settings.nvenc_state in [2, 3]
+                     if self.config.build_settings.nvenc_state in [NvencState.NVENC_HARD_ONLY, NvencState.NVENC_NONE]
                      else self.config.render_speed[self.render_speed][1])
 
             options = self.ffmpeg_factory.create_softsub_options(
@@ -125,12 +127,13 @@ class ThreadClassRender(QThread):
     # Hardsubbing
     def hardsub(self):
         self.config.log('RenderThread', 'hardsub', "Starting hardsubbing...")
-        if self.config.build_settings.build_state in [0, 2]:
+        # Only run if build_state includes hardsub
+        if self.config.build_settings.build_state in [BuildState.SOFT_AND_HARD, BuildState.HARD_ONLY]:
             # Create options using factory
-            use_nvenc = self.config.build_settings.nvenc_state in [0, 2]
-            include_logo = self.config.build_settings.logo_state in [0, 2]
+            use_nvenc = self.config.build_settings.nvenc_state in [NvencState.NVENC_BOTH, NvencState.NVENC_HARD_ONLY]
+            include_logo = self.config.build_settings.logo_state in [LogoState.LOGO_BOTH, LogoState.LOGO_HARD_ONLY]
             preset = (self.config.render_speed[self.render_speed][0]
-                     if self.config.build_settings.nvenc_state in [1, 3]
+                     if self.config.build_settings.nvenc_state in [NvencState.NVENC_SOFT_ONLY, NvencState.NVENC_NONE]
                      else self.config.render_speed[self.render_speed][1])
 
             options = self.ffmpeg_factory.create_hardsub_options(
@@ -150,11 +153,12 @@ class ThreadClassRender(QThread):
     # Hardsubbing special
     def hardsubbering(self):
         self.config.log('RenderThread', 'hardsubbering', "Starting special hardsubbing...")
-        if self.config.build_settings.build_state == 3:
+        # Special mode for hardsubbers (no audio/softsub)
+        if self.config.build_settings.build_state == BuildState.FOR_HARDSUBBERS:
             # Create options using factory (no audio for hardsubbers)
-            use_nvenc = self.config.build_settings.nvenc_state in [0, 2]
-            include_logo = self.config.build_settings.logo_state in [0, 2]
-            preset = 'faster' if self.config.build_settings.nvenc_state in [1, 3] else 'p4'
+            use_nvenc = self.config.build_settings.nvenc_state in [NvencState.NVENC_BOTH, NvencState.NVENC_HARD_ONLY]
+            include_logo = self.config.build_settings.logo_state in [LogoState.LOGO_BOTH, LogoState.LOGO_HARD_ONLY]
+            preset = 'faster' if self.config.build_settings.nvenc_state in [NvencState.NVENC_SOFT_ONLY, NvencState.NVENC_NONE] else 'p4'
 
             options = self.ffmpeg_factory.create_hardsub_options(
                 paths=self.paths,
@@ -172,7 +176,8 @@ class ThreadClassRender(QThread):
             
     def raw_repairing(self):
         self.config.log('RenderThread', 'raw_repairing', "Starting raw repairing...")
-        if self.config.build_settings.build_state == 4:
+        # Repair mode: fix broken raw video
+        if self.config.build_settings.build_state == BuildState.RAW_REPAIR:
             args = [
                 '-y',
                 '-i', str(self.paths.raw),
@@ -312,7 +317,7 @@ class ThreadClassRender(QThread):
             # 10-bit formats: softsub uses 8-bit, hardsub preserves 10-bit
             softsub_fmt = 'yuv420p'
             # Hardsub format depends on nvenc usage
-            if self.config.build_settings.nvenc_state in [1, 3]:
+            if self.config.build_settings.nvenc_state in [NvencState.NVENC_SOFT_ONLY, NvencState.NVENC_NONE]:
                 hardsub_fmt = 'yuv420p10le'
             else:
                 hardsub_fmt = 'p010le'
@@ -336,12 +341,12 @@ class ThreadClassRender(QThread):
         profile_map = {
             'main': ('main', 'main'),
             'main10': (
-                'high10' if self.config.build_settings.nvenc_state in [2, 3] else 'high',
+                'high10' if self.config.build_settings.nvenc_state in [NvencState.NVENC_HARD_ONLY, NvencState.NVENC_NONE] else 'high',
                 'main10'
             ),
             'high': ('high', 'main10'),
             'high10': (
-                'high10' if self.config.build_settings.nvenc_state in [2, 3] else 'high',
+                'high10' if self.config.build_settings.nvenc_state in [NvencState.NVENC_HARD_ONLY, NvencState.NVENC_NONE] else 'high',
                 'main10'
             )
         }
