@@ -17,6 +17,7 @@ from windows.FAQWindow import FAQWindow
 from threads.RenderThread import ThreadClassRender
 from modules.AppUpdater import UpdaterUI
 from models.protocols import ProcessRunner
+from models.render_paths import RenderPaths
 
 # Main window class
 class MainWindow(QMainWindow):
@@ -30,6 +31,13 @@ class MainWindow(QMainWindow):
         self.threadMain = None
         self.faqWindow = None
         self.first_show = True
+
+        # UI path state (not stored on config)
+        self._ui_paths = {
+            'raw': '',
+            'audio': '',
+            'sub': '',
+        }
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.set_buttons()
@@ -81,18 +89,23 @@ class MainWindow(QMainWindow):
                 self.config.log('mainWindow', 'showEvent', "Updater disabled.")
 
     def universal_update(self, setting_path, value, log_message, type, post_operation=None):
-        keys = setting_path.split('.')
-        setting = self.config
-        for key in keys[:-1]:
-            if isinstance(setting, dict):
-                setting = setting.setdefault(key, {})
-            else:
-                setting = getattr(setting, key, None)
-        last_key = keys[-1]
-        if isinstance(setting, dict):
-            setting[last_key] = value
+        # Handle UI paths specially - store locally, not on config
+        if setting_path.startswith('rendering_paths.'):
+            path_key = setting_path.split('.')[1]
+            self._ui_paths[path_key] = value
         else:
-            setattr(setting, last_key, value)
+            keys = setting_path.split('.')
+            setting = self.config
+            for key in keys[:-1]:
+                if isinstance(setting, dict):
+                    setting = setting.setdefault(key, {})
+                else:
+                    setting = getattr(setting, key, None)
+            last_key = keys[-1]
+            if isinstance(setting, dict):
+                setting[last_key] = value
+            else:
+                setattr(setting, last_key, value)
 
         if log_message:
             if type == "checkbox":
@@ -355,24 +368,24 @@ class MainWindow(QMainWindow):
 
     # Raw video choose
     def raw_folder_path(self):
-        self.config.main_paths.raw, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать равку?", "",
+        self._ui_paths['raw'], _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать равку?", "",
                                                             "ALL (*.mkv *.mp4 *.avi)")
-        self.ui.raw_path_editline.setText(self.config.main_paths.raw)
-        self.config.log('mainWindow', 'raw_folder_path', f"Raw path updated to: {self.config.main_paths.raw}")
+        self.ui.raw_path_editline.setText(self._ui_paths['raw'])
+        self.config.log('mainWindow', 'raw_folder_path', f"Raw path updated to: {self._ui_paths['raw']}")
 
     # Sound file choose
     def sound_folder_path(self):
-        self.config.main_paths.audio, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать звук?", "",
+        self._ui_paths['audio'], _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать звук?", "",
                                                             "All(*.wav *.flac *.aac *.m4a *.mka)")
-        self.ui.audio_path_editline.setText(self.config.main_paths.audio)
-        self.config.log('mainWindow', 'sound_folder_path', f"Sound path updated to: {self.config.main_paths.audio}")
+        self.ui.audio_path_editline.setText(self._ui_paths['audio'])
+        self.config.log('mainWindow', 'sound_folder_path', f"Sound path updated to: {self._ui_paths['audio']}")
 
     # Subtitle choose
     def sub_folder_path(self):
-        self.config.rendering_paths['sub'], _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать надписи?", "",
+        self._ui_paths['sub'], _ = QtWidgets.QFileDialog.getOpenFileName(self, "Где брать надписи?", "",
                                                             "Хуй (*.ass *.srt)")
-        self.ui.subtitle_path_editline.setText(self.config.rendering_paths['sub'])
-        self.config.log('mainWindow', 'sub_folder_path', f"Subtitle path updated to: {self.config.rendering_paths['sub']}")
+        self.ui.subtitle_path_editline.setText(self._ui_paths['sub'])
+        self.config.log('mainWindow', 'sub_folder_path', f"Subtitle path updated to: {self._ui_paths['sub']}")
 
     # Coding Errors
     def coding_error(self, error_type):
@@ -425,34 +438,70 @@ class MainWindow(QMainWindow):
         self.config.log('mainWindow', 'elapsed_time_update', f"Elapsed time updated: {time}")
         self.ui.elapsed_time_label.setText(time)
 
+    def _create_render_paths(self) -> RenderPaths:
+        """Factory: create RenderPaths from current UI state."""
+        return RenderPaths.from_ui_state(
+            raw_path=self._ui_paths['raw'],
+            audio_path=self._ui_paths['audio'],
+            sub_path=self._ui_paths['sub'],
+            episode_name=self.config.build_settings.episode_name,
+            softsub_dir=self.config.main_paths.softsub,
+            hardsub_dir=self.config.main_paths.hardsub,
+        )
+
+    def _validate_before_render(self) -> bool:
+        """Validate paths before starting render. Returns True if valid."""
+        try:
+            paths = self._create_render_paths()
+            errors = paths.validate()
+
+            if errors:
+                # Show errors to user
+                error_msg = "\n".join(errors)
+                QtWidgets.QMessageBox.critical(self, "Validation Error", error_msg)
+                self.config.log('mainWindow', '_validate_before_render', f"Validation failed: {error_msg}")
+                return False
+
+            self.config.log('mainWindow', '_validate_before_render', "Validation passed")
+            return True
+        except Exception as e:
+            error_msg = f"Error validating paths: {str(e)}"
+            QtWidgets.QMessageBox.critical(self, "Error", error_msg)
+            self.config.log('mainWindow', '_validate_before_render', error_msg)
+            return False
+
     # Thread start with ffmpeg
     def ffmpeg_thread(self):
+        # Directory checks
         if not os.path.exists(self.config.main_paths.hardsub):
             self.coding_error('hardsub_folder')
-            return
-
-        self.ui.app_state_label.setText("Работаю....(наверное)")
-        self.ui.render_progress_bar.setValue(0)
-
-        if not os.path.exists(self.config.rendering_paths['raw']):
-            self.coding_error('raw')
-            return
-
-        if not os.path.exists(self.config.rendering_paths['audio']) and self.config.build_settings.build_state in [0, 1, 2]:
-            self.coding_error('sound')
-            return
-
-        if not os.path.exists(self.config.rendering_paths['sub']) and self.config.rendering_paths['sub'].replace(' ', '') != '' and self.config.rendering_paths['sub'] != None:
-            self.coding_error('subtitle')
             return
 
         if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
             self.coding_error('softsub')
             return
 
+        # Episode name validation
         if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
             self.coding_error('name')
             return
+
+        self.ui.app_state_label.setText("Работаю....(наверное)")
+        self.ui.render_progress_bar.setValue(0)
+
+        # Validate input paths using new centralized validation
+        if not self._validate_before_render():
+            return
+
+        # Create validated paths (will be passed to RenderThread in Phase 4)
+        paths = self._create_render_paths()
+
+        # Copy paths to config.rendering_paths for backward compatibility (Phase 4 cleanup)
+        self.config.rendering_paths['raw'] = str(paths.raw)
+        self.config.rendering_paths['audio'] = str(paths.audio) if paths.audio else ''
+        self.config.rendering_paths['sub'] = str(paths.sub) if paths.sub else ''
+        self.config.rendering_paths['softsub'] = str(paths.softsub)
+        self.config.rendering_paths['hardsub'] = str(paths.hardsub)
 
         self.config.log('mainWindow', 'ffmpeg_thread', "Starting ffmpeg...")
         self.threadMain = ThreadClassRender(self.config, runner=self.runner)
