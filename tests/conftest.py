@@ -114,15 +114,6 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
         max_logs=10
     )
 
-    # Rendering paths
-    config.rendering_paths = {
-        'raw': '',
-        'audio': '',
-        'sub': '',
-        'softsub': '',
-        'hardsub': ''
-    }
-
     # Working variables
     config.build_states = {
         'Софт и хард': 0,

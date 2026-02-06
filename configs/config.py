@@ -212,14 +212,6 @@ class Config:
         self.dev_settings = DevSettings()
         self.build_settings = BuildSettings()
 
-        self.rendering_paths = {
-            'raw'     : '',
-            'audio'   : '',
-            'sub'     : '',
-            'softsub' : '',
-            'hardsub' : ''
-        }
-
         # Working variables
         self.build_states = {
             'Софт и хард'      : 0,

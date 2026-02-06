@@ -166,13 +166,6 @@ class TestFFMpegConfig:
         assert config.dev_settings.logging_enabled is True
         assert config.dev_settings.max_logs == 10
 
-        # Check rendering_paths
-        assert 'raw' in config.rendering_paths
-        assert 'audio' in config.rendering_paths
-        assert 'sub' in config.rendering_paths
-        assert 'softsub' in config.rendering_paths
-        assert 'hardsub' in config.rendering_paths
-
         # Check build_settings (Phase 4: now BuildSettings dataclass)
         assert config.build_settings.build_state == BuildState.SOFT_AND_HARD
         assert config.build_settings.logo_state == LogoState.LOGO_BOTH

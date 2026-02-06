@@ -18,11 +18,11 @@ class TestRenderThread:
     """Test ThreadClassRender."""
 
     @pytest.fixture
-    def render_thread(self, mock_config):
-        """Create render thread with mock config."""
+    def render_thread(self, mock_config, mock_render_paths):
+        """Create render thread with mock config and paths."""
         # Disable sys.excepthook override in __init__
         with patch('sys.excepthook'):
-            thread = ThreadClassRender(mock_config)
+            thread = ThreadClassRender(mock_config, paths=mock_render_paths)
         return thread
 
     def test_ffmpeg_analysis_decoding_1080p(self, render_thread):
@@ -167,14 +167,6 @@ class TestRenderThread:
 
     def test_softsub_runs_for_state_0_and_1(self, render_thread, mock_config):
         """Softsub encoding runs for build_state 0 and 1."""
-        mock_config.rendering_paths = {
-            'raw': '/test/raw.mkv',
-            'audio': '/test/audio.wav',
-            'sub': None,
-            'softsub': '/test/output.mkv',
-            'hardsub': '/test/output.mp4'
-        }
-
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
@@ -194,14 +186,6 @@ class TestRenderThread:
 
     def test_hardsub_runs_for_state_0_and_2(self, render_thread, mock_config):
         """Hardsub encoding runs for build_state 0 and 2."""
-        mock_config.rendering_paths = {
-            'raw': '/test/raw.mkv',
-            'audio': '/test/audio.wav',
-            'sub': None,
-            'softsub': '/test/output.mkv',
-            'hardsub': '/test/output.mp4'
-        }
-
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
@@ -221,14 +205,6 @@ class TestRenderThread:
 
     def test_hardsubbering_runs_for_state_3(self, render_thread, mock_config):
         """Hardsubbering (for hardsubbers) runs only for state 3."""
-        mock_config.rendering_paths = {
-            'raw': '/test/raw.mkv',
-            'audio': None,
-            'sub': '/test/sub.ass',
-            'softsub': None,
-            'hardsub': '/test/output.mp4'
-        }
-
         with patch('subprocess.Popen') as mock_popen, \
              patch('os.chdir'):
             mock_proc = MagicMock()
@@ -248,11 +224,6 @@ class TestRenderThread:
 
     def test_raw_repairing_runs_for_state_4(self, render_thread, mock_config):
         """Raw repairing runs only for state 4."""
-        mock_config.rendering_paths = {
-            'raw': '/test/raw.mkv',
-            'softsub': '/test/output.mkv',
-        }
-
         with patch('subprocess.Popen') as mock_popen:
             mock_proc = MagicMock()
             mock_proc.stdout = []
