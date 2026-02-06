@@ -8,6 +8,9 @@ from typing import Optional
 
 from modules.FFmpegConstructor import FFmpegConstructor
 from modules.GlobalExceptionHandler import get_global_handler
+from modules.ffmpeg_factory import FFmpegOptionsFactory
+from modules.ffmpeg_builder import build_ffmpeg_args
+from models.encoding import EncodingParams
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
 from PyQt5 import QtCore
@@ -35,20 +38,28 @@ class ThreadClassRender(QThread):
         self.runner = runner
         self.paths = paths
         get_global_handler().register_callback(self.handle_exception)
+
+        # New: Factory for creating FFmpegOptions
+        self.ffmpeg_factory = FFmpegOptionsFactory(config, config.main_paths.temp)
+
+        # Legacy: Keep for backward compatibility (Phase 4 cleanup)
         self.command_constructor = FFmpegConstructor(self.config)
+
         self.render_speed = -1 if self.config.potato_PC else 1
         self.total_duration_sec = 0
         self.total_frames = 0
         self.video_res = ''
-        self.encoding_params = {
-            "avg_bitrate": "6M",
-            "max_bitrate": "9M",
-            "buffer_size": "18M",
-            "crf": "18",
-            "cq": "18",
-            "qmin": "17",
-            "qmax": "25"
-        }
+
+        # Convert to EncodingParams dataclass
+        self.encoding_params = EncodingParams(
+            avg_bitrate="6M",
+            max_bitrate="9M",
+            buffer_size="18M",
+            crf=18,
+            cq=19,
+            qmin=17,
+            qmax=23
+        )
         
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
@@ -93,26 +104,24 @@ class ThreadClassRender(QThread):
     def softsub(self):
         self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
         if self.config.build_settings.build_state in [0, 1]:
-            args = self.command_constructor.build_soft_args(
-                raw_path      = str(self.paths.raw),
-                sound_path    = str(self.paths.audio) if self.paths.audio else '',
-                sub_path      = str(self.paths.sub) if self.paths.sub else None,
-                output_path   = str(self.paths.softsub),
-                nvenc         = True if self.config.build_settings.nvenc_state in [0, 1] else False,
-                crf_rate      = self.encoding_params['crf'],
-                cqmin         = self.encoding_params['qmin'],
-                cq            = self.encoding_params['cq'],
-                cqmax         = self.encoding_params['qmax'],
-                max_bitrate   = self.encoding_params['max_bitrate'],
-                max_buffer    = self.encoding_params['buffer_size'],
-                preset        = self.config.render_speed[self.render_speed][0] if self.config.build_settings.nvenc_state in [2, 3] else self.config.render_speed[self.render_speed][1],
-                tune          = self.config.build_settings.softsub_settings.video_tune if self.config.build_settings.nvenc_state in [2, 3] else 'hq',
-                video_profile = self.config.build_settings.softsub_settings.video_profile,
-                profile_level = self.config.build_settings.softsub_settings.profile_level,
-                pixel_format  = self.config.build_settings.softsub_settings.pixel_format,
-                include_logo  = True if self.config.build_settings.logo_state in [0, 1] else False,
-                potato_mode   = self.config.potato_PC
+            # Create options using factory
+            use_nvenc = self.config.build_settings.nvenc_state in [0, 1]
+            include_logo = self.config.build_settings.logo_state in [0, 1]
+            preset = (self.config.render_speed[self.render_speed][0]
+                     if self.config.build_settings.nvenc_state in [2, 3]
+                     else self.config.render_speed[self.render_speed][1])
+
+            options = self.ffmpeg_factory.create_softsub_options(
+                paths=self.paths,
+                video_settings=self.config.build_settings.softsub_settings,
+                encoding_params=self.encoding_params,
+                use_nvenc=use_nvenc,
+                include_logo=include_logo,
+                preset=preset
             )
+
+            # Build args from options
+            args = build_ffmpeg_args(options)
             self.config.log('RenderThread', 'softsub', f"Generated args: {' '.join(args)}")
             self._run_encode(args, "Собираю софтсаб...")
 
@@ -120,52 +129,48 @@ class ThreadClassRender(QThread):
     def hardsub(self):
         self.config.log('RenderThread', 'hardsub', "Starting hardsubbing...")
         if self.config.build_settings.build_state in [0, 2]:
-            args = self.command_constructor.build_hard_args(
-                raw_path      = str(self.paths.raw),
-                sound_path    = str(self.paths.audio) if self.paths.audio else '',
-                sub_path      = str(self.paths.sub) if self.paths.sub else None,
-                output_path   = str(self.paths.hardsub),
-                nvenc         = True if self.config.build_settings.nvenc_state in [0, 2] else False,
-                crf_rate      = self.encoding_params['crf'],
-                cqmin         = self.encoding_params['qmin'],
-                cq            = self.encoding_params['cq'],
-                cqmax         = self.encoding_params['qmax'],
-                max_bitrate   = self.encoding_params['max_bitrate'],
-                max_buffer    = self.encoding_params['buffer_size'],
-                preset        = self.config.render_speed[self.render_speed][0] if self.config.build_settings.nvenc_state in [1, 3] else self.config.render_speed[self.render_speed][1],
-                tune          = self.config.build_settings.hardsub_settings.video_tune if self.config.build_settings.nvenc_state in [1, 3] else 'hq',
-                video_profile = self.config.build_settings.hardsub_settings.video_profile,
-                profile_level = self.config.build_settings.hardsub_settings.profile_level if '10' in self.config.build_settings.hardsub_settings.video_profile else '4.2',
-                pixel_format  = self.config.build_settings.hardsub_settings.pixel_format,
-                include_logo  = True if self.config.build_settings.logo_state in [0, 2] else False,
-                potato_mode   = self.config.potato_PC
+            # Create options using factory
+            use_nvenc = self.config.build_settings.nvenc_state in [0, 2]
+            include_logo = self.config.build_settings.logo_state in [0, 2]
+            preset = (self.config.render_speed[self.render_speed][0]
+                     if self.config.build_settings.nvenc_state in [1, 3]
+                     else self.config.render_speed[self.render_speed][1])
+
+            options = self.ffmpeg_factory.create_hardsub_options(
+                paths=self.paths,
+                video_settings=self.config.build_settings.hardsub_settings,
+                encoding_params=self.encoding_params,
+                use_nvenc=use_nvenc,
+                include_logo=include_logo,
+                preset=preset
             )
-            self.config.log('RenderThread', 'hardsub', f"Generated args: {args}")
+
+            # Build args from options
+            args = build_ffmpeg_args(options)
+            self.config.log('RenderThread', 'hardsub', f"Generated args: {' '.join(args)}")
             self._run_encode(args, "Собираю хардсаб...")
 
     # Hardsubbing special
     def hardsubbering(self):
         self.config.log('RenderThread', 'hardsubbering', "Starting special hardsubbing...")
         if self.config.build_settings.build_state == 3:
-            args = self.command_constructor.build_hard_args(
-                raw_path      = str(self.paths.raw),
-                sub_path      = str(self.paths.sub) if self.paths.sub else None,
-                output_path   = str(self.paths.hardsub),
-                nvenc         = True if self.config.build_settings.nvenc_state in [0, 2] else False,
-                crf_rate      = self.encoding_params['crf'],
-                cqmin         = self.encoding_params['qmin'],
-                cq            = self.encoding_params['cq'],
-                cqmax         = self.encoding_params['qmax'],
-                max_bitrate   = self.encoding_params['max_bitrate'],
-                max_buffer    = self.encoding_params['buffer_size'],
-                preset        = 'faster' if self.config.build_settings.nvenc_state in [1, 3] else 'p4',
-                tune          = self.config.build_settings.hardsub_settings.video_tune if self.config.build_settings.nvenc_state in [1, 3] else 'hq',
-                video_profile = self.config.build_settings.hardsub_settings.video_profile,
-                profile_level = self.config.build_settings.hardsub_settings.profile_level if '10' in self.config.build_settings.hardsub_settings.video_profile else '4.2',
-                pixel_format  = self.config.build_settings.hardsub_settings.pixel_format,
-                include_logo  = True if self.config.build_settings.logo_state in [0, 2] else False,
+            # Create options using factory (no audio for hardsubbers)
+            use_nvenc = self.config.build_settings.nvenc_state in [0, 2]
+            include_logo = self.config.build_settings.logo_state in [0, 2]
+            preset = 'faster' if self.config.build_settings.nvenc_state in [1, 3] else 'p4'
+
+            options = self.ffmpeg_factory.create_hardsub_options(
+                paths=self.paths,
+                video_settings=self.config.build_settings.hardsub_settings,
+                encoding_params=self.encoding_params,
+                use_nvenc=use_nvenc,
+                include_logo=include_logo,
+                preset=preset
             )
-            self.config.log('RenderThread', 'hardsubbering', f"Generated args: {args}")
+
+            # Build args from options
+            args = build_ffmpeg_args(options)
+            self.config.log('RenderThread', 'hardsubbering', f"Generated args: {' '.join(args)}")
             self._run_encode(args, "Собираю хардсаб для хардсабберов...")
             
     def raw_repairing(self):

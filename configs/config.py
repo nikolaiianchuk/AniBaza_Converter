@@ -12,6 +12,7 @@ from typing import Optional
 
 from models.enums import BuildState, LogoState, NvencState
 
+
 @dataclass
 class Paths:
     appdata: Path
@@ -26,16 +27,16 @@ class Paths:
     logo: Path
 
     def __init__(self, cwd: str):
-        self.appdata = Path(os.getenv('APPDATA') or '')
+        self.appdata = Path(os.getenv("APPDATA") or "")
         self.cwd = Path(cwd)
-        self.config_dir = Path(cwd, 'configs')
-        self.config = Path(self.config_dir, 'config.ini')
-        self.version = Path(self.config_dir, 'current_version.ini')
-        self.logs = Path(cwd, 'logs')
-        self.temp = Path(cwd, 'tmp')
-        self.softsub = Path('')
-        self.hardsub = Path(cwd, 'HARDSUB')
-        self.logo = Path(cwd, 'logo/AniBaza_Logo16x9.ass')
+        self.config_dir = Path(cwd, "configs")
+        self.config = Path(self.config_dir, "config.ini")
+        self.version = Path(self.config_dir, "current_version.ini")
+        self.logs = Path(cwd, "logs")
+        self.temp = Path(cwd, "tmp")
+        self.softsub = Path("")
+        self.hardsub = Path(cwd, "HARDSUB")
+        self.logo = Path(cwd, "logo/AniBaza_Logo16x9.ass")
         self.create_missing_folders()
 
     def create_missing_folders(self):
@@ -47,11 +48,11 @@ class Paths:
 @dataclass()
 class PCInfo:
     Platform: str = sys.platform
-    OSName: str = ''
-    OSVersion: str = ''
-    CPU: str = ''
-    RAM: str = ''
-    GPU: str = ''
+    OSName: str = ""
+    OSVersion: str = ""
+    CPU: str = ""
+    RAM: str = ""
+    GPU: str = ""
 
     def __post_init__(self):
         if self.is_windows():
@@ -61,13 +62,14 @@ class PCInfo:
 
     def _init_win32(self):
         import wmi
+
         hardware = wmi.WMI()
         os_info = hardware.Win32_OperatingSystem()[0]
         proc_info = hardware.Win32_Processor()[0]
         gpu_info = hardware.Win32_VideoController()[0]
 
-        os_name = os_info.Name.encode('utf-8').split(b'|')[0].decode('utf-8')
-        os_version = ' '.join([os_info.Version, os_info.BuildNumber])
+        os_name = os_info.Name.encode("utf-8").split(b"|")[0].decode("utf-8")
+        os_version = " ".join([os_info.Version, os_info.BuildNumber])
         system_ram = int(float(os_info.TotalVisibleMemorySize) // (1024 * 1024)) + 1  # KB to GB
 
         self.OSName = os_name
@@ -82,7 +84,7 @@ class PCInfo:
         self.CPU = platform.processor()
 
     def is_windows(self) -> bool:
-        return self.Platform == 'win32'
+        return self.Platform == "win32"
 
 
 @dataclass
@@ -98,7 +100,7 @@ class FFMpegConfig:
         self.version = None
         self.nvenc = False
 
-        path = which('ffmpeg')
+        path = which("ffmpeg")
         if not path:
             path = "C:\\ffmpeg\\bin\\ffmpeg.exe"
         self.installed = os.path.exists(path)
@@ -111,25 +113,40 @@ class FFMpegConfig:
 
     def __parse_ffmpeg_output(self):
         process = subprocess.Popen(
-            [str(self.path), '-version'],
+            [str(self.path), "-version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            encoding='utf-8',
-            errors='replace'
+            encoding="utf-8",
+            errors="replace",
         )
         stdout, _ = process.communicate()
-        match = re.search(r'ffmpeg\s+version\s+([a-zA-Z0-9]+\.[0-9]+(?:\.[0-9]+)?)', stdout)
+        match = re.search(r"ffmpeg\s+version\s+([a-zA-Z0-9]+\.[0-9]+(?:\.[0-9]+)?)", stdout)
         if match:
             self.version = match.group(1)
 
         # validate nvenc availability
         process = subprocess.Popen(
-            [str(self.path), '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=black:s=1080x1080',
-             '-vframes', '1', '-an', '-c:v', 'hevc_nvenc', '-f', 'null', '-'],
+            [
+                str(self.path),
+                "-loglevel",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=black:s=1080x1080",
+                "-vframes",
+                "1",
+                "-an",
+                "-c:v",
+                "hevc_nvenc",
+                "-f",
+                "null",
+                "-",
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            encoding='utf-8',
-            errors='replace'
+            encoding="utf-8",
+            errors="replace",
         )
         _, stderr = process.communicate()
         self.nvenc = not stderr
@@ -138,16 +155,18 @@ class FFMpegConfig:
 @dataclass
 class AppInfo:
     """Application metadata and versioning information."""
-    title: str = ''
-    version_number: str = ''
-    version_name: str = ''
-    author: str = ''
-    update_link: str = 'https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
+
+    title: str = ""
+    version_number: str = ""
+    version_name: str = ""
+    author: str = ""
+    update_link: str = "https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json"
 
 
 @dataclass
 class DevSettings:
     """Development and debugging settings."""
+
     dev_mode: bool = True
     logging_enabled: bool = True
     max_logs: int = 10
@@ -156,38 +175,41 @@ class DevSettings:
 @dataclass
 class VideoSettings:
     """Video encoding settings — the actual tunable parameters."""
-    video_tune: str = 'animation'
-    video_profile: str = 'high10'
-    profile_level: str = '4.1'
-    pixel_format: str = 'yuv420p10le'
+
+    video_tune: str = "animation"
+    video_profile: str = "high10"
+    profile_level: str = "4.1"
+    pixel_format: str = "yuv420p10le"
 
 
 class VideoPresets:
     """Named presets for different encoding scenarios."""
+
     SOFTSUB = VideoSettings(
-        video_tune='animation',
-        video_profile='high10',
-        profile_level='4.1',
-        pixel_format='yuv420p10le',
+        video_tune="animation",
+        video_profile="high10",
+        profile_level="4.1",
+        pixel_format="yuv420p10le",
     )
     HARDSUB = VideoSettings(
-        video_tune='animation',
-        video_profile='main10',
-        profile_level='4.1',
-        pixel_format='yuv420p10le',
+        video_tune="animation",
+        video_profile="main10",
+        profile_level="4.1",
+        pixel_format="yuv420p10le",
     )
     POTATO = VideoSettings(
-        video_tune='',  # tune is skipped in potato mode
-        video_profile='main',
-        profile_level='4.1',
-        pixel_format='yuv420p',
+        video_tune="",  # tune is skipped in potato mode
+        video_profile="main",
+        profile_level="4.1",
+        pixel_format="yuv420p",
     )
 
 
 @dataclass
 class BuildSettings:
     """Build configuration for video rendering."""
-    episode_name: str = ''
+
+    episode_name: str = ""
     build_state: BuildState = BuildState.SOFT_AND_HARD
     logo_state: LogoState = LogoState.LOGO_BOTH
     nvenc_state: NvencState = NvencState.NVENC_BOTH
@@ -214,32 +236,27 @@ class Config:
 
         # Working variables
         self.build_states = {
-            'Софт и хард'      : 0,
-            'Только софт'      : 1,
-            'Только хард'      : 2,
-            'Для хардсабберов' : 3,
-            'Починить равку'   : 4
+            "Софт и хард": 0,
+            "Только софт": 1,
+            "Только хард": 2,
+            "Для хардсабберов": 3,
+            "Починить равку": 4,
         }
 
         self.render_speed = {
-            -1 : ('ultrafast', 'p1'),
-            0  : ('superfast', 'p2'),
-            1  : ('veryfast', 'p3'),
-            2  : ('faster', 'p4'),
-            3  : ('fast', 'p5')
+            -1: ("ultrafast", "p1"),
+            0: ("superfast", "p2"),
+            1: ("veryfast", "p3"),
+            2: ("faster", "p4"),
+            3: ("fast", "p5"),
         }
 
         self.update_search = True
-        # - total_duration_sec, total_frames, video_res → RenderThread
-        # - current_state → removed (passed via signals only)
-        # - first_show → MainWindow
         self.potato_PC = False
 
     def start_log(self):
         self.logging_module.start_logging(
-            self.dev_settings.logging_enabled,
-            self.main_paths.logs,
-            self.dev_settings.max_logs
+            self.dev_settings.logging_enabled, self.main_paths.logs, self.dev_settings.max_logs
         )
 
     def log(self, module, function, message):
