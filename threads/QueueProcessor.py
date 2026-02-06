@@ -63,15 +63,72 @@ class QueueProcessor(QThread):
     def run(self) -> None:
         """Main thread loop for processing jobs.
 
-        Stub implementation for Task 9.
-        Full implementation will be added in Task 10.
+        Processes jobs sequentially from the queue:
+        1. Get next waiting job
+        2. Create RenderThread for the job
+        3. Execute and wait for completion
+        4. Update job status based on result
+        5. Emit appropriate signals
+        6. Handle cancellation between jobs
+        7. Emit queue_finished when all jobs are done
         """
-        # Task 10 will implement:
-        # - Loop through queue.get_next_waiting()
-        # - Set current_job_id and emit job_started
-        # - Execute job (create RenderThread, connect signals)
-        # - Update job status based on result
-        # - Emit appropriate completion signals
-        # - Check cancelled flag between jobs
-        # - Emit queue_finished when done
-        pass
+        from threads.RenderThread import ThreadClassRender
+        from models.enums import JobStatus
+
+        while True:
+            # Check if cancelled before processing next job
+            if self.cancelled:
+                break
+
+            # Get next waiting job
+            queued_job = self.queue.get_next_waiting()
+            if queued_job is None:
+                # No more waiting jobs
+                break
+
+            # Set current job and update status to RUNNING
+            self.current_job_id = queued_job.id
+            self.queue.update_status(queued_job.id, JobStatus.RUNNING)
+            self.job_started.emit(queued_job.id)
+
+            try:
+                # Check if cancelled after starting job
+                if self.cancelled:
+                    # Mark job as cancelled
+                    self.queue.update_status(queued_job.id, JobStatus.CANCELLED)
+                    self.job_cancelled.emit(queued_job.id)
+                    self.current_job_id = None
+                    break
+
+                # Create and run RenderThread for this job
+                # Note: RenderThread expects config object, but we have RenderJob
+                # For now, we'll need to adapt this when we integrate with actual config
+                render_thread = ThreadClassRender(
+                    config=None,  # Will be provided during integration
+                    runner=None,
+                    paths=queued_job.job.paths
+                )
+
+                # Run the render thread synchronously
+                render_thread.run()
+
+                # Job completed successfully
+                self.queue.update_status(queued_job.id, JobStatus.COMPLETED)
+                self.job_completed.emit(queued_job.id)
+
+            except Exception as e:
+                # Job failed
+                error_message = str(e)
+                self.queue.update_status(
+                    queued_job.id,
+                    JobStatus.FAILED,
+                    error_message=error_message
+                )
+                self.job_failed.emit(queued_job.id, error_message)
+
+            finally:
+                # Clear current job
+                self.current_job_id = None
+
+        # All jobs processed
+        self.queue_finished.emit()
