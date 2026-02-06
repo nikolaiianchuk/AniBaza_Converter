@@ -72,7 +72,9 @@ class FFmpegConstructor:
             'exists'         : False
         }
 
-        self.separator = f'{chr(92)}:{chr(92)}{chr(92)}'
+        # Path separator for Windows paths in ffmpeg filters
+        # Use raw string instead of chr(92) obfuscation
+        self.separator = r'\:\\'
         self.escaped_logo_path = ''
 
     def sub_escaper(self, path):
