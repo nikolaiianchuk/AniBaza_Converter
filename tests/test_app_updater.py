@@ -42,7 +42,7 @@ class TestAppUpdater:
 
         should_update, latest, installed = updater_thread.should_update_ffmpeg()
 
-        # BUG: String comparison - "7.1" > "6.0" happens to work here
+        # Uses semantic versioning (packaging.version.Version)
         assert should_update is True
         assert latest == "7.1"
         assert installed == "6.0"
@@ -75,7 +75,7 @@ class TestAppUpdater:
 
         version, url, name = updater_thread.check_for_app_update()
 
-        # BUG: String comparison - "1.1.0" > "1.0.0" happens to work
+        # Uses semantic versioning (packaging.version.Version)
         assert version == "1.1.0"
         assert url == "https://example.com/update.exe"
         assert name == "v1.1.0"
