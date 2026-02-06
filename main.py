@@ -7,6 +7,7 @@ import traceback
 
 from configs.config import Config, PCInfo, Paths
 from modules.GlobalExceptionHandler import get_global_handler
+from modules.process_runner import SubprocessRunner
 from PyQt5 import QtWidgets
 from windows.mainWindow import MainWindow
 
@@ -81,11 +82,24 @@ def main():
         config.log('App System', 'main', 'Starting application')
         config.log('App System', 'get_PC_info', f"PC info: {pc_info}")
         config.log('App System', 'ffmpeg', f"Version: {config.ffmpeg.version}, Supports NVENC: {config.ffmpeg.nvenc}")
+
+        # Create ProcessRunner for safe subprocess execution
+        runner = None
+        if config.ffmpeg.installed and config.ffmpeg.path:
+            runner = SubprocessRunner(
+                ffmpeg_path=config.ffmpeg.path,
+                ffprobe_path=config.ffmpeg.path.parent / 'ffprobe' if config.ffmpeg.path else None,
+                cwd=config.main_paths.cwd
+            )
+            config.log('App System', 'main', f'ProcessRunner initialized with ffmpeg: {config.ffmpeg.path}')
+        else:
+            config.log('App System', 'main', 'ProcessRunner not available (ffmpeg not found)')
+
         restore_config(config)
         ConfigModule.load_configs(config)
         app = QtWidgets.QApplication(sys.argv)
         app.setQuitOnLastWindowClosed(True)
-        mainWindow = MainWindow(config)
+        mainWindow = MainWindow(config, runner=runner)
         mainWindow.show()
 
         sys.exit(app.exec_())

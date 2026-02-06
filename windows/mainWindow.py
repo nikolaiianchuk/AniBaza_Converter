@@ -9,21 +9,24 @@ import webbrowser
 import modules.ConfigModule as ConfigModule
 
 from modules.GlobalExceptionHandler import get_global_handler
+from typing import Optional
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QApplication, QMainWindow
 from UI.normUI2 import Ui_MainWindow
 from windows.FAQWindow import FAQWindow
 from threads.RenderThread import ThreadClassRender
 from modules.AppUpdater import UpdaterUI
+from models.protocols import ProcessRunner
 
 # Main window class
 class MainWindow(QMainWindow):
     # Main window init
-    def __init__(self, config):
+    def __init__(self, config, runner: Optional[ProcessRunner] = None):
         super().__init__()
         # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
         self.config = config
+        self.runner = runner  # Phase 6: ProcessRunner for safe subprocess execution
         self.finish_message = False
         self.threadMain = None
         self.faqWindow = None
@@ -452,7 +455,7 @@ class MainWindow(QMainWindow):
             return
 
         self.config.log('mainWindow', 'ffmpeg_thread', "Starting ffmpeg...")
-        self.threadMain = ThreadClassRender(self.config)
+        self.threadMain = ThreadClassRender(self.config, runner=self.runner)
         self.threadMain.finished.connect(self.finished)
         self.threadMain.frame_upd.connect(self.frame_update)
         self.threadMain.time_upd.connect(self.time_update)
