@@ -212,7 +212,6 @@ class Config:
         self.dev_settings = DevSettings()
         self.build_settings = BuildSettings()
 
-        # TODO: Move to RenderJob
         self.rendering_paths = {
             'raw'     : '',
             'audio'   : '',
