@@ -207,15 +207,15 @@ class TestFFmpegConstructor:
 
         constructor.sub_escaper(str(sub_with_brackets))
 
-        # Check that sub dict is populated
-        assert constructor.sub['exists'] is True
-        assert constructor.sub['name'] == "[Test] subtitle.ass"
-        assert constructor.sub['sanitized_name'] == "Test subtitle.ass"
-        assert constructor.sub['temp_path'] != ''
-        assert constructor.sub['escaped_path'] != ''
+        # Phase 5: Check that SubtitleInfo dataclass is populated
+        assert constructor.sub.exists is True
+        assert constructor.sub.name == "[Test] subtitle.ass"
+        assert constructor.sub.sanitized_name == "Test subtitle.ass"
+        assert constructor.sub.temp_path != ''
+        assert constructor.sub.escaped_path != ''
 
         # Check temp file was created
-        temp_file = Path(constructor.sub['temp_path'])
+        temp_file = Path(constructor.sub.temp_path)
         assert temp_file.exists()
         assert temp_file.read_text() == "test content"
 
@@ -230,7 +230,7 @@ class TestFFmpegConstructor:
         assert '\\\\' not in constructor.escaped_logo_path or sys.platform == 'win32'
 
     def test_remove_temp_sub(self, constructor, test_files, mock_config, tmp_path):
-        """remove_temp_sub deletes temp file and resets dict."""
+        """remove_temp_sub deletes temp file and resets SubtitleInfo."""
         mock_config.main_paths.temp = tmp_path / "tmp"
         mock_config.main_paths.temp.mkdir(exist_ok=True)
 
@@ -239,17 +239,18 @@ class TestFFmpegConstructor:
 
         # Setup sub
         constructor.sub_escaper(str(sub_file))
-        temp_path = constructor.sub['temp_path']
+        temp_path = constructor.sub.temp_path
 
         assert Path(temp_path).exists()
 
         # Remove
         constructor.remove_temp_sub()
 
+        # Phase 5: Check SubtitleInfo is reset
         assert not Path(temp_path).exists()
-        assert constructor.sub['exists'] is False
-        assert constructor.sub['name'] == ''
-        assert constructor.sub['temp_path'] == ''
+        assert constructor.sub.exists is False
+        assert constructor.sub.name == ''
+        assert constructor.sub.temp_path == ''
 
 
 class TestFFmpegConstructorArgs:

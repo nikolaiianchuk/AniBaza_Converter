@@ -2,6 +2,7 @@ import os
 import shutil
 
 from pathlib import Path
+from models.encoding import SubtitleInfo
 
 class FFmpegConstructor:
     def __init__(self, config):
@@ -63,14 +64,8 @@ class FFmpegConstructor:
             'audio discretization' : '-ar 48000',
             'video output'         : '"{OUTPUT_FILE_PATH}"'
         }
-        self.sub = {
-            'name'           : '',
-            'sanitized_name' : '',
-            'path'           : '',
-            'temp_path'      : '',
-            'escaped_path'   : '',
-            'exists'         : False
-        }
+        # Phase 5: Replace mutable dict with SubtitleInfo dataclass
+        self.sub = SubtitleInfo()
 
         # Path separator for Windows paths in ffmpeg filters
         # Use raw string instead of chr(92) obfuscation
@@ -78,14 +73,22 @@ class FFmpegConstructor:
         self.escaped_logo_path = ''
 
     def sub_escaper(self, path):
-        self.sub['path'] = path
-        self.sub['exists'] = True
-        self.sub['name'] = os.path.basename(self.sub['path'])
-        self.sub['sanitized_name'] = str(self.sub['name']).replace('[', '').replace(']', '')
+        # Phase 5: Create new SubtitleInfo instead of mutating dict
+        name = os.path.basename(path)
+        sanitized_name = str(name).replace('[', '').replace(']', '')
         os.makedirs(self.config.main_paths.temp, exist_ok=True)
-        self.sub['temp_path'] = os.path.join(self.config.main_paths.temp, self.sub['sanitized_name'])
-        shutil.copyfile(self.sub['path'], self.sub['temp_path'])
-        self.sub['escaped_path'] = f"{str(self.sub['temp_path']).replace(chr(92), '/').replace(':/', self.separator)}"
+        temp_path = os.path.join(self.config.main_paths.temp, sanitized_name)
+        shutil.copyfile(path, temp_path)
+        escaped_path = f"{str(temp_path).replace(chr(92), '/').replace(':/', self.separator)}"
+
+        self.sub = SubtitleInfo(
+            name=name,
+            sanitized_name=sanitized_name,
+            path=path,
+            temp_path=temp_path,
+            escaped_path=escaped_path,
+            exists=True
+        )
 
     def logo_escaper(self):
         self.escaped_logo_path = f"{str(self.config.main_paths.logo).replace(chr(92), '/').replace(':/', self.separator)}"
@@ -115,20 +118,20 @@ class FFmpegConstructor:
         # Input files
         args.extend(['-i', raw_path])
         args.extend(['-i', sound_path])
-        if self.sub['exists']:
+        if self.sub.exists:
             args.extend(['-i', sub_path])
 
         # Stream mapping
         args.extend(['-map', '0:v:0'])
         args.extend(['-map', '1:a'])
-        if self.sub['exists']:
+        if self.sub.exists:
             args.extend(['-map', '2:s'])
 
         # Metadata
         args.extend(['-dn'])  # Garbage deleter
         args.extend(['-metadata:s:v:0', 'title=Original', '-metadata:s:v:0', 'language=jap'])
         args.extend(['-metadata:s:a:0', 'title=AniBaza', '-metadata:s:a:0', 'language=rus'])
-        if self.sub['exists']:
+        if self.sub.exists:
             args.extend(['-metadata:s:s:0', 'title=Caption', '-metadata:s:s:0', 'language=rus'])
 
         # Logo burning filter
@@ -162,7 +165,7 @@ class FFmpegConstructor:
         args.extend(['-ar', '48000'])
 
         # Subtitle codec
-        if self.sub['exists']:
+        if self.sub.exists:
             args.extend(['-c:s', 'copy'])
 
         # Output file
@@ -202,12 +205,12 @@ class FFmpegConstructor:
         args.extend(['-dn'])  # Garbage deleter
 
         # Burning filters (logo and/or subtitle)
-        if include_logo and self.sub['exists']:
+        if include_logo and self.sub.exists:
             # Both logo and subtitle (2burning)
-            args.extend(['-vf', f"subtitles='{self.escaped_logo_path}', subtitles='{self.sub['escaped_path']}'"])
-        elif include_logo or self.sub['exists']:
+            args.extend(['-vf', f"subtitles='{self.escaped_logo_path}', subtitles='{self.sub.escaped_path}'"])
+        elif include_logo or self.sub.exists:
             # Just one (1burning)
-            path_to_burn = self.escaped_logo_path if include_logo else self.sub['escaped_path']
+            path_to_burn = self.escaped_logo_path if include_logo else self.sub.escaped_path
             args.extend(['-vf', f"subtitles='{path_to_burn}'"])
 
         # Video codec
@@ -258,14 +261,14 @@ class FFmpegConstructor:
         cmds = ['override output',
                 'video input',
                 'audio input',
-                'subtitle input' if self.sub['exists'] else '',
+                'subtitle input' if self.sub.exists else '',
                 'video map',
                 'audio map',
-                'subtitle map' if self.sub['exists'] else '',
+                'subtitle map' if self.sub.exists else '',
                 'garbage deleter',
                 'video metadata',
                 'audio metadata',
-                'subtitle metadata' if self.sub['exists'] else '',
+                'subtitle metadata' if self.sub.exists else '',
                 'logo burning' if include_logo else '',
                 'video codec',
                 'video CQ' if nvenc else 'video CRF',
@@ -278,7 +281,7 @@ class FFmpegConstructor:
                 'audio codec',
                 'audio bitrate',
                 'audio discretization',
-                'subtitle codec' if self.sub['exists'] else '',
+                'subtitle codec' if self.sub.exists else '',
                 'video output'
             ]#'profile level',
 
@@ -323,9 +326,9 @@ class FFmpegConstructor:
         self.logo_escaper()
         command_parts = [self.hardsub_ffmpeg_commands['init']]
         burning = ''
-        if include_logo and self.sub['exists']:
+        if include_logo and self.sub.exists:
             burning = '2burning'
-        elif include_logo or self.sub['exists']:
+        elif include_logo or self.sub.exists:
             burning = '1burning'
         else:
             burning = ''
@@ -359,8 +362,8 @@ class FFmpegConstructor:
             RAW_PATH_INPUT    = raw_path,
             SOUND_PATH_INPUT  = sound_path,
             ESCAPED_LOGO_PATH = self.escaped_logo_path,
-            ESCAPED_SUB_PATH  = self.sub['escaped_path'],
-            LOGO_OR_SUB_PATH  = self.escaped_logo_path if include_logo else self.sub['escaped_path'],
+            ESCAPED_SUB_PATH  = self.sub.escaped_path,
+            LOGO_OR_SUB_PATH  = self.escaped_logo_path if include_logo else self.sub.escaped_path,
             NVENC             = '_nvenc' if nvenc else '',
             BITRATE           = '3500k',
             CRF_RATE          = crf_rate,
@@ -380,13 +383,7 @@ class FFmpegConstructor:
         return str_out
 
     def remove_temp_sub(self):
-        if os.path.exists(self.sub['temp_path']):
-            os.remove(self.sub['temp_path'])
-            self.sub = {
-                'name' : '',
-                'sanitized_name' : '',
-                'path' : '',
-                'temp_path' : '',
-                'escaped_path' : '',
-                'exists' : False
-            }
+        # Phase 5: Use SubtitleInfo dataclass
+        if os.path.exists(self.sub.temp_path):
+            os.remove(self.sub.temp_path)
+            self.sub = SubtitleInfo()  # Reset to empty instance

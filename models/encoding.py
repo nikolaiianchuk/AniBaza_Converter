@@ -19,6 +19,21 @@ class EncodingParams:
     qmax: int  # Maximum quantizer
 
 
+@dataclass
+class SubtitleInfo:
+    """Information about a subtitle file being processed.
+
+    Phase 5: Replaces the mutable dict self.sub in FFmpegConstructor.
+    """
+
+    name: str = ''
+    sanitized_name: str = ''
+    path: str = ''
+    temp_path: str = ''
+    escaped_path: str = ''
+    exists: bool = False
+
+
 class EncodingDefaults:
     """Hardcoded encoding constants and defaults.
 
