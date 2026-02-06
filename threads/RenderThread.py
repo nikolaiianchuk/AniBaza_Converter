@@ -111,11 +111,8 @@ class ThreadClassRender(QThread):
                 potato_mode   = self.config.potato_PC
             )
             self.config.log('RenderThread', 'softsub', f"Generated args: {' '.join(args)}")
-            self.config.current_state = "Собираю софтсаб..."
-            self.state_update(self.config.current_state)
-            # Phase 6: Use _run_process_safe() which uses ProcessRunner if available
-            process = self._run_process_safe(args)
-            self.frame_update(process)
+            # Phase 5.7: Use consolidated _run_encode() helper
+            self._run_encode(args, "Собираю софтсаб...")
 
     # Hardsubbing
     def hardsub(self):
@@ -142,10 +139,8 @@ class ThreadClassRender(QThread):
                 potato_mode   = self.config.potato_PC
             )
             self.config.log('RenderThread', 'hardsub', f"Generated args: {args}")
-            self.config.current_state = "Собираю хардсаб..."
-            self.state_update(self.config.current_state)
-            process = self._run_process_safe(args)
-            self.frame_update(process)
+            # Phase 5.7: Use consolidated _run_encode() helper
+            self._run_encode(args, "Собираю хардсаб...")
 
     # Hardsubbing special
     def hardsubbering(self):
@@ -170,10 +165,8 @@ class ThreadClassRender(QThread):
                 include_logo  = True if self.config.build_settings.logo_state in [0, 2] else False,
             )
             self.config.log('RenderThread', 'hardsubbering', f"Generated args: {args}")
-            self.config.current_state = "Собираю хардсаб для хардсабберов..."
-            self.state_update(self.config.current_state)
-            process = self._run_process_safe(args)
-            self.frame_update(process)
+            # Phase 5.7: Use consolidated _run_encode() helper
+            self._run_encode(args, "Собираю хардсаб для хардсабберов...")
             
     def raw_repairing(self):
         self.config.log('RenderThread', 'raw_repairing', "Starting raw repairing...")
@@ -187,10 +180,8 @@ class ThreadClassRender(QThread):
                 self.config.rendering_paths['softsub']
             ]
             self.config.log('RenderThread', 'raw_repairing', f"Generated args: {args}")
-            self.config.current_state = "Востанавливаю равку..."
-            self.state_update(self.config.current_state)
-            process = self._run_process_safe(args)
-            self.frame_update(process)
+            # Phase 5.7: Use consolidated _run_encode() helper
+            self._run_encode(args, "Востанавливаю равку...")
 
     def ffmpeg_analysis(self):
         self.config.log('RenderThread', 'ffmpeg_analysis', "Starting ffmpeg analysis...")
@@ -328,6 +319,23 @@ class ThreadClassRender(QThread):
                 encoding='utf-8',
                 errors='replace'
             )
+
+    def _run_encode(self, args: list[str], state_label: str) -> None:
+        """Phase 5.7: Consolidated encode execution helper.
+
+        Encapsulates the common pattern of:
+        1. Update UI state
+        2. Run ffmpeg process
+        3. Monitor progress
+
+        Args:
+            args: FFmpeg arguments as a list
+            state_label: Status message to display (e.g., "Собираю софтсаб...")
+        """
+        self.config.current_state = state_label
+        self.state_update(state_label)
+        process = self._run_process_safe(args)
+        self.frame_update(process)
 
     # Coding commands
     def run(self):

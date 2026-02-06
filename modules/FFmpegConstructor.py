@@ -2,7 +2,7 @@ import os
 import shutil
 
 from pathlib import Path
-from models.encoding import SubtitleInfo
+from models.encoding import SubtitleInfo, EncodingDefaults
 
 class FFmpegConstructor:
     def __init__(self, config):
@@ -94,8 +94,8 @@ class FFmpegConstructor:
         self.escaped_logo_path = f"{str(self.config.main_paths.logo).replace(chr(92), '/').replace(':/', self.separator)}"
 
     def build_soft_args(self, raw_path='', sound_path='', sub_path=None,
-                        output_path='', nvenc=False, crf_rate='18', cqmin='17',
-                        cq='18', cqmax='25', max_bitrate='', max_buffer='', video_profile='main',
+                        output_path='', nvenc=False, crf_rate=None, cqmin=None,
+                        cq=None, cqmax=None, max_bitrate='', max_buffer='', video_profile='main',
                         profile_level='4.2', pixel_format='yuv420p', preset='faster', tune='animation',
                         include_logo=True, potato_mode=False):
         """Build ffmpeg arguments as a list (no shell=True needed).
@@ -105,6 +105,16 @@ class FFmpegConstructor:
 
         Args are the same as build_soft_command(), but returns list instead of string.
         """
+        # Phase 5.8: Use EncodingDefaults for constants
+        if crf_rate is None:
+            crf_rate = str(EncodingDefaults.CRF_1080P)
+        if cq is None:
+            cq = str(EncodingDefaults.CRF_1080P + EncodingDefaults.CQ_OFFSET)
+        if cqmin is None:
+            cqmin = str(int(cq) - EncodingDefaults.QMIN_OFFSET)
+        if cqmax is None:
+            cqmax = str(int(cq) + EncodingDefaults.QMAX_OFFSET)
+
         # Prepare subtitle and logo paths (without os.chdir)
         if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
@@ -148,7 +158,7 @@ class FFmpegConstructor:
         else:
             args.extend(['-crf', crf_rate])
 
-        args.extend(['-b:v', '3500k'])
+        args.extend(['-b:v', EncodingDefaults.VIDEO_BITRATE])
         args.extend(['-maxrate', max_bitrate])
         args.extend(['-bufsize', max_buffer])
         args.extend(['-preset', preset])
@@ -160,9 +170,9 @@ class FFmpegConstructor:
         args.extend(['-pix_fmt', pixel_format])
 
         # Audio settings
-        args.extend(['-c:a', 'aac'])
-        args.extend(['-b:a', '320K'])
-        args.extend(['-ar', '48000'])
+        args.extend(['-c:a', EncodingDefaults.AUDIO_CODEC])
+        args.extend(['-b:a', EncodingDefaults.AUDIO_BITRATE])
+        args.extend(['-ar', str(EncodingDefaults.AUDIO_SAMPLE_RATE)])
 
         # Subtitle codec
         if self.sub.exists:
@@ -174,14 +184,24 @@ class FFmpegConstructor:
         return args
 
     def build_hard_args(self, raw_path='', sound_path='', sub_path=None,
-                        output_path='', nvenc=False, crf_rate='18', cqmin='17',
-                        cq='18', cqmax='25', max_bitrate='', max_buffer='', preset='faster',
+                        output_path='', nvenc=False, crf_rate=None, cqmin=None,
+                        cq=None, cqmax=None, max_bitrate='', max_buffer='', preset='faster',
                         tune='animation', video_profile='main', profile_level='4.2',
                         pixel_format='yuv420p', include_logo=True, potato_mode=False):
         """Build hardsub ffmpeg arguments as a list (no shell=True needed).
 
         Returns a list of arguments for hardsub encoding.
         """
+        # Phase 5.8: Use EncodingDefaults for constants
+        if crf_rate is None:
+            crf_rate = str(EncodingDefaults.CRF_1080P)
+        if cq is None:
+            cq = str(EncodingDefaults.CRF_1080P + EncodingDefaults.CQ_OFFSET)
+        if cqmin is None:
+            cqmin = str(int(cq) - EncodingDefaults.QMIN_OFFSET)
+        if cqmax is None:
+            cqmax = str(int(cq) + EncodingDefaults.QMAX_OFFSET)
+
         # Prepare subtitle and logo paths
         if sub_path and os.path.exists(sub_path):
             self.sub_escaper(sub_path)
@@ -223,7 +243,7 @@ class FFmpegConstructor:
         else:
             args.extend(['-crf', crf_rate])
 
-        args.extend(['-b:v', '3500k'])
+        args.extend(['-b:v', EncodingDefaults.VIDEO_BITRATE])
         args.extend(['-maxrate', max_bitrate])
         args.extend(['-bufsize', max_buffer])
         args.extend(['-preset', preset])
@@ -236,9 +256,9 @@ class FFmpegConstructor:
 
         # Audio settings (only if sound_path provided)
         if sound_path:
-            args.extend(['-c:a', 'aac'])
-            args.extend(['-b:a', '320K'])
-            args.extend(['-ar', '48000'])
+            args.extend(['-c:a', EncodingDefaults.AUDIO_CODEC])
+            args.extend(['-b:a', EncodingDefaults.AUDIO_BITRATE])
+            args.extend(['-ar', str(EncodingDefaults.AUDIO_SAMPLE_RATE)])
 
         # Output file
         args.append(output_path)
