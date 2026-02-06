@@ -465,13 +465,18 @@ class MainWindow(QMainWindow):
 
     # Kill ffmpeg process
     def proc_kill(self):
-        os.chdir(self.config.main_paths.cwd)
         self.finish_message = True
-        if self.config.pc_info.is_windows():
-            subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
+        if hasattr(self, 'threadMain') and self.threadMain and self.threadMain.runner:
+            # Use ProcessRunner for safe, targeted kill
+            self.threadMain.runner.kill_ffmpeg()
+            self.config.log('mainWindow', 'proc_kill', "Killed ffmpeg process via ProcessRunner")
         else:
-            subprocess.run('kill $(pgrep ffmpeg)', shell=True)
-        self.config.log('mainWindow', 'proc_kill', "Killed ffmpeg process")
+            # Fallback to old method if ProcessRunner not available
+            if self.config.pc_info.is_windows():
+                subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
+            else:
+                subprocess.run('kill $(pgrep ffmpeg)', shell=True)
+            self.config.log('mainWindow', 'proc_kill', "Killed ffmpeg process (fallback method)")
 
     # After coding
     def finished(self):

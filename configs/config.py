@@ -112,10 +112,9 @@ class FFMpegConfig:
 
     def __parse_ffmpeg_output(self):
         process = subprocess.Popen(
-            f"{self.path} -version",
+            [str(self.path), '-version'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True,
             encoding='utf-8',
             errors='replace'
         )
@@ -126,10 +125,10 @@ class FFMpegConfig:
 
         # validate nvenc availability
         process = subprocess.Popen(
-            f"{self.path} -loglevel error -f lavfi -i color=black:s=1080x1080 -vframes 1 -an -c:v hevc_nvenc -f null -",
+            [str(self.path), '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=black:s=1080x1080',
+             '-vframes', '1', '-an', '-c:v', 'hevc_nvenc', '-f', 'null', '-'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True,
             encoding='utf-8',
             errors='replace'
         )

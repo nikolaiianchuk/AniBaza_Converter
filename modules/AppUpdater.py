@@ -137,7 +137,7 @@ class UpdaterUI:
         if path:  # Если путь не пустой
             self.progress.close()  # Закрываем прогресс-диалог
             self.config.log('AppUpdater', 'app_download_finished', "Starting installer...")
-            subprocess.Popen([path], shell=True)
+            subprocess.Popen([path])
             self.main_window.close()
 
     def start_app_download(self, url, version):
