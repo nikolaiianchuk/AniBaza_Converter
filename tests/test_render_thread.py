@@ -127,18 +127,18 @@ class TestRenderThread:
         render_thread.total_duration_sec = 1442  # Set duration to avoid division by zero
         params = render_thread.calculate_encoding_params(2.0, "1080p")
 
-        assert params['crf'] == '18'
-        assert params['cq'] == '19'
-        assert params['qmin'] == '17'
-        assert params['qmax'] == '23'
+        assert params.crf == 18
+        assert params.cq == 19
+        assert params.qmin == 17
+        assert params.qmax == 23
 
     def test_calculate_encoding_params_720p(self, render_thread):
         """Encoding params for 720p use CRF 20."""
         render_thread.total_duration_sec = 1442  # Set duration
         params = render_thread.calculate_encoding_params(2.0, "720p")
 
-        assert params['crf'] == '20'
-        assert params['cq'] == '21'
+        assert params.crf == 20
+        assert params.cq == 21
 
     def test_calculate_encoding_params_potato(self, render_thread):
         """Potato mode halves bitrate and sets CRF 23."""
@@ -148,11 +148,11 @@ class TestRenderThread:
         params = render_thread.calculate_encoding_params(2.0, "1080p")
 
         # Check potato CRF
-        assert params['crf'] == '23'
-        assert params['cq'] == '21'
+        assert params.crf == 23
+        assert params.cq == 21
 
         # Check bitrate is halved (roughly)
-        avg_bitrate = int(params['avg_bitrate'].rstrip('M'))
+        avg_bitrate = int(params.avg_bitrate.rstrip('M'))
         assert avg_bitrate <= 3  # Should be less than or equal to 3M due to halving and capping
 
     def test_calculate_encoding_params_cap(self, render_thread):
@@ -162,7 +162,7 @@ class TestRenderThread:
 
         params = render_thread.calculate_encoding_params(10.0, "1080p")
 
-        avg_bitrate = int(params['avg_bitrate'].rstrip('M'))
+        avg_bitrate = int(params.avg_bitrate.rstrip('M'))
         assert avg_bitrate == 6  # Capped at 6M
 
     def test_softsub_runs_for_state_0_and_1(self, render_thread, mock_config):

@@ -190,25 +190,25 @@ class ThreadClassRender(QThread):
         process = self._run_process_safe(args, is_ffprobe=True)
         self.ffmpeg_analysis_decoding(process)
     
-    def calculate_encoding_params(self, file_size_gb, resolution):
-        output = {
-            "avg_bitrate": "{AVG}M",
-            "max_bitrate": "{MAX}M",
-            "buffer_size": "{BUFFER}M",
-            "crf": "{CRF}",
-            "cq": "{CQ}",
-            "qmin": "{QMIN}",
-            "qmax": "{QMAX}"
-        }
+    def calculate_encoding_params(self, file_size_gb, resolution) -> EncodingParams:
+        """Calculate encoding parameters based on file size and resolution.
+
+        Args:
+            file_size_gb: Input file size in GB
+            resolution: Video resolution (e.g., "1080p", "720p")
+
+        Returns:
+            EncodingParams dataclass with calculated values
+        """
         avg_bitrate = (file_size_gb * 1024 * 8) / self.total_duration_sec
         avg_bitrate = avg_bitrate if avg_bitrate < 6 else 6
-        
+
         if self.config.potato_PC:
             avg_bitrate /= 2
-            
+
         max_bitrate = avg_bitrate * 1.5
         buffer_size = max_bitrate * 2
-        
+
         if resolution in ["1080p", "4K"]:
             crf = 18
             cq = 19
@@ -218,24 +218,27 @@ class ThreadClassRender(QThread):
         else:
             crf = 23
             cq = 23
-            
+
         if self.config.potato_PC:
             crf = 23
             cq = 21
-            
+
         qmin = cq - 2
         qmax = cq + 4
-        
-        output['avg_bitrate'] = output['avg_bitrate'].format(AVG=int(avg_bitrate))
-        output['max_bitrate'] = output['max_bitrate'].format(MAX=int(max_bitrate))
-        output['buffer_size'] = output['buffer_size'].format(BUFFER=int(buffer_size))
-        output['crf'] = output['crf'].format(CRF=crf)
-        output['cq'] = output['cq'].format(CQ=cq)
-        output['qmin'] = output['qmin'].format(QMIN=qmin)
-        output['qmax'] = output['qmax'].format(QMAX=qmax)
-        
-        self.config.log('RenderThread', 'calculate_encoding_params', f"EncodingParams: {output}")
-        return output
+
+        params = EncodingParams(
+            avg_bitrate=f"{int(avg_bitrate)}M",
+            max_bitrate=f"{int(max_bitrate)}M",
+            buffer_size=f"{int(buffer_size)}M",
+            crf=crf,
+            cq=cq,
+            qmin=qmin,
+            qmax=qmax
+        )
+
+        self.config.log('RenderThread', 'calculate_encoding_params',
+                       f"EncodingParams: {params}")
+        return params
     
     def ffmpeg_analysis_decoding(self, proc):
         profiles = {
