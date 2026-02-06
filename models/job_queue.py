@@ -59,6 +59,30 @@ class JobQueue:
             self._jobs.append(queued)
             return job_id
 
+    def remove(self, job_id: str) -> bool:
+        """Remove job from queue by ID.
+
+        Cannot remove jobs with RUNNING status to prevent
+        interrupting active processing.
+
+        Args:
+            job_id: ID of job to remove
+
+        Returns:
+            True if job was removed, False if not found or is RUNNING
+        """
+        with self._lock:
+            for i, queued_job in enumerate(self._jobs):
+                if queued_job.id == job_id:
+                    # Cannot remove running jobs
+                    if queued_job.status == JobStatus.RUNNING:
+                        return False
+                    # Remove the job
+                    self._jobs.pop(i)
+                    return True
+            # Job not found
+            return False
+
     def get_all_jobs(self) -> list[QueuedJob]:
         """Get copy of all jobs for display.
 

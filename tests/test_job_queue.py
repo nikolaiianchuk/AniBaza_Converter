@@ -77,3 +77,51 @@ class TestJobQueue:
         assert jobs[0].id == job_id
         assert jobs[0].status == JobStatus.WAITING
         assert jobs[0].job == mock_job
+
+    def test_remove_waiting_job_succeeds(self):
+        """Can remove job with WAITING status."""
+        queue = JobQueue()
+        job_id = queue.add(Mock())
+
+        result = queue.remove(job_id)
+
+        assert result is True
+        assert len(queue.get_all_jobs()) == 0
+
+    def test_remove_nonexistent_job_fails(self):
+        """Cannot remove job that doesn't exist."""
+        queue = JobQueue()
+        queue.add(Mock())
+
+        result = queue.remove("nonexistent-id")
+
+        assert result is False
+        assert len(queue.get_all_jobs()) == 1
+
+    def test_remove_running_job_fails(self):
+        """Cannot remove job with RUNNING status."""
+        queue = JobQueue()
+        job_id = queue.add(Mock())
+
+        # Change status to RUNNING
+        jobs = queue.get_all_jobs()
+        jobs[0].status = JobStatus.RUNNING
+
+        result = queue.remove(job_id)
+
+        assert result is False
+        assert len(queue.get_all_jobs()) == 1
+
+    def test_remove_completed_job_succeeds(self):
+        """Can remove job with COMPLETED status."""
+        queue = JobQueue()
+        job_id = queue.add(Mock())
+
+        # Change status to COMPLETED
+        jobs = queue.get_all_jobs()
+        jobs[0].status = JobStatus.COMPLETED
+
+        result = queue.remove(job_id)
+
+        assert result is True
+        assert len(queue.get_all_jobs()) == 0
