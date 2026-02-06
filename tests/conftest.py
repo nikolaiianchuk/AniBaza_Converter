@@ -92,7 +92,7 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
     # Main objects
     from modules.LoggingModule import LoggingModule
     config.logging_module = LoggingModule()
-    config.command_constructor = None
+    # Phase 4.2: Thread references moved to their owners
     config.updater_thread = None
     config.download_thread = None
     config.ffmpeg_thread = None

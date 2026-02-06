@@ -34,7 +34,8 @@ class ThreadClassRender(QThread):
         self.runner = runner  # New: Optional ProcessRunner for safe execution
         # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
-        self.config.command_constructor = FFmpegConstructor(self.config)
+        # Phase 4.2: Move command_constructor from Config to RenderThread
+        self.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
         self.encoding_params = {
             "avg_bitrate": "6M",
@@ -90,7 +91,7 @@ class ThreadClassRender(QThread):
         self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
         if self.config.build_settings.build_state in [0, 1]:
             # Phase 6: Use build_soft_args() (list) instead of build_soft_command() (string)
-            args = self.config.command_constructor.build_soft_args(
+            args = self.command_constructor.build_soft_args(
                 raw_path      = self.config.rendering_paths['raw'],
                 sound_path    = self.config.rendering_paths['audio'],
                 sub_path      = self.config.rendering_paths['sub'],
@@ -118,7 +119,7 @@ class ThreadClassRender(QThread):
     def hardsub(self):
         self.config.log('RenderThread', 'hardsub', "Starting hardsubbing...")
         if self.config.build_settings.build_state in [0, 2]:
-            args = self.config.command_constructor.build_hard_args(
+            args = self.command_constructor.build_hard_args(
                 raw_path      = self.config.rendering_paths['raw'],
                 sound_path    = self.config.rendering_paths['audio'],
                 sub_path      = self.config.rendering_paths['sub'],
@@ -146,7 +147,7 @@ class ThreadClassRender(QThread):
     def hardsubbering(self):
         self.config.log('RenderThread', 'hardsubbering', "Starting special hardsubbing...")
         if self.config.build_settings.build_state == 3:
-            args = self.config.command_constructor.build_hard_args(
+            args = self.command_constructor.build_hard_args(
                 raw_path      = self.config.rendering_paths['raw'],
                 sub_path      = self.config.rendering_paths['sub'],
                 output_path   = self.config.rendering_paths['hardsub'],
@@ -347,7 +348,7 @@ class ThreadClassRender(QThread):
             self.hardsub()
             self.hardsubbering()
             self.raw_repairing()
-            self.config.command_constructor.remove_temp_sub()
+            self.command_constructor.remove_temp_sub()
 
         except Exception as e:
             self.handle_exception(type(e), e, e.__traceback__)

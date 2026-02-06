@@ -205,7 +205,7 @@ class Config:
 
         # Main objects
         self.logging_module = LoggingModule()
-        self.command_constructor = None
+        # Phase 4.2: Thread references moved to their owners (UpdaterUI)
         self.updater_thread = None
         self.download_thread = None
         self.ffmpeg_thread = None

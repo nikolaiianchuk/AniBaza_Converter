@@ -101,14 +101,18 @@ class UpdaterUI:
     def __init__(self, main_window, config):
         self.main_window = main_window
         self.config = config
+        # Phase 4.2: Thread references now owned by UpdaterUI
+        self.updater_thread = None
+        self.download_thread = None
+        self.ffmpeg_thread = None
 
     def start_updater(self):
         self.config.log('AppUpdater', 'start_updater', "Starting updater...")
-        self.config.updater_thread = UpdaterThread(self.config)
-        self.config.updater_thread.app_update_signal.connect(self.show_app_update_dialog)
-        self.config.updater_thread.ffmpeg_update_signal.connect(self.show_ffmpeg_update_dialog)
-        self.config.updater_thread.error_signal.connect(self.show_error_dialog)
-        self.config.updater_thread.start()
+        self.updater_thread = UpdaterThread(self.config)
+        self.updater_thread.app_update_signal.connect(self.show_app_update_dialog)
+        self.updater_thread.ffmpeg_update_signal.connect(self.show_ffmpeg_update_dialog)
+        self.updater_thread.error_signal.connect(self.show_error_dialog)
+        self.updater_thread.start()
 
     def universal_message_box(self, icon, title, text, infotext, buttons, log_message=None):
         self.config.log('AppUpdater', 'universal_message_box', log_message) if log_message else None
@@ -121,9 +125,9 @@ class UpdaterUI:
         return msg_box.exec()
 
     def cancel_app_download(self):
-        if hasattr(self.config, 'download_thread'):
+        if self.download_thread:
             self.config.log('AppUpdater', 'cancel_app_download', "Download canceled.")
-            self.config.download_thread.cancel()  # type: ignore # Останавливаем скачивание
+            self.download_thread.cancel()  # type: ignore # Останавливаем скачивание
             self.progress.close()  # Закрываем прогресс-диалог
 
     def app_update_progress(self, value):
@@ -161,15 +165,15 @@ class UpdaterUI:
         if temp_dir is None:
             raise EnvironmentError("TEMP environment variable is not set")
         installer_path = os.path.join(temp_dir, "update_installer.exe")
-        self.config.download_thread = DownloadThread(self.config, url, installer_path)
-        self.config.download_thread.progress_signal.connect(self.app_update_progress)
-        self.config.download_thread.finished_signal.connect(self.app_download_finished)
-        self.config.download_thread.error_signal.connect(self.show_error_dialog)
-        self.config.download_thread.start()
+        self.download_thread = DownloadThread(self.config, url, installer_path)
+        self.download_thread.progress_signal.connect(self.app_update_progress)
+        self.download_thread.finished_signal.connect(self.app_download_finished)
+        self.download_thread.error_signal.connect(self.show_error_dialog)
+        self.download_thread.start()
 
     def cancel_ffmpeg_installation(self):
-        if hasattr(self.config, "ffmpeg_thread"):
-            self.config.ffmpeg_thread.cancel()
+        if self.ffmpeg_thread:
+            self.ffmpeg_thread.cancel()
 
     def ffmpeg_install_finished(self, success):
         if hasattr(self, 'progress') and self.progress is not None:
@@ -194,11 +198,11 @@ class UpdaterUI:
         self.cancel_button = QPushButton('Отмена', self.progress)
         self.cancel_button.clicked.connect(self.cancel_ffmpeg_installation)
         self.progress.setCancelButton(self.cancel_button)
-        self.config.ffmpeg_thread = FFmpegInstallThread(self.config)
-        self.config.ffmpeg_thread.progress_signal.connect(lambda msg: self.progress.setLabelText(msg))
-        self.config.ffmpeg_thread.finished_signal.connect(self.ffmpeg_install_finished)
-        self.config.ffmpeg_thread.error_signal.connect(self.show_error_dialog)
-        self.config.ffmpeg_thread.start()
+        self.ffmpeg_thread = FFmpegInstallThread(self.config)
+        self.ffmpeg_thread.progress_signal.connect(lambda msg: self.progress.setLabelText(msg))
+        self.ffmpeg_thread.finished_signal.connect(self.ffmpeg_install_finished)
+        self.ffmpeg_thread.error_signal.connect(self.show_error_dialog)
+        self.ffmpeg_thread.start()
         self.progress.show()
 
     def show_app_update_dialog(self, latest_version, download_url, name):
