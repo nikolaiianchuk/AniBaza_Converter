@@ -18,6 +18,9 @@ from threads.RenderThread import ThreadClassRender
 from modules.AppUpdater import UpdaterUI
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
+from models.job_queue import JobQueue
+from threads.QueueProcessor import QueueProcessor
+from widgets.job_queue_widget import JobQueueWidget
 
 # Main window class
 class MainWindow(QMainWindow):
@@ -40,6 +43,26 @@ class MainWindow(QMainWindow):
         }
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # Initialize queue components
+        self.job_queue = JobQueue()
+        self.queue_processor = QueueProcessor(self.job_queue)
+        self.queue_widget = JobQueueWidget()
+
+        # Connect queue processor signals
+        self.queue_processor.job_started.connect(self.on_job_started)
+        self.queue_processor.job_completed.connect(self.on_job_completed)
+        self.queue_processor.job_failed.connect(self.on_job_failed)
+        self.queue_processor.job_cancelled.connect(self.on_job_cancelled)
+        self.queue_processor.queue_finished.connect(self.on_queue_finished)
+
+        # Connect queue widget signals
+        self.queue_widget.move_up_requested.connect(self.on_move_up_requested)
+        self.queue_widget.move_down_requested.connect(self.on_move_down_requested)
+        self.queue_widget.remove_requested.connect(self.on_remove_requested)
+        self.queue_widget.stop_requested.connect(self.on_stop_requested)
+        self.queue_widget.clear_completed_requested.connect(self.on_clear_completed_requested)
+
         self.set_buttons()
         self.set_checkboxes()
         self.set_textboxes()
@@ -553,3 +576,114 @@ class MainWindow(QMainWindow):
         self.ui.render_stop_button.setDisabled(not lock_value)
         self.lock_mode()
         self.config.log('mainWindow', 'locker', "UI locked")
+
+    # Queue event handlers
+    def on_job_started(self, job_id: str):
+        """Handle job started event from queue processor.
+
+        Args:
+            job_id: ID of the job that started
+        """
+        self.config.log('mainWindow', 'on_job_started', f"Job started: {job_id}")
+        # TODO: Update UI to show job is running
+        self.refresh_queue_display()
+
+    def on_job_completed(self, job_id: str):
+        """Handle job completed event from queue processor.
+
+        Args:
+            job_id: ID of the job that completed
+        """
+        self.config.log('mainWindow', 'on_job_completed', f"Job completed: {job_id}")
+        # TODO: Update UI to show job completion
+        self.refresh_queue_display()
+
+    def on_job_failed(self, job_id: str, error_message: str):
+        """Handle job failed event from queue processor.
+
+        Args:
+            job_id: ID of the job that failed
+            error_message: Error message describing the failure
+        """
+        self.config.log('mainWindow', 'on_job_failed', f"Job failed: {job_id} - {error_message}")
+        # TODO: Show error to user
+        self.refresh_queue_display()
+
+    def on_job_cancelled(self, job_id: str):
+        """Handle job cancelled event from queue processor.
+
+        Args:
+            job_id: ID of the job that was cancelled
+        """
+        self.config.log('mainWindow', 'on_job_cancelled', f"Job cancelled: {job_id}")
+        # TODO: Update UI to show job cancellation
+        self.refresh_queue_display()
+
+    def on_queue_finished(self):
+        """Handle queue finished event from queue processor.
+
+        Emitted when all jobs in the queue have been processed.
+        """
+        self.config.log('mainWindow', 'on_queue_finished', "Queue processing finished")
+        # TODO: Update UI to show queue is finished
+        self.refresh_queue_display()
+
+    def on_move_up_requested(self, job_id: str):
+        """Handle move up request from queue widget.
+
+        Args:
+            job_id: ID of the job to move up
+        """
+        self.config.log('mainWindow', 'on_move_up_requested', f"Move up requested: {job_id}")
+        if self.job_queue.move_up(job_id):
+            self.refresh_queue_display()
+        else:
+            self.config.log('mainWindow', 'on_move_up_requested', f"Failed to move up job: {job_id}")
+
+    def on_move_down_requested(self, job_id: str):
+        """Handle move down request from queue widget.
+
+        Args:
+            job_id: ID of the job to move down
+        """
+        self.config.log('mainWindow', 'on_move_down_requested', f"Move down requested: {job_id}")
+        if self.job_queue.move_down(job_id):
+            self.refresh_queue_display()
+        else:
+            self.config.log('mainWindow', 'on_move_down_requested', f"Failed to move down job: {job_id}")
+
+    def on_remove_requested(self, job_id: str):
+        """Handle remove request from queue widget.
+
+        Args:
+            job_id: ID of the job to remove
+        """
+        self.config.log('mainWindow', 'on_remove_requested', f"Remove requested: {job_id}")
+        if self.job_queue.remove(job_id):
+            self.refresh_queue_display()
+        else:
+            self.config.log('mainWindow', 'on_remove_requested', f"Failed to remove job: {job_id}")
+
+    def on_stop_requested(self, job_id: str):
+        """Handle stop request from queue widget.
+
+        Args:
+            job_id: ID of the job to stop
+        """
+        self.config.log('mainWindow', 'on_stop_requested', f"Stop requested: {job_id}")
+        # TODO: Implement job cancellation
+        self.queue_processor.cancel_current_job()
+
+    def on_clear_completed_requested(self):
+        """Handle clear completed request from queue widget.
+
+        Removes all completed jobs from the queue.
+        """
+        self.config.log('mainWindow', 'on_clear_completed_requested', "Clear completed requested")
+        self.job_queue.clear_completed()
+        self.refresh_queue_display()
+
+    def refresh_queue_display(self):
+        """Refresh the queue widget to show current queue state."""
+        jobs = self.job_queue.get_all_jobs()
+        self.queue_widget.update_jobs(jobs)
