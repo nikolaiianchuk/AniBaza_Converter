@@ -158,10 +158,14 @@ class JobQueueWidget(QWidget):
 
 ### MainWindow Integration
 
+**Button Changes:**
+- **Keep existing Start/Stop buttons** - DO NOT remove them
+- Update their behavior to work with queue
+- Add new "Add to Queue" button next to file inputs
+
 **New UI Elements:**
 - "Add to Queue" button next to existing file inputs
 - JobQueueWidget below configuration area
-- Existing "Start/Stop" buttons repurposed
 
 **Button Logic:**
 
@@ -188,6 +192,23 @@ def on_stop_clicked(self):
     # Cancel current job and pause queue
     self.queue_processor.cancel_current_job()
 ```
+
+**Existing Button Behavior Changes:**
+
+*Start Button (render_start_button):*
+- **Old behavior:** Always starts immediate render with current UI settings
+- **New behavior:**
+  - If `queue.has_waiting_jobs()` → Start queue processor
+  - If queue empty → Start immediate render (preserves old workflow)
+- Button text remains "Start" (no label change needed)
+
+*Stop Button (render_stop_button):*
+- **Old behavior:** Stops the current render thread
+- **New behavior:**
+  - Cancels current running job
+  - Pauses queue (same as error handling)
+  - User can resume queue with Start button or clear jobs
+- Button text remains "Stop" (no label change needed)
 
 **State Management:**
 - Allow adding to queue while processing (user confirmed)
