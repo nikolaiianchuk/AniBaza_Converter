@@ -687,3 +687,76 @@ class MainWindow(QMainWindow):
         """Refresh the queue widget to show current queue state."""
         jobs = self.job_queue.get_all_jobs()
         self.queue_widget.update_jobs(jobs)
+
+    def on_add_to_queue_clicked(self):
+        """Handle Add to Queue button click.
+
+        Validates inputs, creates RenderJob, adds to queue, clears UI.
+        """
+        # Validate episode name first
+        if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
+            self.coding_error('name')
+            return
+
+        # Validate directories exist
+        if not os.path.exists(self.config.main_paths.hardsub):
+            self.coding_error('hardsub_folder')
+            return
+
+        if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
+            self.coding_error('softsub')
+            return
+
+        # Validate input paths using centralized validation
+        if not self._validate_before_render():
+            return
+
+        # Create validated, immutable paths
+        paths = self._create_render_paths()
+
+        # Create encoding parameters (using same defaults as RenderThread)
+        from models.encoding import EncodingParams
+        encoding_params = EncodingParams(
+            avg_bitrate="6M",
+            max_bitrate="9M",
+            buffer_size="18M",
+            crf=18,
+            cq=19,
+            qmin=17,
+            qmax=23
+        )
+
+        # Determine video settings based on build state (use softsub settings as default)
+        video_settings = self.config.build_settings.softsub_settings
+
+        # Create RenderJob
+        from models.job import RenderJob
+        job = RenderJob(
+            paths=paths,
+            episode_name=self.config.build_settings.episode_name,
+            build_state=self.config.build_settings.build_state,
+            nvenc_state=self.config.build_settings.nvenc_state,
+            logo_state=self.config.build_settings.logo_state,
+            encoding_params=encoding_params,
+            video_settings=video_settings,
+            potato_mode=self.config.potato_PC
+        )
+
+        # Add to queue
+        job_id = self.job_queue.add(job)
+        self.config.log('mainWindow', 'on_add_to_queue_clicked', f"Added job to queue: {job_id}")
+
+        # Clear UI fields
+        self.ui.raw_path_editline.clear()
+        self.ui.audio_path_editline.clear()
+        self.ui.subtitle_path_editline.clear()
+
+        # Clear internal paths
+        self._ui_paths['raw'] = ''
+        self._ui_paths['audio'] = ''
+        self._ui_paths['sub'] = ''
+
+        # Refresh queue display
+        self.refresh_queue_display()
+
+        self.config.log('mainWindow', 'on_add_to_queue_clicked', "Job added successfully, UI cleared")
