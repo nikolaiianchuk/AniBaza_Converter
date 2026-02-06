@@ -129,13 +129,26 @@ class TestPathEscaping:
 
         assert escaped == "/home/user/video.mkv"
 
-    def test_escape_windows_path_no_drive(self, tmp_path):
+    def test_escape_windows_path_no_drive(self):
         """Relative Windows paths work correctly."""
-        path = tmp_path / "subdir" / "file.ass"
+        # Use actual relative path (not tmp_path which is absolute on Windows)
+        path = Path("subdir") / "file.ass"
         escaped = _escape_path_for_filter(path)
 
-        # Should have forward slashes
+        # Should have forward slashes and no drive letter escaping
         assert "\\" not in escaped
+        assert "/" in escaped
+        assert escaped == "subdir/file.ass"
+
+    def test_escape_windows_path_with_drive(self):
+        """Windows absolute paths escape drive letter correctly."""
+        # Simulate Windows absolute path
+        path = Path("C:/Users/test/video.mkv")
+        escaped = _escape_path_for_filter(path)
+
+        # Drive letter should be escaped for FFmpeg filter syntax
+        assert escaped == r"C\:\\Users/test/video.mkv"
+        assert escaped.startswith(r"C\:\\")
         assert "/" in escaped
 
 
