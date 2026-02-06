@@ -234,3 +234,101 @@ class TestJobListItem:
 
         # All status texts should be unique
         assert len(status_texts) == len(set(status_texts))
+
+
+class TestJobQueueWidget:
+    """Test JobQueueWidget container - displays list of jobs with controls."""
+
+    def test_create_empty_queue_widget(self, qapp):
+        """JobQueueWidget can be created with empty job list."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Should have QListWidget
+        assert hasattr(widget, 'list_widget')
+        assert widget.list_widget is not None
+
+        # Should have clear completed button
+        assert hasattr(widget, 'clear_completed_button')
+        assert widget.clear_completed_button is not None
+        assert isinstance(widget.clear_completed_button, QPushButton)
+
+    def test_display_jobs_in_list(self, qapp):
+        """JobQueueWidget displays list of jobs."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        # Create mock jobs
+        mock_job1 = Mock()
+        mock_job1.job.episode_name = "Episode 01"
+        mock_job1.id = "job-1"
+        mock_job1.status = JobStatus.WAITING
+
+        mock_job2 = Mock()
+        mock_job2.job.episode_name = "Episode 02"
+        mock_job2.id = "job-2"
+        mock_job2.status = JobStatus.RUNNING
+
+        jobs = [mock_job1, mock_job2]
+
+        widget = JobQueueWidget()
+        widget.update_jobs(jobs)
+
+        # Should display 2 items in list
+        assert widget.list_widget.count() == 2
+
+    def test_clear_button_emits_signal(self, qapp):
+        """Clear completed button emits clear_completed signal."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Connect signal to mock
+        mock_handler = Mock()
+        widget.clear_completed_requested.connect(mock_handler)
+
+        # Click clear button
+        widget.clear_completed_button.click()
+
+        # Should emit signal
+        mock_handler.assert_called_once()
+
+    def test_job_actions_propagate_signals(self, qapp):
+        """Job item actions propagate through JobQueueWidget signals."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        # Create mock job
+        mock_job = Mock()
+        mock_job.job.episode_name = "Episode 01"
+        mock_job.id = "test-job-123"
+        mock_job.status = JobStatus.WAITING
+
+        widget = JobQueueWidget()
+        widget.update_jobs([mock_job])
+
+        # Connect signals to mocks
+        move_up_handler = Mock()
+        move_down_handler = Mock()
+        remove_handler = Mock()
+        stop_handler = Mock()
+
+        widget.move_up_requested.connect(move_up_handler)
+        widget.move_down_requested.connect(move_down_handler)
+        widget.remove_requested.connect(remove_handler)
+        widget.stop_requested.connect(stop_handler)
+
+        # Get the JobListItem widget from the list
+        list_item = widget.list_widget.item(0)
+        job_item_widget = widget.list_widget.itemWidget(list_item)
+
+        # Trigger move up action
+        job_item_widget.move_up_requested.emit("test-job-123")
+        move_up_handler.assert_called_once_with("test-job-123")
+
+        # Trigger move down action
+        job_item_widget.move_down_requested.emit("test-job-123")
+        move_down_handler.assert_called_once_with("test-job-123")
+
+        # Trigger remove action
+        job_item_widget.remove_requested.emit("test-job-123")
+        remove_handler.assert_called_once_with("test-job-123")

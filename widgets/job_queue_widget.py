@@ -1,7 +1,15 @@
 """Job queue UI widgets - display and control render queue."""
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QListWidget,
+    QListWidgetItem,
+)
 
 from models.job_queue import QueuedJob
 from models.enums import JobStatus
@@ -151,3 +159,83 @@ class JobListItem(QWidget):
         self.remove_button.setToolTip("Remove from queue")
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.job_id))
         layout.addWidget(self.remove_button)
+
+
+class JobQueueWidget(QWidget):
+    """Container widget displaying job queue with controls.
+
+    Shows:
+    - QListWidget with all queued jobs (as JobListItem widgets)
+    - Clear Completed button to remove finished jobs
+
+    Signals:
+        move_up_requested(str): Emitted when job move up clicked, passes job ID
+        move_down_requested(str): Emitted when job move down clicked, passes job ID
+        remove_requested(str): Emitted when job remove clicked, passes job ID
+        stop_requested(str): Emitted when job stop clicked, passes job ID
+        clear_completed_requested(): Emitted when clear completed button clicked
+    """
+
+    # Signals propagated from JobListItem widgets
+    move_up_requested = pyqtSignal(str)
+    move_down_requested = pyqtSignal(str)
+    remove_requested = pyqtSignal(str)
+    stop_requested = pyqtSignal(str)
+
+    # Signal from clear button
+    clear_completed_requested = pyqtSignal()
+
+    def __init__(self, parent=None):
+        """Initialize job queue widget.
+
+        Args:
+            parent: Parent widget (optional)
+        """
+        super().__init__(parent)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        """Build the widget UI with list and controls."""
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Job list widget
+        self.list_widget = QListWidget()
+        layout.addWidget(self.list_widget)
+
+        # Clear completed button
+        self.clear_completed_button = QPushButton("Clear Completed")
+        self.clear_completed_button.setToolTip("Remove all completed jobs from queue")
+        self.clear_completed_button.clicked.connect(self.clear_completed_requested.emit)
+        layout.addWidget(self.clear_completed_button)
+
+        self.setLayout(layout)
+
+    def update_jobs(self, jobs: list[QueuedJob]):
+        """Update displayed job list.
+
+        Clears list and recreates all JobListItem widgets from provided jobs.
+        Connects JobListItem signals to propagate through this widget.
+
+        Args:
+            jobs: List of QueuedJob objects to display
+        """
+        # Clear existing items
+        self.list_widget.clear()
+
+        # Add each job as a JobListItem
+        for queued_job in jobs:
+            # Create JobListItem widget
+            job_item_widget = JobListItem(queued_job)
+
+            # Connect signals to propagate
+            job_item_widget.move_up_requested.connect(self.move_up_requested.emit)
+            job_item_widget.move_down_requested.connect(self.move_down_requested.emit)
+            job_item_widget.remove_requested.connect(self.remove_requested.emit)
+            job_item_widget.stop_requested.connect(self.stop_requested.emit)
+
+            # Create list item and set widget
+            list_item = QListWidgetItem(self.list_widget)
+            list_item.setSizeHint(job_item_widget.sizeHint())
+            self.list_widget.addItem(list_item)
+            self.list_widget.setItemWidget(list_item, job_item_widget)
