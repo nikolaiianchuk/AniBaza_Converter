@@ -30,11 +30,11 @@ jobs:
       run: |
         pip install wmi
 
-    - name: Install ffmpeg (Ubuntu)
+    - name: Install ffmpeg and Qt dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
 
     - name: Install ffmpeg (macOS)
       if: matrix.os == 'macos-latest'
@@ -46,12 +46,23 @@ jobs:
       run: |
         choco install ffmpeg -y
 
-    - name: Run tests
+    - name: Run tests (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        xvfb-run -a pytest tests/ -v --tb=short
+
+    - name: Run tests (macOS/Windows)
+      if: matrix.os != 'ubuntu-latest'
       run: |
         pytest tests/ -v --tb=short
 
-    - name: Test report
-      if: always()
+    - name: Test report (Linux)
+      if: always() && matrix.os == 'ubuntu-latest'
+      run: |
+        xvfb-run -a pytest tests/ --tb=short --junit-xml=test-results.xml
+
+    - name: Test report (macOS/Windows)
+      if: always() && matrix.os != 'ubuntu-latest'
       run: |
         pytest tests/ --tb=short --junit-xml=test-results.xml
 
