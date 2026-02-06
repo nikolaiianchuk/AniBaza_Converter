@@ -221,3 +221,100 @@ class TestJobQueue:
         jobs = queue.get_all_jobs()
         assert jobs[0].id == id1
         assert jobs[1].id == id2
+
+    def test_update_status_existing_job(self):
+        """Can update status of existing job."""
+        queue = JobQueue()
+        job_id = queue.add(Mock())
+
+        result = queue.update_status(job_id, JobStatus.RUNNING)
+
+        assert result is True
+        jobs = queue.get_all_jobs()
+        assert jobs[0].status == JobStatus.RUNNING
+
+    def test_update_status_nonexistent_job(self):
+        """Cannot update status of nonexistent job."""
+        queue = JobQueue()
+        queue.add(Mock())
+
+        result = queue.update_status("nonexistent-id", JobStatus.RUNNING)
+
+        assert result is False
+
+    def test_get_next_waiting_returns_first_waiting(self):
+        """get_next_waiting returns first WAITING job."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+        id3 = queue.add(Mock(name="job3"))
+
+        # Set first job to RUNNING
+        queue.update_status(id1, JobStatus.RUNNING)
+
+        next_job = queue.get_next_waiting()
+
+        assert next_job is not None
+        assert next_job.id == id2
+        assert next_job.status == JobStatus.WAITING
+
+    def test_get_next_waiting_no_waiting_jobs(self):
+        """get_next_waiting returns None when no WAITING jobs."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+
+        # Set job to COMPLETED
+        queue.update_status(id1, JobStatus.COMPLETED)
+
+        next_job = queue.get_next_waiting()
+
+        assert next_job is None
+
+    def test_has_waiting_jobs_returns_true(self):
+        """has_waiting_jobs returns True when WAITING jobs exist."""
+        queue = JobQueue()
+        queue.add(Mock())
+
+        result = queue.has_waiting_jobs()
+
+        assert result is True
+
+    def test_has_waiting_jobs_returns_false(self):
+        """has_waiting_jobs returns False when no WAITING jobs."""
+        queue = JobQueue()
+        job_id = queue.add(Mock())
+
+        # Set job to RUNNING
+        queue.update_status(job_id, JobStatus.RUNNING)
+
+        result = queue.has_waiting_jobs()
+
+        assert result is False
+
+    def test_clear_completed_removes_completed_jobs(self):
+        """clear_completed removes all COMPLETED jobs."""
+        queue = JobQueue()
+        id1 = queue.add(Mock(name="job1"))
+        id2 = queue.add(Mock(name="job2"))
+        id3 = queue.add(Mock(name="job3"))
+
+        # Set different statuses
+        queue.update_status(id1, JobStatus.COMPLETED)
+        queue.update_status(id2, JobStatus.RUNNING)
+        # id3 stays WAITING
+
+        queue.clear_completed()
+
+        jobs = queue.get_all_jobs()
+        assert len(jobs) == 2
+        assert jobs[0].id == id2
+        assert jobs[1].id == id3
+
+    def test_clear_completed_empty_queue(self):
+        """clear_completed works on empty queue."""
+        queue = JobQueue()
+
+        queue.clear_completed()
+
+        jobs = queue.get_all_jobs()
+        assert len(jobs) == 0

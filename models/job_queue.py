@@ -143,3 +143,54 @@ class JobQueue:
                     return True
             # Job not found
             return False
+
+    def update_status(self, job_id: str, status: JobStatus, error_message: Optional[str] = None) -> bool:
+        """Update job status and optional error message.
+
+        Args:
+            job_id: ID of job to update
+            status: New JobStatus
+            error_message: Optional error message (for FAILED status)
+
+        Returns:
+            True if job was updated, False if not found
+        """
+        with self._lock:
+            for queued_job in self._jobs:
+                if queued_job.id == job_id:
+                    queued_job.status = status
+                    if error_message is not None:
+                        queued_job.error_message = error_message
+                    return True
+            # Job not found
+            return False
+
+    def get_next_waiting(self) -> Optional[QueuedJob]:
+        """Get next job with WAITING status.
+
+        Returns:
+            First WAITING job in queue, or None if no WAITING jobs
+        """
+        with self._lock:
+            for queued_job in self._jobs:
+                if queued_job.status == JobStatus.WAITING:
+                    return queued_job
+            # No waiting jobs
+            return None
+
+    def has_waiting_jobs(self) -> bool:
+        """Check if any jobs have WAITING status.
+
+        Returns:
+            True if at least one WAITING job exists, False otherwise
+        """
+        with self._lock:
+            return any(job.status == JobStatus.WAITING for job in self._jobs)
+
+    def clear_completed(self) -> None:
+        """Remove all jobs with COMPLETED status from queue.
+
+        This is typically called to clean up finished jobs.
+        """
+        with self._lock:
+            self._jobs = [job for job in self._jobs if job.status != JobStatus.COMPLETED]
