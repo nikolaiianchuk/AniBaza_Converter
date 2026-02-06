@@ -23,7 +23,8 @@ class EncodingParams:
 class SubtitleInfo:
     """Information about a subtitle file being processed.
 
-    Phase 5: Replaces the mutable dict self.sub in FFmpegConstructor.
+    Legacy: Previously used by FFmpegConstructor (now removed).
+    Currently unused - kept for potential future use.
     """
 
     name: str = ''
