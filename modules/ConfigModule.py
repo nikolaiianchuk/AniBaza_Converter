@@ -87,7 +87,7 @@ def save_config(config):
 
         with open(config.main_paths.config, 'w') as config_file:
             parser.write(config_file)
-        config_file.close()
+        # File automatically closed by 'with' statement
         config.log('ConfigModule', 'save_config', "Config saved.")
     else:
         config.log('ConfigModule', 'save_config', "Config file not found.")

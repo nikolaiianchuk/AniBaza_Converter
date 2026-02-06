@@ -80,8 +80,8 @@ class TestAppUpdater:
         assert url == "https://example.com/update.exe"
         assert name == "v1.1.0"
 
-    def test_version_comparison_bug(self, updater_thread, monkeypatch):
-        """Documents string comparison bug: '7.1' > '10.0' is True."""
+    def test_version_comparison_semantic(self, updater_thread, monkeypatch):
+        """Phase 5: Semantic version comparison works correctly."""
         updater_thread.config.ffmpeg.version = "10.0"
 
         mock_response = MagicMock()
@@ -91,12 +91,11 @@ class TestAppUpdater:
 
         should_update, latest, installed = updater_thread.should_update_ffmpeg()
 
-        # BUG: String comparison gives wrong result
-        # "7.1" > "10.0" is False in string comparison, but 7.1 < 10.0 numerically
-        # This documents the bug - will be fixed in Phase 5
-        assert latest == "7.1"
-        assert installed == "10.0"
-        # String comparison would say no update needed, but semantically it should be False
+        # Phase 5 FIX: Semantic version comparison correctly determines 7.1 < 10.0
+        # So no update is needed (latest 7.1 is older than installed 10.0)
+        assert should_update is False
+        assert latest is None  # No update needed, so these are None
+        assert installed is None
 
     def test_get_latest_ffmpeg_version_network_error(self, updater_thread, monkeypatch):
         """Network errors are handled gracefully."""

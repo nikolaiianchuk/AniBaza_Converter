@@ -5,6 +5,7 @@ import sys
 import traceback
 import requests
 
+from packaging.version import Version, InvalidVersion
 from PyQt5.QtWidgets import QMessageBox,QProgressDialog, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 
@@ -64,8 +65,13 @@ class UpdaterThread(QThread):
         installed_version = self.config.ffmpeg.version or '0.0'
         self.config.log('AppUpdater', 'get_installed_ffmpeg_version', f"Installed FFmpeg version: {installed_version}")
         latest_version = self.get_latest_ffmpeg_version()
-        if latest_version and installed_version and latest_version > installed_version:
-            return True, latest_version, installed_version
+        if latest_version and installed_version:
+            try:
+                # Phase 5: Use semantic version comparison instead of string comparison
+                if Version(latest_version) > Version(installed_version):
+                    return True, latest_version, installed_version
+            except InvalidVersion as e:
+                self.config.log('AppUpdater', 'should_update_ffmpeg', f"Invalid version format: {e}")
         return False, None, None
 
     def check_for_app_update(self):
@@ -78,8 +84,13 @@ class UpdaterThread(QThread):
             latest_version = data.get("version")
             download_url = data.get("url")
             name = data.get("name")
-            if latest_version and download_url and name and latest_version > self.config.app_info.version_number:
-                return latest_version, download_url, name
+            if latest_version and download_url and name:
+                try:
+                    # Phase 5: Use semantic version comparison instead of string comparison
+                    if Version(latest_version) > Version(self.config.app_info.version_number):
+                        return latest_version, download_url, name
+                except InvalidVersion as e:
+                    self.config.log('AppUpdater', 'check_for_app_update', f"Invalid version format: {e}")
         except Exception as e:
             self.handle_exception(e)
         return None, None, None
