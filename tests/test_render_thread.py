@@ -69,18 +69,18 @@ class TestRenderThread:
         ]
         mock_proc = MockProcess(ffprobe_output)
         render_thread.ffmpeg_analysis_decoding(mock_proc)
-        assert render_thread.config.build_settings['softsub_settings']['pixel_format'] == 'yuv420p'
+        assert render_thread.config.build_settings.softsub_settings.pixel_format == 'yuv420p'
 
         # Test yuv420p10le
-        render_thread.config.build_settings['softsub_settings']['pixel_format'] = 'yuv420p10le'
-        render_thread.config.build_settings['hardsub_settings']['pixel_format'] = 'yuv420p10le'
+        render_thread.config.build_settings.softsub_settings.pixel_format = 'yuv420p10le'
+        render_thread.config.build_settings.hardsub_settings.pixel_format = 'yuv420p10le'
         ffprobe_output2 = [
             "Duration: 00:01:00.00\n",
             "Stream #0:0: Video: hevc (Main 10), yuv420p10le(tv), 1920x1080\n",
         ]
         mock_proc2 = MockProcess(ffprobe_output2)
         render_thread.ffmpeg_analysis_decoding(mock_proc2)
-        assert render_thread.config.build_settings['softsub_settings']['pixel_format'] == 'yuv420p'
+        assert render_thread.config.build_settings.softsub_settings.pixel_format == 'yuv420p'
 
     def test_ffmpeg_analysis_decoding_profiles(self, render_thread):
         """Video profiles are parsed and set correctly."""
@@ -99,12 +99,12 @@ class TestRenderThread:
             mock_proc = MockProcess(ffprobe_output)
 
             # Reset nvenc state for test
-            render_thread.config.build_settings['nvenc_state'] = 2  # No nvenc for softsub
+            render_thread.config.build_settings.nvenc_state = 2  # No nvenc for softsub
 
             render_thread.ffmpeg_analysis_decoding(mock_proc)
 
-            assert render_thread.config.build_settings['softsub_settings']['video_profile'] == expected_soft
-            assert render_thread.config.build_settings['hardsub_settings']['video_profile'] == expected_hard
+            assert render_thread.config.build_settings.softsub_settings.video_profile == expected_soft
+            assert render_thread.config.build_settings.hardsub_settings.video_profile == expected_hard
 
     def test_ffmpeg_analysis_decoding_potato_overrides(self, render_thread):
         """Potato mode forces yuv420p and main profile."""
@@ -117,10 +117,10 @@ class TestRenderThread:
         mock_proc = MockProcess(ffprobe_output)
         render_thread.ffmpeg_analysis_decoding(mock_proc)
 
-        assert render_thread.config.build_settings['softsub_settings']['pixel_format'] == 'yuv420p'
-        assert render_thread.config.build_settings['hardsub_settings']['pixel_format'] == 'yuv420p'
-        assert render_thread.config.build_settings['softsub_settings']['video_profile'] == 'main'
-        assert render_thread.config.build_settings['hardsub_settings']['video_profile'] == 'main'
+        assert render_thread.config.build_settings.softsub_settings.pixel_format == 'yuv420p'
+        assert render_thread.config.build_settings.hardsub_settings.pixel_format == 'yuv420p'
+        assert render_thread.config.build_settings.softsub_settings.video_profile == 'main'
+        assert render_thread.config.build_settings.hardsub_settings.video_profile == 'main'
 
     def test_calculate_encoding_params_1080p(self, render_thread):
         """Encoding params for 1080p use CRF 18."""
@@ -182,13 +182,13 @@ class TestRenderThread:
             mock_popen.return_value = mock_proc
 
             # Test state 0
-            mock_config.build_settings['build_state'] = 0
+            mock_config.build_settings.build_state = 0
             render_thread.softsub()
             assert mock_popen.called
 
             # Reset and test state 1
             mock_popen.reset_mock()
-            mock_config.build_settings['build_state'] = 1
+            mock_config.build_settings.build_state = 1
             render_thread.softsub()
             assert mock_popen.called
 
@@ -209,13 +209,13 @@ class TestRenderThread:
             mock_popen.return_value = mock_proc
 
             # Test state 0
-            mock_config.build_settings['build_state'] = 0
+            mock_config.build_settings.build_state = 0
             render_thread.hardsub()
             assert mock_popen.called
 
             # Reset and test state 2
             mock_popen.reset_mock()
-            mock_config.build_settings['build_state'] = 2
+            mock_config.build_settings.build_state = 2
             render_thread.hardsub()
             assert mock_popen.called
 
@@ -236,13 +236,13 @@ class TestRenderThread:
             mock_popen.return_value = mock_proc
 
             # Test state 3
-            mock_config.build_settings['build_state'] = 3
+            mock_config.build_settings.build_state = 3
             render_thread.hardsubbering()
             assert mock_popen.called
 
             # Test state 2 (should not run)
             mock_popen.reset_mock()
-            mock_config.build_settings['build_state'] = 2
+            mock_config.build_settings.build_state = 2
             render_thread.hardsubbering()
             assert not mock_popen.called
 
@@ -259,13 +259,13 @@ class TestRenderThread:
             mock_popen.return_value = mock_proc
 
             # Test state 4
-            mock_config.build_settings['build_state'] = 4
+            mock_config.build_settings.build_state = 4
             render_thread.raw_repairing()
             assert mock_popen.called
 
             # Test state 0 (should not run)
             mock_popen.reset_mock()
-            mock_config.build_settings['build_state'] = 0
+            mock_config.build_settings.build_state = 0
             render_thread.raw_repairing()
             assert not mock_popen.called
 

@@ -31,12 +31,13 @@ potato_PC = True
 
         ConfigModule.load_configs(mock_config)
 
-        assert mock_config.dev_settings['dev_mode'] is False
-        assert mock_config.dev_settings['logging']['state'] is True
-        assert mock_config.dev_settings['logging']['max_logs'] == 20
-        assert mock_config.build_settings['logo_state'] == 1
-        assert mock_config.build_settings['nvenc_state'] == 2
-        assert mock_config.build_settings['build_state'] == 1
+        # Phase 4: dataclass attributes
+        assert mock_config.dev_settings.dev_mode is False
+        assert mock_config.dev_settings.logging_enabled is True
+        assert mock_config.dev_settings.max_logs == 20
+        assert mock_config.build_settings.logo_state == 1
+        assert mock_config.build_settings.nvenc_state == 2
+        assert mock_config.build_settings.build_state == 1
         assert mock_config.update_search is False
         assert mock_config.potato_PC is True
 
@@ -53,11 +54,12 @@ update_url = https://example.com/update.json
 
         ConfigModule.load_configs(mock_config)
 
-        assert mock_config.app_info['title'] == 'Test App'
-        assert mock_config.app_info['version_number'] == '1.2.3'
-        assert mock_config.app_info['version_name'] == 'TestVersion'
-        assert mock_config.app_info['author'] == 'Test Author'
-        assert mock_config.app_info['update_link'] == 'https://example.com/update.json'
+        # Phase 4: dataclass attributes
+        assert mock_config.app_info.title == 'Test App'
+        assert mock_config.app_info.version_number == '1.2.3'
+        assert mock_config.app_info.version_name == 'TestVersion'
+        assert mock_config.app_info.author == 'Test Author'
+        assert mock_config.app_info.update_link == 'https://example.com/update.json'
 
     def test_save_config_writes_values(self, mock_config, tmp_path):
         """save_config persists values to INI file."""
@@ -78,10 +80,15 @@ potato_PC = False
 """
         mock_config.main_paths.config.write_text(config_content)
 
-        # Modify values
-        mock_config.build_settings['logo_state'] = 2
-        mock_config.build_settings['nvenc_state'] = 1
-        mock_config.build_settings['build_state'] = 3
+        # Modify values (Phase 4: dataclass attributes)
+        from configs.config import BuildSettings
+        from models.enums import BuildState, LogoState, NvencState
+        mock_config.build_settings = BuildSettings(
+            episode_name='',
+            logo_state=LogoState(2),
+            nvenc_state=NvencState(1),
+            build_state=BuildState(3)
+        )
         mock_config.update_search = False
         mock_config.potato_PC = True
 
@@ -90,9 +97,9 @@ potato_PC = False
 
         # Reload and verify
         ConfigModule.load_configs(mock_config)
-        assert mock_config.build_settings['logo_state'] == 2
-        assert mock_config.build_settings['nvenc_state'] == 1
-        assert mock_config.build_settings['build_state'] == 3
+        assert mock_config.build_settings.logo_state == 2
+        assert mock_config.build_settings.nvenc_state == 1
+        assert mock_config.build_settings.build_state == 3
         assert mock_config.update_search is False
         assert mock_config.potato_PC is True
 

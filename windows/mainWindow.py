@@ -50,11 +50,11 @@ class MainWindow(QMainWindow):
         ]
         self.ui.render_stop_button.hide()
         self.ui.app_version_label.setText("Version {NUM} ({NAME}) by {AUTHOR}".format(
-            NUM    = self.config.app_info['version_number'],
-            NAME   = self.config.app_info['version_name'],
-            AUTHOR = self.config.app_info['author']
+            NUM    = self.config.app_info.version_number,
+            NAME   = self.config.app_info.version_name,
+            AUTHOR = self.config.app_info.author
         ))
-        self.setWindowTitle(self.config.app_info['title'])
+        self.setWindowTitle(self.config.app_info.title)
 
     def handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
@@ -110,20 +110,20 @@ class MainWindow(QMainWindow):
     # Softsub path updater
     def soft_path_constructor(self):
         if '[AniBaza]' in self.config.main_paths.softsub:
-            self.config.build_settings['episode_name'] = self.config.main_paths.softsub.split('/')[-1]
-            self.config.build_settings['episode_name'] = self.config.build_settings['episode_name'].replace(
-                self.config.build_settings['episode_name'][self.config.build_settings['episode_name'].rfind('[')+1 :
-                self.config.build_settings['episode_name'].rfind(']')],''
-            ) if '[' in self.config.build_settings['episode_name'] else self.config.build_settings['episode_name']
-            self.ui.episode_line.setText(self.config.build_settings['episode_name'])
+            self.config.build_settings.episode_name = self.config.main_paths.softsub.split('/')[-1]
+            self.config.build_settings.episode_name = self.config.build_settings.episode_name.replace(
+                self.config.build_settings.episode_name[self.config.build_settings.episode_name.rfind('[')+1 :
+                self.config.build_settings.episode_name.rfind(']')],''
+            ) if '[' in self.config.build_settings.episode_name else self.config.build_settings.episode_name
+            self.ui.episode_line.setText(self.config.build_settings.episode_name)
         else:
             self.config.log('mainWindow', 'soft_path_constructor', f"Softsub base path updated to: {self.config.main_paths.softsub}")
         self.update_render_paths()
 
     def update_render_paths(self):
-        self.config.rendering_paths['softsub'] = f"{self.config.main_paths.softsub}/{self.config.build_settings['episode_name']}.mkv"
+        self.config.rendering_paths['softsub'] = f"{self.config.main_paths.softsub}/{self.config.build_settings.episode_name}.mkv"
         self.config.log('mainWindow', 'update_render_paths', f"Softsub render path updated to: {self.config.rendering_paths['softsub']}")
-        self.config.rendering_paths['hardsub'] = f"{self.config.main_paths.hardsub}/{self.config.build_settings['episode_name']}.mp4"
+        self.config.rendering_paths['hardsub'] = f"{self.config.main_paths.hardsub}/{self.config.build_settings.episode_name}.mp4"
         self.config.log('mainWindow', 'update_render_paths', f"Hardsub render path updated to: {self.config.rendering_paths['hardsub']}")
         self.config.log('mainWindow', 'update_render_paths', 'Render paths updated!')
 
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
             self.ui.softsub_path_open_button
         )
         for ui in ui_for_disable:
-            ui.setDisabled(self.config.build_settings['build_state'] == 3)
+            ui.setDisabled(self.config.build_settings.build_state == 3)
 
     # FAQ window opener
     def open_faq(self):
@@ -175,11 +175,11 @@ class MainWindow(QMainWindow):
                     self.ui.dev_mode_enable.isChecked(),
                     "Dev mode {VALUE}.",
                     "checkbox",
-                    lambda: self.ui.log_mode_enable.setEnabled(self.config.dev_settings['dev_mode'])
+                    lambda: self.ui.log_mode_enable.setEnabled(self.config.dev_settings.dev_mode)
                 ),
                 lambda: self.universal_setter(
                     self.ui.dev_mode_enable,
-                    self.config.dev_settings['dev_mode'],
+                    self.config.dev_settings.dev_mode,
                     "Dev mode {VALUE}.",
                     "checkbox"
                 )
@@ -193,7 +193,7 @@ class MainWindow(QMainWindow):
                 ),
                 lambda: self.universal_setter(
                     self.ui.log_mode_enable,
-                    self.config.dev_settings['logging']['state'],
+                    self.config.dev_settings.logging_enabled,
                     "Logging mode {VALUE}.",
                     "checkbox"
                 )
@@ -309,9 +309,9 @@ class MainWindow(QMainWindow):
         for combobox, handler in comboboxes.items():
             combobox.currentIndexChanged.connect(handler)
 
-        self.ui.render_mode_box.setCurrentIndex(self.config.build_settings['build_state'])
-        self.ui.logo_box.setCurrentIndex(self.config.build_settings['logo_state'])
-        self.ui.nvenc_box.setCurrentIndex(self.config.build_settings['nvenc_state'])
+        self.ui.render_mode_box.setCurrentIndex(self.config.build_settings.build_state)
+        self.ui.logo_box.setCurrentIndex(self.config.build_settings.logo_state)
+        self.ui.nvenc_box.setCurrentIndex(self.config.build_settings.nvenc_state)
         if not self.config.ffmpeg.nvenc:
             self.ui.nvenc_box.setCurrentIndex(3)
             self.ui.nvenc_box.hide()
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
             self.coding_error('raw')
             return
 
-        if not os.path.exists(self.config.rendering_paths['audio']) and self.config.build_settings['build_state'] in [0, 1, 2]:
+        if not os.path.exists(self.config.rendering_paths['audio']) and self.config.build_settings.build_state in [0, 1, 2]:
             self.coding_error('sound')
             return
 
@@ -441,11 +441,11 @@ class MainWindow(QMainWindow):
             self.coding_error('subtitle')
             return
 
-        if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings['build_state'] in [0, 1, 4]:
+        if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
             self.coding_error('softsub')
             return
 
-        if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings['episode_name']):
+        if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
             self.coding_error('name')
             return
 

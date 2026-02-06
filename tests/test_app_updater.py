@@ -62,7 +62,7 @@ class TestAppUpdater:
 
     def test_check_for_app_update(self, updater_thread, monkeypatch):
         """check_for_app_update parses JSON and compares versions."""
-        updater_thread.config.app_info['version_number'] = "1.0.0"
+        updater_thread.config.app_info.version_number = "1.0.0"
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -111,7 +111,7 @@ class TestAppUpdater:
 
     def test_check_for_app_update_no_update(self, updater_thread, monkeypatch):
         """No update when current version is latest."""
-        updater_thread.config.app_info['version_number'] = "2.0.0"
+        updater_thread.config.app_info.version_number = "2.0.0"
 
         mock_response = MagicMock()
         mock_response.json.return_value = {

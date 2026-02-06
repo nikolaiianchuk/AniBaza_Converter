@@ -4,11 +4,14 @@ import re
 import subprocess
 import sys
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from modules.LoggingModule import LoggingModule
 from shutil import which
 from typing import Optional
+
+# Import enums from Phase 2
+from models.enums import BuildState, LogoState, NvencState
 
 @dataclass
 class Paths:
@@ -134,6 +137,66 @@ class FFMpegConfig:
         self.nvenc = not stderr
 
 
+@dataclass
+class AppInfo:
+    """Application metadata and versioning information."""
+    title: str = ''
+    version_number: str = ''
+    version_name: str = ''
+    author: str = ''
+    update_link: str = 'https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
+
+
+@dataclass
+class DevSettings:
+    """Development and debugging settings."""
+    dev_mode: bool = True
+    logging_enabled: bool = True
+    max_logs: int = 10
+
+
+@dataclass
+class VideoSettings:
+    """Video encoding settings — the actual tunable parameters."""
+    video_tune: str = 'animation'
+    video_profile: str = 'high10'
+    profile_level: str = '4.1'
+    pixel_format: str = 'yuv420p10le'
+
+
+class VideoPresets:
+    """Named presets for different encoding scenarios."""
+    SOFTSUB = VideoSettings(
+        video_tune='animation',
+        video_profile='high10',
+        profile_level='4.1',
+        pixel_format='yuv420p10le',
+    )
+    HARDSUB = VideoSettings(
+        video_tune='animation',
+        video_profile='main10',
+        profile_level='4.1',
+        pixel_format='yuv420p10le',
+    )
+    POTATO = VideoSettings(
+        video_tune='',  # tune is skipped in potato mode
+        video_profile='main',
+        profile_level='4.1',
+        pixel_format='yuv420p',
+    )
+
+
+@dataclass
+class BuildSettings:
+    """Build configuration for video rendering."""
+    episode_name: str = ''
+    build_state: BuildState = BuildState.SOFT_AND_HARD
+    logo_state: LogoState = LogoState.LOGO_BOTH
+    nvenc_state: NvencState = NvencState.NVENC_BOTH
+    softsub_settings: VideoSettings = field(default_factory=lambda: VideoPresets.SOFTSUB)
+    hardsub_settings: VideoSettings = field(default_factory=lambda: VideoPresets.HARDSUB)
+
+
 class Config:
     def __init__(self, paths: Paths, pc_info: PCInfo):
         # Main paths
@@ -148,25 +211,12 @@ class Config:
         self.download_thread = None
         self.ffmpeg_thread = None
 
-        # Application info
-        self.app_info = {
-            'title'          : '',
-            'version_number' : '',
-            'version_name'   : '',
-            'author'         : '',
-            'update_link'    : 'https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
-        }
+        # Typed dataclasses (Phase 4)
+        self.app_info = AppInfo()
+        self.dev_settings = DevSettings()
+        self.build_settings = BuildSettings()
 
-        # Special settings
-        self.dev_settings = {
-            'dev_mode' : True,
-            'logging'  : {
-                'state'    : True,
-                'max_logs' : 10
-            }
-        }
-
-        # Rendering paths
+        # Rendering paths (TODO Phase 4.3: move to RenderJob)
         self.rendering_paths = {
             'raw'     : '',
             'audio'   : '',
@@ -193,38 +243,20 @@ class Config:
         }
 
         self.update_search = True
+        # TODO Phase 4.3: Move to RenderThread
         self.total_duration_sec = 0
         self.total_frames = 0
-        self.current_state = ''
         self.video_res = ''
+        # TODO Phase 4.3: Move to MainWindow
+        self.current_state = ''
         self.first_show = True
         self.potato_PC = False
 
-        # Build settings
-        self.build_settings = {
-            'episode_name'     : '',
-            'build_state'      : 0,
-            'logo_state'       : 0,
-            'nvenc_state'      : 0,
-            'softsub_settings' : {
-                'video_tune'    : 'animation',
-                'video_profile' : 'high10',
-                'profile_level' : '4.1',
-                'pixel_format'  : 'yuv420p10le'
-            },
-            'hardsub_settings' : {
-                'video_tune'    : 'animation',
-                'video_profile' : 'main10',
-                'profile_level' : '4.1',
-                'pixel_format'  : 'yuv420p10le'
-            }
-        }
-
     def start_log(self):
         self.logging_module.start_logging(
-            self.dev_settings['logging']['state'],
+            self.dev_settings.logging_enabled,
             self.main_paths.logs,
-            self.dev_settings['logging']['max_logs']
+            self.dev_settings.max_logs
         )
 
     def log(self, module, function, message):

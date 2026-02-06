@@ -8,7 +8,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from configs.config import FFMpegConfig, PCInfo, Paths
+from configs.config import (
+    AppInfo,
+    BuildSettings,
+    DevSettings,
+    FFMpegConfig,
+    PCInfo,
+    Paths,
+    VideoPresets,
+    VideoSettings,
+)
+from models.enums import BuildState, LogoState, NvencState
 
 
 class TestPaths:
@@ -144,17 +154,17 @@ class TestFFMpegConfig:
         """Config has expected default values."""
         config = mock_config
 
-        # Check app_info
-        assert 'title' in config.app_info
-        assert 'version_number' in config.app_info
-        assert 'version_name' in config.app_info
-        assert 'author' in config.app_info
-        assert 'update_link' in config.app_info
+        # Check app_info (Phase 4: now AppInfo dataclass)
+        assert config.app_info.title == 'AniBaza Converter'
+        assert config.app_info.version_number == '1.0.0'
+        assert config.app_info.version_name == 'Test'
+        assert config.app_info.author == 'Test Author'
+        assert config.app_info.update_link is not None
 
-        # Check dev_settings
-        assert config.dev_settings['dev_mode'] is True
-        assert config.dev_settings['logging']['state'] is True
-        assert config.dev_settings['logging']['max_logs'] == 10
+        # Check dev_settings (Phase 4: now DevSettings dataclass)
+        assert config.dev_settings.dev_mode is True
+        assert config.dev_settings.logging_enabled is True
+        assert config.dev_settings.max_logs == 10
 
         # Check rendering_paths
         assert 'raw' in config.rendering_paths
@@ -163,9 +173,181 @@ class TestFFMpegConfig:
         assert 'softsub' in config.rendering_paths
         assert 'hardsub' in config.rendering_paths
 
-        # Check build_settings
-        assert config.build_settings['build_state'] == 0
-        assert config.build_settings['logo_state'] == 0
-        assert config.build_settings['nvenc_state'] == 0
-        assert 'softsub_settings' in config.build_settings
-        assert 'hardsub_settings' in config.build_settings
+        # Check build_settings (Phase 4: now BuildSettings dataclass)
+        assert config.build_settings.build_state == BuildState.SOFT_AND_HARD
+        assert config.build_settings.logo_state == LogoState.LOGO_BOTH
+        assert config.build_settings.nvenc_state == NvencState.NVENC_BOTH
+        assert config.build_settings.softsub_settings is not None
+        assert config.build_settings.hardsub_settings is not None
+
+
+class TestAppInfo:
+    """Test AppInfo dataclass (Phase 4)."""
+
+    def test_appinfo_default_values(self):
+        """AppInfo has expected default values."""
+        info = AppInfo()
+
+        assert info.title == ''
+        assert info.version_number == ''
+        assert info.version_name == ''
+        assert info.author == ''
+        assert info.update_link == 'https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
+
+    def test_appinfo_custom_values(self):
+        """AppInfo can be constructed with custom values."""
+        info = AppInfo(
+            title='Test App',
+            version_number='1.0.0',
+            version_name='Test Release',
+            author='Test Author',
+            update_link='https://example.com/version.json'
+        )
+
+        assert info.title == 'Test App'
+        assert info.version_number == '1.0.0'
+        assert info.version_name == 'Test Release'
+        assert info.author == 'Test Author'
+        assert info.update_link == 'https://example.com/version.json'
+
+    def test_appinfo_is_mutable(self):
+        """AppInfo is mutable (for backward compatibility)."""
+        info = AppInfo(title='Test')
+        info.title = 'Modified'
+        assert info.title == 'Modified'
+
+
+class TestDevSettings:
+    """Test DevSettings dataclass (Phase 4)."""
+
+    def test_devsettings_default_values(self):
+        """DevSettings has expected default values."""
+        settings = DevSettings()
+
+        assert settings.dev_mode is True
+        assert settings.logging_enabled is True
+        assert settings.max_logs == 10
+
+    def test_devsettings_custom_values(self):
+        """DevSettings can be constructed with custom values."""
+        settings = DevSettings(
+            dev_mode=False,
+            logging_enabled=False,
+            max_logs=20
+        )
+
+        assert settings.dev_mode is False
+        assert settings.logging_enabled is False
+        assert settings.max_logs == 20
+
+    def test_devsettings_is_mutable(self):
+        """DevSettings is mutable (for backward compatibility)."""
+        settings = DevSettings()
+        settings.dev_mode = False
+        assert settings.dev_mode is False
+
+
+class TestVideoSettings:
+    """Test VideoSettings dataclass (Phase 4)."""
+
+    def test_videosettings_default_values(self):
+        """VideoSettings has expected default values."""
+        settings = VideoSettings()
+
+        assert settings.video_tune == 'animation'
+        assert settings.video_profile == 'high10'
+        assert settings.profile_level == '4.1'
+        assert settings.pixel_format == 'yuv420p10le'
+
+    def test_videosettings_custom_values(self):
+        """VideoSettings can be constructed with custom values."""
+        settings = VideoSettings(
+            video_tune='film',
+            video_profile='main',
+            profile_level='4.0',
+            pixel_format='yuv420p'
+        )
+
+        assert settings.video_tune == 'film'
+        assert settings.video_profile == 'main'
+        assert settings.profile_level == '4.0'
+        assert settings.pixel_format == 'yuv420p'
+
+    def test_videosettings_is_mutable(self):
+        """VideoSettings is mutable (for backward compatibility)."""
+        settings = VideoSettings()
+        settings.video_tune = 'film'
+        assert settings.video_tune == 'film'
+
+
+class TestVideoPresets:
+    """Test VideoPresets constants (Phase 4)."""
+
+    def test_softsub_preset(self):
+        """SOFTSUB preset has correct values."""
+        preset = VideoPresets.SOFTSUB
+
+        assert preset.video_tune == 'animation'
+        assert preset.video_profile == 'high10'
+        assert preset.profile_level == '4.1'
+        assert preset.pixel_format == 'yuv420p10le'
+
+    def test_hardsub_preset(self):
+        """HARDSUB preset has correct values."""
+        preset = VideoPresets.HARDSUB
+
+        assert preset.video_tune == 'animation'
+        assert preset.video_profile == 'main10'
+        assert preset.profile_level == '4.1'
+        assert preset.pixel_format == 'yuv420p10le'
+
+    def test_potato_preset(self):
+        """POTATO preset has correct values."""
+        preset = VideoPresets.POTATO
+
+        assert preset.video_tune == ''  # No tune in potato mode
+        assert preset.video_profile == 'main'
+        assert preset.profile_level == '4.1'
+        assert preset.pixel_format == 'yuv420p'
+
+
+class TestBuildSettings:
+    """Test BuildSettings dataclass (Phase 4)."""
+
+    def test_buildsettings_default_values(self):
+        """BuildSettings has expected default values."""
+        settings = BuildSettings()
+
+        assert settings.episode_name == ''
+        assert settings.build_state == BuildState.SOFT_AND_HARD
+        assert settings.logo_state == LogoState.LOGO_BOTH
+        assert settings.nvenc_state == NvencState.NVENC_BOTH
+        assert settings.softsub_settings == VideoPresets.SOFTSUB
+        assert settings.hardsub_settings == VideoPresets.HARDSUB
+
+    def test_buildsettings_custom_values(self):
+        """BuildSettings can be constructed with custom values."""
+        custom_soft = VideoSettings(video_tune='film', video_profile='main', profile_level='4.0', pixel_format='yuv420p')
+        custom_hard = VideoSettings(video_tune='', video_profile='main', profile_level='4.0', pixel_format='yuv420p')
+
+        settings = BuildSettings(
+            episode_name='Episode 01',
+            build_state=BuildState.SOFT_ONLY,
+            logo_state=LogoState.LOGO_SOFT_ONLY,
+            nvenc_state=NvencState.NVENC_SOFT_ONLY,
+            softsub_settings=custom_soft,
+            hardsub_settings=custom_hard
+        )
+
+        assert settings.episode_name == 'Episode 01'
+        assert settings.build_state == BuildState.SOFT_ONLY
+        assert settings.logo_state == LogoState.LOGO_SOFT_ONLY
+        assert settings.nvenc_state == NvencState.NVENC_SOFT_ONLY
+        assert settings.softsub_settings == custom_soft
+        assert settings.hardsub_settings == custom_hard
+
+    def test_buildsettings_is_mutable(self):
+        """BuildSettings is mutable (for backward compatibility)."""
+        settings = BuildSettings()
+        settings.episode_name = 'Modified'
+        assert settings.episode_name == 'Modified'

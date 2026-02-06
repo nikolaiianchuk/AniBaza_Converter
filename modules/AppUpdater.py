@@ -71,14 +71,14 @@ class UpdaterThread(QThread):
     def check_for_app_update(self):
         try:
             self.config.log('AppUpdater', 'check_for_app_update', "Checking for updates...")
-            response = requests.get(self.config.app_info['update_link'], timeout=5)
+            response = requests.get(self.config.app_info.update_link, timeout=5)
             response.raise_for_status()
             data = response.json()
             self.config.log('AppUpdater', 'check_for_app_update', f"Data found: {data}")
             latest_version = data.get("version")
             download_url = data.get("url")
             name = data.get("name")
-            if latest_version and download_url and name and latest_version > self.config.app_info['version_number']:
+            if latest_version and download_url and name and latest_version > self.config.app_info.version_number:
                 return latest_version, download_url, name
         except Exception as e:
             self.handle_exception(e)
@@ -130,7 +130,7 @@ class UpdaterUI:
     def start_app_download(self, url, version):
         self.config.log('AppUpdater', 'start_app_download', 'Starting download...')
         self.progress = QProgressDialog(
-            f"Скачиваю обновление...\n{self.config.app_info['version_number']} -> {version}",
+            f"Скачиваю обновление...\n{self.config.app_info.version_number} -> {version}",
             "Отмена",
             0, 100,
             self.main_window
@@ -192,7 +192,7 @@ class UpdaterUI:
         result = self.universal_message_box(
             QMessageBox.Icon.Information,
             "ABCUpdater",
-            f"Доступна новая версия AniBaza Converter: {self.config.app_info['version_number']} -> {latest_version}!",
+            f"Доступна новая версия AniBaza Converter: {self.config.app_info.version_number} -> {latest_version}!",
             "Вы хотите скачать и установить новую версию?",
             QMessageBox.StandardButtons(QMessageBox.StandardButton.Yes) | QMessageBox.StandardButtons(QMessageBox.StandardButton.No),
             'Showing App update dialog...'

@@ -11,7 +11,16 @@ from PyQt5.QtWidgets import QApplication
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from configs.config import Config, FFMpegConfig, PCInfo, Paths
+from configs.config import (
+    AppInfo,
+    BuildSettings,
+    Config,
+    DevSettings,
+    FFMpegConfig,
+    PCInfo,
+    Paths,
+)
+from models.enums import BuildState, LogoState, NvencState
 
 
 @pytest.fixture(scope="session")
@@ -88,23 +97,21 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
     config.download_thread = None
     config.ffmpeg_thread = None
 
-    # Application info
-    config.app_info = {
-        'title': 'AniBaza Converter',
-        'version_number': '1.0.0',
-        'version_name': 'Test',
-        'author': 'Test Author',
-        'update_link': 'https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
-    }
+    # Application info (Phase 4: now dataclass)
+    config.app_info = AppInfo(
+        title='AniBaza Converter',
+        version_number='1.0.0',
+        version_name='Test',
+        author='Test Author',
+        update_link='https://raw.githubusercontent.com/Miki-san/AniBaza_Converter/master/latest_version.json'
+    )
 
-    # Special settings
-    config.dev_settings = {
-        'dev_mode': True,
-        'logging': {
-            'state': True,
-            'max_logs': 10
-        }
-    }
+    # Special settings (Phase 4: now dataclass)
+    config.dev_settings = DevSettings(
+        dev_mode=True,
+        logging_enabled=True,
+        max_logs=10
+    )
 
     # Rendering paths
     config.rendering_paths = {
@@ -140,24 +147,12 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
     config.first_show = True
     config.potato_PC = False
 
-    # Build settings
-    config.build_settings = {
-        'episode_name': '',
-        'build_state': 0,
-        'logo_state': 0,
-        'nvenc_state': 0,
-        'softsub_settings': {
-            'video_tune': 'animation',
-            'video_profile': 'high10',
-            'profile_level': '4.1',
-            'pixel_format': 'yuv420p10le'
-        },
-        'hardsub_settings': {
-            'video_tune': 'animation',
-            'video_profile': 'main10',
-            'profile_level': '4.1',
-            'pixel_format': 'yuv420p10le'
-        }
-    }
+    # Build settings (Phase 4: now dataclass)
+    config.build_settings = BuildSettings(
+        episode_name='',
+        build_state=BuildState.SOFT_AND_HARD,
+        logo_state=LogoState.LOGO_BOTH,
+        nvenc_state=NvencState.NVENC_BOTH
+    )
 
     return config

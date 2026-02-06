@@ -15,11 +15,11 @@ class TestMainWindow:
         # Test the logic directly - use platform-agnostic paths
         mock_config.main_paths.softsub = Path("/output/softsub")
         mock_config.main_paths.hardsub = Path("/output/HARDSUB")
-        mock_config.build_settings['episode_name'] = "Episode_01"
+        mock_config.build_settings.episode_name = "Episode_01"
 
-        # Simulate what update_render_paths does
-        softsub_path = f"{mock_config.main_paths.softsub}/{mock_config.build_settings['episode_name']}.mkv"
-        hardsub_path = f"{mock_config.main_paths.hardsub}/{mock_config.build_settings['episode_name']}.mp4"
+        # Simulate what update_render_paths does (Phase 4: dataclass attributes)
+        softsub_path = f"{mock_config.main_paths.softsub}/{mock_config.build_settings.episode_name}.mkv"
+        hardsub_path = f"{mock_config.main_paths.hardsub}/{mock_config.build_settings.episode_name}.mp4"
 
         # Check that paths end with the expected filename (platform-agnostic)
         assert softsub_path.endswith("softsub/Episode_01.mkv") or softsub_path.endswith("softsub\\Episode_01.mkv")
