@@ -64,7 +64,6 @@ class FFmpegConstructor:
             'audio discretization' : '-ar 48000',
             'video output'         : '"{OUTPUT_FILE_PATH}"'
         }
-        # Phase 5: Replace mutable dict with SubtitleInfo dataclass
         self.sub = SubtitleInfo()
 
         # Path separator for Windows paths in ffmpeg filters
@@ -73,7 +72,6 @@ class FFmpegConstructor:
         self.escaped_logo_path = ''
 
     def sub_escaper(self, path):
-        # Phase 5: Create new SubtitleInfo instead of mutating dict
         name = os.path.basename(path)
         sanitized_name = str(name).replace('[', '').replace(']', '')
         os.makedirs(self.config.main_paths.temp, exist_ok=True)
@@ -105,7 +103,6 @@ class FFmpegConstructor:
 
         Args are the same as build_soft_command(), but returns list instead of string.
         """
-        # Phase 5.8: Use EncodingDefaults for constants
         if crf_rate is None:
             crf_rate = str(EncodingDefaults.CRF_1080P)
         if cq is None:
@@ -192,7 +189,6 @@ class FFmpegConstructor:
 
         Returns a list of arguments for hardsub encoding.
         """
-        # Phase 5.8: Use EncodingDefaults for constants
         if crf_rate is None:
             crf_rate = str(EncodingDefaults.CRF_1080P)
         if cq is None:
@@ -403,7 +399,6 @@ class FFmpegConstructor:
         return str_out
 
     def remove_temp_sub(self):
-        # Phase 5: Use SubtitleInfo dataclass
         if os.path.exists(self.sub.temp_path):
             os.remove(self.sub.temp_path)
             self.sub = SubtitleInfo()  # Reset to empty instance

@@ -2,11 +2,9 @@ name: Build and Release
 
 on:
   push:
-    branches: [master]
+    branches: [master]  # Only run on master branch
     tags:
-      - "v*" # Trigger on version tags like v1.0.0
-  pull_request:
-    branches: [master]
+      - "v*"  # Trigger on version tags like v1.0.0
 
 jobs:
   build:

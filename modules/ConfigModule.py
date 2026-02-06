@@ -78,7 +78,6 @@ def load_configs(config):
 def save_config(config):
     parser = load_parser(config, config.main_paths.config)
     if parser:
-        # Phase 4: build_settings is now a dataclass
         parser.set('main settings', 'logo_state', str(int(config.build_settings.logo_state)))
         parser.set('main settings', 'build_state', str(int(config.build_settings.build_state)))
         parser.set('main settings', 'nvenc_state', str(int(config.build_settings.nvenc_state)))

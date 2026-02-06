@@ -32,12 +32,9 @@ class ThreadClassRender(QThread):
         super(ThreadClassRender, self).__init__()
         self.config = config
         self.runner = runner  # New: Optional ProcessRunner for safe execution
-        # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
-        # Phase 4.2: Move command_constructor from Config to RenderThread
         self.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
-        # Phase 4.3: Move runtime state from Config to RenderThread
         self.total_duration_sec = 0
         self.total_frames = 0
         self.video_res = ''
@@ -94,7 +91,6 @@ class ThreadClassRender(QThread):
     def softsub(self):
         self.config.log('RenderThread', 'softsub', "Starting softsubbing...")
         if self.config.build_settings.build_state in [0, 1]:
-            # Phase 6: Use build_soft_args() (list) instead of build_soft_command() (string)
             args = self.command_constructor.build_soft_args(
                 raw_path      = self.config.rendering_paths['raw'],
                 sound_path    = self.config.rendering_paths['audio'],
@@ -116,7 +112,6 @@ class ThreadClassRender(QThread):
                 potato_mode   = self.config.potato_PC
             )
             self.config.log('RenderThread', 'softsub', f"Generated args: {' '.join(args)}")
-            # Phase 5.7: Use consolidated _run_encode() helper
             self._run_encode(args, "Собираю софтсаб...")
 
     # Hardsubbing
@@ -144,7 +139,6 @@ class ThreadClassRender(QThread):
                 potato_mode   = self.config.potato_PC
             )
             self.config.log('RenderThread', 'hardsub', f"Generated args: {args}")
-            # Phase 5.7: Use consolidated _run_encode() helper
             self._run_encode(args, "Собираю хардсаб...")
 
     # Hardsubbing special
@@ -170,7 +164,6 @@ class ThreadClassRender(QThread):
                 include_logo  = True if self.config.build_settings.logo_state in [0, 2] else False,
             )
             self.config.log('RenderThread', 'hardsubbering', f"Generated args: {args}")
-            # Phase 5.7: Use consolidated _run_encode() helper
             self._run_encode(args, "Собираю хардсаб для хардсабберов...")
             
     def raw_repairing(self):
@@ -185,7 +178,6 @@ class ThreadClassRender(QThread):
                 self.config.rendering_paths['softsub']
             ]
             self.config.log('RenderThread', 'raw_repairing', f"Generated args: {args}")
-            # Phase 5.7: Use consolidated _run_encode() helper
             self._run_encode(args, "Востанавливаю равку...")
 
     def ffmpeg_analysis(self):
@@ -337,7 +329,6 @@ class ThreadClassRender(QThread):
             args: FFmpeg arguments as a list
             state_label: Status message to display (e.g., "Собираю софтсаб...")
         """
-        # Phase 4.3: State passed via signal, no need to store on config
         self.state_update(state_label)
         process = self._run_process_safe(args)
         self.frame_update(process)

@@ -13,7 +13,6 @@ class FAQWindow(QDialog):
         self.config = config
         self.fui = Ui_dialog()
         self.fui.setupUi(self)
-        # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
         
     def handle_exception(self, exc_type, exc_value, exc_traceback):

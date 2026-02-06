@@ -66,7 +66,6 @@ def main():
     try:
         config.start_log()
 
-        # Phase 5: Install global exception handler
         exception_handler = get_global_handler()
         exception_handler.install()
 

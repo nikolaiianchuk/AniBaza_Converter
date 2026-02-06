@@ -205,7 +205,6 @@ class Config:
 
         # Main objects
         self.logging_module = LoggingModule()
-        # Phase 4.2: Thread references moved to their owners (UpdaterUI)
         self.updater_thread = None
         self.download_thread = None
         self.ffmpeg_thread = None
@@ -242,7 +241,6 @@ class Config:
         }
 
         self.update_search = True
-        # Phase 4.3: Runtime state moved to proper owners
         # - total_duration_sec, total_frames, video_res → RenderThread
         # - current_state → removed (passed via signals only)
         # - first_show → MainWindow

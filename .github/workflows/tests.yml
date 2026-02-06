@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ master, refactor-* ]
+    branches: [ "**" ]  # Run on all branches
   pull_request:
-    branches: [ master ]
+    branches: [ "**" ]  # Run on all PRs
 
 jobs:
   test:

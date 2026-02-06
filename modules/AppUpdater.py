@@ -21,7 +21,6 @@ class UpdaterThread(QThread):
 
     def __init__(self, config):
         super().__init__()
-        # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
         self.config = config
 
@@ -69,7 +68,6 @@ class UpdaterThread(QThread):
         latest_version = self.get_latest_ffmpeg_version()
         if latest_version and installed_version:
             try:
-                # Phase 5: Use semantic version comparison instead of string comparison
                 if Version(latest_version) > Version(installed_version):
                     return True, latest_version, installed_version
             except InvalidVersion as e:
@@ -88,7 +86,6 @@ class UpdaterThread(QThread):
             name = data.get("name")
             if latest_version and download_url and name:
                 try:
-                    # Phase 5: Use semantic version comparison instead of string comparison
                     if Version(latest_version) > Version(self.config.app_info.version_number):
                         return latest_version, download_url, name
                 except InvalidVersion as e:
@@ -101,7 +98,6 @@ class UpdaterUI:
     def __init__(self, main_window, config):
         self.main_window = main_window
         self.config = config
-        # Phase 4.2: Thread references now owned by UpdaterUI
         self.updater_thread = None
         self.download_thread = None
         self.ffmpeg_thread = None

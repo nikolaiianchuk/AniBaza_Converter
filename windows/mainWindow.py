@@ -23,14 +23,12 @@ class MainWindow(QMainWindow):
     # Main window init
     def __init__(self, config, runner: Optional[ProcessRunner] = None):
         super().__init__()
-        # Phase 5: Register exception handler instead of overriding sys.excepthook
         get_global_handler().register_callback(self.handle_exception)
         self.config = config
-        self.runner = runner  # Phase 6: ProcessRunner for safe subprocess execution
+        self.runner = runner
         self.finish_message = False
         self.threadMain = None
         self.faqWindow = None
-        # Phase 4.3: Move runtime state from Config to MainWindow
         self.first_show = True
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -493,7 +491,6 @@ class MainWindow(QMainWindow):
             self.coding_error('stop')
             self.finish_message = False
         else:
-            # Phase 4.3: State passed via signal, no need to store on config
             self.state_update("Все готово!")
             self.elapsed_time_update('')
             QApplication.beep()
