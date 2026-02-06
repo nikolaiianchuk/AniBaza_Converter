@@ -30,6 +30,8 @@ class MainWindow(QMainWindow):
         self.finish_message = False
         self.threadMain = None
         self.faqWindow = None
+        # Phase 4.3: Move runtime state from Config to MainWindow
+        self.first_show = True
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.set_buttons()
@@ -72,8 +74,8 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event):
         super().showEvent(event)
-        if self.config.first_show:  # Проверяем, был ли уже вызван showEvent
-            self.config.first_show = False  # Сбрасываем флаг, чтобы не выполнять повторно
+        if self.first_show:  # Проверяем, был ли уже вызван showEvent
+            self.first_show = False  # Сбрасываем флаг, чтобы не выполнять повторно
             self.updater_ui = UpdaterUI(self, self.config)
             if self.config.update_search:
                 self.updater_ui.start_updater()
@@ -491,8 +493,8 @@ class MainWindow(QMainWindow):
             self.coding_error('stop')
             self.finish_message = False
         else:
-            self.config.current_state = "Все готово!"
-            self.state_update(self.config.current_state)
+            # Phase 4.3: State passed via signal, no need to store on config
+            self.state_update("Все готово!")
             self.elapsed_time_update('')
             QApplication.beep()
         self.ui.elapsed_time_label.setText('')

@@ -242,13 +242,10 @@ class Config:
         }
 
         self.update_search = True
-        # TODO Phase 4.3: Move to RenderThread
-        self.total_duration_sec = 0
-        self.total_frames = 0
-        self.video_res = ''
-        # TODO Phase 4.3: Move to MainWindow
-        self.current_state = ''
-        self.first_show = True
+        # Phase 4.3: Runtime state moved to proper owners
+        # - total_duration_sec, total_frames, video_res → RenderThread
+        # - current_state → removed (passed via signals only)
+        # - first_show → MainWindow
         self.potato_PC = False
 
     def start_log(self):

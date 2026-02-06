@@ -38,14 +38,14 @@ class TestRenderThread:
 
         # Check duration parsing
         expected_duration = 24 * 60 + 2.05  # 1442.05 seconds
-        assert abs(render_thread.config.total_duration_sec - expected_duration) < 0.1
+        assert abs(render_thread.total_duration_sec - expected_duration) < 0.1
 
         # Check frame count (duration * 24000/1001)
         expected_frames = expected_duration * 24000 / 1001.0
-        assert abs(render_thread.config.total_frames - expected_frames) < 1
+        assert abs(render_thread.total_frames - expected_frames) < 1
 
         # Check resolution
-        assert render_thread.config.video_res == "1080p"
+        assert render_thread.video_res == "1080p"
 
     def test_ffmpeg_analysis_decoding_720p(self, render_thread):
         """FFprobe output for 720p is parsed correctly."""
@@ -58,7 +58,7 @@ class TestRenderThread:
         mock_proc = MockProcess(ffprobe_output)
         render_thread.ffmpeg_analysis_decoding(mock_proc)
 
-        assert render_thread.config.video_res == "720p"
+        assert render_thread.video_res == "720p"
 
     def test_ffmpeg_analysis_decoding_pixel_formats(self, render_thread):
         """Different pixel formats are detected."""
@@ -124,7 +124,7 @@ class TestRenderThread:
 
     def test_calculate_encoding_params_1080p(self, render_thread):
         """Encoding params for 1080p use CRF 18."""
-        render_thread.config.total_duration_sec = 1442  # Set duration to avoid division by zero
+        render_thread.total_duration_sec = 1442  # Set duration to avoid division by zero
         params = render_thread.calculate_encoding_params(2.0, "1080p")
 
         assert params['crf'] == '18'
@@ -134,7 +134,7 @@ class TestRenderThread:
 
     def test_calculate_encoding_params_720p(self, render_thread):
         """Encoding params for 720p use CRF 20."""
-        render_thread.config.total_duration_sec = 1442  # Set duration
+        render_thread.total_duration_sec = 1442  # Set duration
         params = render_thread.calculate_encoding_params(2.0, "720p")
 
         assert params['crf'] == '20'
@@ -143,7 +143,7 @@ class TestRenderThread:
     def test_calculate_encoding_params_potato(self, render_thread):
         """Potato mode halves bitrate and sets CRF 23."""
         render_thread.config.potato_PC = True
-        render_thread.config.total_duration_sec = 1000  # Set duration
+        render_thread.total_duration_sec = 1000  # Set duration
 
         params = render_thread.calculate_encoding_params(2.0, "1080p")
 
@@ -158,7 +158,7 @@ class TestRenderThread:
     def test_calculate_encoding_params_cap(self, render_thread):
         """Average bitrate is capped at 6M."""
         # Set very short duration to get high bitrate
-        render_thread.config.total_duration_sec = 100
+        render_thread.total_duration_sec = 100
 
         params = render_thread.calculate_encoding_params(10.0, "1080p")
 
@@ -271,7 +271,8 @@ class TestRenderThread:
 
     def test_frame_update_parses_progress(self, render_thread, mock_config):
         """frame_update parses frame and fps from ffmpeg output."""
-        mock_config.total_frames = 1000
+        # Phase 4.3: total_frames moved to RenderThread
+        render_thread.total_frames = 1000
 
         ffmpeg_output = [
             "frame=  100 fps= 25 q=-1.0 size=    1024kB time=00:00:04.00 bitrate=2097.2kbits/s speed=1.0x\n",

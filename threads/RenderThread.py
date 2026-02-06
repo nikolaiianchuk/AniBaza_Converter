@@ -37,6 +37,10 @@ class ThreadClassRender(QThread):
         # Phase 4.2: Move command_constructor from Config to RenderThread
         self.command_constructor = FFmpegConstructor(self.config)
         self.render_speed = -1 if self.config.potato_PC else 1
+        # Phase 4.3: Move runtime state from Config to RenderThread
+        self.total_duration_sec = 0
+        self.total_frames = 0
+        self.video_res = ''
         self.encoding_params = {
             "avg_bitrate": "6M",
             "max_bitrate": "9M",
@@ -62,7 +66,7 @@ class ThreadClassRender(QThread):
             frame_match = re.search(r'frame=\s*(\d+)\s+fps=\s*(\d+)', line)
 
             if frame_match:
-                remaining_frames = self.config.total_frames - int(frame_match.group(1))
+                remaining_frames = self.total_frames - int(frame_match.group(1))
                 fps = float(frame_match.group(2))
                 remaining_time = remaining_frames / (fps if math.ceil(fps) != 0 else 1)
                 rem_hrs = int(remaining_time // 3600)
@@ -201,7 +205,7 @@ class ThreadClassRender(QThread):
             "qmin": "{QMIN}",
             "qmax": "{QMAX}"
         }
-        avg_bitrate = (file_size_gb * 1024 * 8) / self.config.total_duration_sec
+        avg_bitrate = (file_size_gb * 1024 * 8) / self.total_duration_sec
         avg_bitrate = avg_bitrate if avg_bitrate < 6 else 6
         
         if self.config.potato_PC:
@@ -253,14 +257,14 @@ class ThreadClassRender(QThread):
             resolution_match = re.search(r'(\d{3,4})x(\d{3,4})', line)
             if resolution_match:
                 _, height = resolution_match.groups()
-                self.config.video_res = f"{height}p" if int(height) < 4096 else f"{int(height)/1024}K"
-                self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Video resolution: {self.config.video_res}")
+                self.video_res = f"{height}p" if int(height) < 4096 else f"{int(height)/1024}K"
+                self.config.log('RenderThread', 'ffmpeg_analysis_decoding', f"Video resolution: {self.video_res}")
             
             if duration_match:
                 hrs, minutes, sec = map(float, duration_match.groups())
-                self.config.total_duration_sec =  hrs * 3600 + minutes * 60 + sec
-                self.config.total_frames = self.config.total_duration_sec * 24000 / 1001.0
-                self.time_upd.emit(self.config.total_frames)
+                self.total_duration_sec =  hrs * 3600 + minutes * 60 + sec
+                self.total_frames = self.total_duration_sec * 24000 / 1001.0
+                self.time_upd.emit(self.total_frames)
             
             if codec_match:
                 for item in ['yuv420p,', 'yuv420p(', 'yuv420p ', 'yuv420p10le,', 'yuv420p10le(', 'yuv420p10le ', 'p010le,', 'p010le(', 'p010le ']:
@@ -333,7 +337,7 @@ class ThreadClassRender(QThread):
             args: FFmpeg arguments as a list
             state_label: Status message to display (e.g., "Собираю софтсаб...")
         """
-        self.config.current_state = state_label
+        # Phase 4.3: State passed via signal, no need to store on config
         self.state_update(state_label)
         process = self._run_process_safe(args)
         self.frame_update(process)
@@ -343,7 +347,7 @@ class ThreadClassRender(QThread):
         try:
             self.config.log('RenderThread', 'run', "Running ffmpeg thread...")
             self.ffmpeg_analysis()
-            self.encoding_params = self.calculate_encoding_params(2, self.config.video_res)
+            self.encoding_params = self.calculate_encoding_params(2, self.video_res)
             self.softsub()
             self.hardsub()
             self.hardsubbering()

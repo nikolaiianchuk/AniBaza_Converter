@@ -140,11 +140,7 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
     }
 
     config.update_search = True
-    config.total_duration_sec = 0
-    config.total_frames = 0
-    config.current_state = ''
-    config.video_res = ''
-    config.first_show = True
+    # Phase 4.3: Runtime state moved to proper owners (RenderThread, MainWindow)
     config.potato_PC = False
 
     # Build settings (Phase 4: now dataclass)
