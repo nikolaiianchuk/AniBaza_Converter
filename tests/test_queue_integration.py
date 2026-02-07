@@ -140,6 +140,7 @@ class TestAddToQueueValidation:
     def test_add_to_queue_fails_with_invalid_episode_name(self, qapp, mock_config, tmp_path):
         """on_add_to_queue_clicked shows error when episode name is invalid."""
         from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
 
         window = MainWindow(mock_config)
 
@@ -154,12 +155,15 @@ class TestAddToQueueValidation:
         # Invalid episode name (contains invalid characters)
         window.config.build_settings.episode_name = "Episode/01"
 
-        # Mock QMessageBox to capture error - coding_error uses QMessageBox.exec_
-        with patch('PyQt5.QtWidgets.QMessageBox.exec_') as mock_exec:
-            window.on_add_to_queue_clicked()
+        # Mock display_error to verify error is shown (coding_error now uses display_error)
+        window.display_error = Mock()
 
-            # Should show error message (coding_error creates and displays QMessageBox)
-            mock_exec.assert_called_once()
+        window.on_add_to_queue_clicked()
+
+        # Should show error message via display_error
+        window.display_error.assert_called_once()
+        args = window.display_error.call_args[0]
+        assert "Некорректное имя серии" in args[0]  # Error message about invalid name
 
         # Job should NOT be added
         assert len(window.job_queue.get_all_jobs()) == 0
