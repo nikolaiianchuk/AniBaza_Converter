@@ -115,3 +115,38 @@ class TestCodingErrorRefactored:
                 window.display_error.reset_mock()
                 window.coding_error(error_type)
                 window.display_error.assert_called_once()
+
+
+class TestValidateBeforeRender:
+    """Test _validate_before_render uses display_error."""
+
+    def test_validate_no_messagebox_on_error(self, qapp, mock_config, tmp_path):
+        """_validate_before_render does NOT show QMessageBox on validation failure."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+
+        # Invalid path
+        window._ui_paths['raw'] = str(tmp_path / "nonexistent.mkv")
+
+        with patch('PyQt5.QtWidgets.QMessageBox.critical') as mock_critical:
+            result = window._validate_before_render()
+
+            # Should NOT call QMessageBox.critical
+            mock_critical.assert_not_called()
+
+    def test_validate_calls_display_error_on_failure(self, qapp, mock_config, tmp_path):
+        """_validate_before_render calls display_error on validation failure."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+
+        # Invalid path
+        window._ui_paths['raw'] = str(tmp_path / "nonexistent.mkv")
+
+        result = window._validate_before_render()
+
+        # Should call display_error with ERROR severity
+        window.display_error.assert_called_once()
+        args = window.display_error.call_args[0]
+        assert "not found" in args[0].lower() or "не найден" in args[0].lower()
+        assert args[1] == ErrorSeverity.ERROR
+        assert result is False

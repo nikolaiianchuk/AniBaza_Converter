@@ -565,7 +565,7 @@ class MainWindow(QMainWindow):
             if errors:
                 # Show errors to user
                 error_msg = "\n".join(errors)
-                QtWidgets.QMessageBox.critical(self, "Validation Error", error_msg)
+                self.display_error(error_msg, ErrorSeverity.ERROR)
                 self.config.log('mainWindow', '_validate_before_render', f"Validation failed: {error_msg}")
                 return False
 
@@ -573,7 +573,7 @@ class MainWindow(QMainWindow):
             return True
         except Exception as e:
             error_msg = f"Error validating paths: {str(e)}"
-            QtWidgets.QMessageBox.critical(self, "Error", error_msg)
+            self.display_error(error_msg, ErrorSeverity.ERROR)
             self.config.log('mainWindow', '_validate_before_render', error_msg)
             return False
 
