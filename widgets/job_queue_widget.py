@@ -115,6 +115,8 @@ class JobListItem(QWidget):
         """
         # Move up button
         self.move_up_button = QPushButton("↑")
+        self.move_up_button.setObjectName("move_up")
+        self.move_up_button.setProperty("class", "job-action")
         self.move_up_button.setFixedSize(30, 30)
         self.move_up_button.setToolTip("Move up in queue")
         self.move_up_button.clicked.connect(lambda: self.move_up_requested.emit(self.job_id))
@@ -122,6 +124,8 @@ class JobListItem(QWidget):
 
         # Move down button
         self.move_down_button = QPushButton("↓")
+        self.move_down_button.setObjectName("move_down")
+        self.move_down_button.setProperty("class", "job-action")
         self.move_down_button.setFixedSize(30, 30)
         self.move_down_button.setToolTip("Move down in queue")
         self.move_down_button.clicked.connect(lambda: self.move_down_requested.emit(self.job_id))
@@ -129,6 +133,8 @@ class JobListItem(QWidget):
 
         # Remove button
         self.remove_button = QPushButton("✕")
+        self.remove_button.setObjectName("remove")
+        self.remove_button.setProperty("class", "job-action")
         self.remove_button.setFixedSize(30, 30)
         self.remove_button.setToolTip("Remove from queue")
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.job_id))
@@ -155,6 +161,8 @@ class JobListItem(QWidget):
         """
         # Remove button
         self.remove_button = QPushButton("✕")
+        self.remove_button.setObjectName("remove")
+        self.remove_button.setProperty("class", "job-action")
         self.remove_button.setFixedSize(30, 30)
         self.remove_button.setToolTip("Remove from queue")
         self.remove_button.clicked.connect(lambda: self.remove_requested.emit(self.job_id))

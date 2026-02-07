@@ -370,3 +370,36 @@ class TestJobQueueWidgetObjectNames:
         # Buttons should have empty inline stylesheet
         assert widget.resume_button.styleSheet() == ""
         assert widget.clear_completed_button.styleSheet() == ""
+
+
+class TestJobItemActionButtons:
+    """Test action buttons have class property for QSS."""
+
+    def test_action_buttons_have_class_property(self, qapp):
+        """Job item action buttons have 'job-action' class property."""
+        mock_job = Mock()
+        mock_job.job.episode_name = "Episode 01"
+        mock_job.id = "test-job-id"
+        mock_job.status = JobStatus.WAITING
+
+        # Create job list item
+        item_widget = JobListItem(mock_job)
+
+        # All should have 'job-action' class property
+        assert item_widget.move_up_button.property("class") == "job-action"
+        assert item_widget.move_down_button.property("class") == "job-action"
+        assert item_widget.remove_button.property("class") == "job-action"
+
+    def test_action_buttons_no_inline_styles(self, qapp):
+        """Job item action buttons have no inline stylesheets."""
+        mock_job = Mock()
+        mock_job.job.episode_name = "Episode 01"
+        mock_job.id = "test-job-id"
+        mock_job.status = JobStatus.WAITING
+
+        item_widget = JobListItem(mock_job)
+
+        # All action buttons should have empty inline stylesheet
+        assert item_widget.move_up_button.styleSheet() == ""
+        assert item_widget.move_down_button.styleSheet() == ""
+        assert item_widget.remove_button.styleSheet() == ""
