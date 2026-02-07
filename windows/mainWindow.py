@@ -437,13 +437,12 @@ class MainWindow(QMainWindow):
         self.ui.subtitle_path_editline.setText(self._ui_paths['sub'])
         self.config.log('mainWindow', 'sub_folder_path', f"Subtitle path updated to: {self._ui_paths['sub']}")
 
-    def display_error(self, message: str, severity: ErrorSeverity = ErrorSeverity.INFO, action_callback=None):
+    def display_error(self, message: str, severity: ErrorSeverity = ErrorSeverity.INFO):
         """Display error message in app_state_label with severity-based styling.
 
         Args:
             message: Error message to display
             severity: ErrorSeverity level (INFO, WARNING, ERROR)
-            action_callback: Optional callback for future action button functionality
         """
         # Set label text
         self.ui.app_state_label.setText(message)
@@ -457,13 +456,7 @@ class MainWindow(QMainWindow):
         style.polish(self.ui.app_state_label)
 
         # Log error with severity level
-        severity_map = {
-            ErrorSeverity.INFO: "INFO",
-            ErrorSeverity.WARNING: "WARNING",
-            ErrorSeverity.ERROR: "ERROR"
-        }
-        log_level = severity_map.get(severity, "INFO")
-        self.config.log("mainWindow", "display_error", f"[{log_level}] {message}")
+        self.config.log("mainWindow", "display_error", f"[{severity.name}] {message}")
 
     # Coding Errors
     def coding_error(self, error_type):
