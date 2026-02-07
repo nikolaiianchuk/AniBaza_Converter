@@ -41,3 +41,10 @@ class JobStatus(IntEnum):
     COMPLETED = 2
     FAILED = 3
     CANCELLED = 4
+
+
+class ErrorSeverity(IntEnum):
+    """Error display severity levels for color-coded feedback."""
+    INFO = 0     # Blue-gray (default) - informational
+    WARNING = 1  # Orange - warning/caution
+    ERROR = 2    # Red - critical error

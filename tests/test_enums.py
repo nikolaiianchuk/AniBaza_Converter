@@ -1,6 +1,7 @@
 """Tests for models/enums.py."""
 
-from models.enums import BuildState, LogoState, NvencState
+import pytest
+from models.enums import BuildState, LogoState, NvencState, ErrorSeverity
 
 
 class TestEnums:
@@ -58,3 +59,23 @@ def test_job_status_membership():
     status = JobStatus.WAITING
     assert status in [JobStatus.WAITING, JobStatus.RUNNING]
     assert status not in [JobStatus.COMPLETED, JobStatus.FAILED]
+
+
+class TestErrorSeverity:
+    """Test ErrorSeverity enum."""
+
+    def test_error_severity_exists(self):
+        """ErrorSeverity enum is defined."""
+        assert ErrorSeverity is not None
+
+    def test_error_severity_has_info(self):
+        """ErrorSeverity has INFO level."""
+        assert ErrorSeverity.INFO == 0
+
+    def test_error_severity_has_warning(self):
+        """ErrorSeverity has WARNING level."""
+        assert ErrorSeverity.WARNING == 1
+
+    def test_error_severity_has_error(self):
+        """ErrorSeverity has ERROR level."""
+        assert ErrorSeverity.ERROR == 2
