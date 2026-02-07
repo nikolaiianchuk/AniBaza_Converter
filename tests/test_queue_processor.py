@@ -165,6 +165,9 @@ class TestQueueProcessorRun:
 
             mock_thread1.run = Mock()
             mock_thread2.run = Mock()
+            # Set _cancelled to False to indicate successful completion
+            mock_thread1._cancelled = False
+            mock_thread2._cancelled = False
             MockRenderThread.side_effect = [mock_thread1, mock_thread2]
 
             # Track signal emissions

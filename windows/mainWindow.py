@@ -19,6 +19,7 @@ from modules.AppUpdater import UpdaterUI
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
 from models.job_queue import JobQueue
+from models.enums import JobStatus
 from threads.QueueProcessor import QueueProcessor
 from widgets.job_queue_widget import JobQueueWidget
 
@@ -46,8 +47,21 @@ class MainWindow(QMainWindow):
 
         # Initialize queue components
         self.job_queue = JobQueue()
-        self.queue_processor = QueueProcessor(self.job_queue)
+        self.queue_processor = QueueProcessor(self.job_queue, config=config, runner=runner)
         self.queue_widget = JobQueueWidget()
+
+        # Add queue widget to UI layout (below existing controls)
+        # Get the central widget's layout and add the queue widget
+        if hasattr(self.ui, 'centralwidget'):
+            layout = self.ui.centralwidget.layout()
+            if layout:
+                layout.addWidget(self.queue_widget)
+            else:
+                # If no layout exists, create a vertical layout
+                from PyQt5.QtWidgets import QVBoxLayout
+                layout = QVBoxLayout()
+                self.ui.centralwidget.setLayout(layout)
+                layout.addWidget(self.queue_widget)
 
         # Connect queue processor signals
         self.queue_processor.job_started.connect(self.on_job_started)
@@ -55,6 +69,12 @@ class MainWindow(QMainWindow):
         self.queue_processor.job_failed.connect(self.on_job_failed)
         self.queue_processor.job_cancelled.connect(self.on_job_cancelled)
         self.queue_processor.queue_finished.connect(self.on_queue_finished)
+
+        # Connect progress signals forwarded from RenderThread
+        self.queue_processor.frame_upd.connect(self.frame_update)
+        self.queue_processor.time_upd.connect(self.time_update)
+        self.queue_processor.state_upd.connect(self.state_update)
+        self.queue_processor.elapsed_time_upd.connect(self.elapsed_time_update)
 
         # Connect queue widget signals
         self.queue_widget.move_up_requested.connect(self.on_move_up_requested)
@@ -84,7 +104,10 @@ class MainWindow(QMainWindow):
             self.ui.softsub_path_editline,
             self.ui.config_save_button
         ]
-        self.ui.render_stop_button.hide()
+        # Keep both Start and Stop buttons visible
+        self.ui.render_start_button.setText("Добавить в очередь")  # Change label
+        self.ui.render_start_button.setEnabled(True)
+        self.ui.render_stop_button.setEnabled(False)  # Disabled until something is running
         self.ui.app_version_label.setText("Version {NUM} ({NAME}) by {AUTHOR}".format(
             NUM    = self.config.app_info.version_number,
             NAME   = self.config.app_info.version_name,
@@ -191,7 +214,7 @@ class MainWindow(QMainWindow):
             self.ui.hardsub_folder_open_button: self.open_hardsub,
             self.ui.logs_folder_open_button: self.open_logsdir,
             self.ui.render_stop_button: self.on_stop_button_clicked,
-            self.ui.render_start_button: self.on_start_button_clicked,
+            self.ui.render_start_button: self.on_add_to_queue_and_start,  # Changed: now adds to queue + starts
             self.ui.softsub_path_open_button: self.soft_folder_path,
             self.ui.audio_path_open_button: self.sound_folder_path,
             self.ui.raw_path_open_button: self.raw_folder_path,
@@ -385,9 +408,12 @@ class MainWindow(QMainWindow):
 
     # Softsub saving path
     def soft_folder_path(self):
-        self.config.main_paths.softsub = QtWidgets.QFileDialog.getExistingDirectory(self, 'Куда пихать софт?')
-        self.ui.softsub_path_editline.setText(self.config.main_paths.softsub)
-        self.config.log('mainWindow', 'soft_folder_path', f"Softsub path updated to: {self.config.main_paths.softsub}")
+        from pathlib import Path
+        path_str = QtWidgets.QFileDialog.getExistingDirectory(self, 'Куда пихать софт?')
+        if path_str:  # Only update if user didn't cancel
+            self.config.main_paths.softsub = Path(path_str)
+            self.ui.softsub_path_editline.setText(str(self.config.main_paths.softsub))
+            self.config.log('mainWindow', 'soft_folder_path', f"Softsub path updated to: {self.config.main_paths.softsub}")
 
     # Raw video choose
     def raw_folder_path(self):
@@ -495,13 +521,14 @@ class MainWindow(QMainWindow):
 
     # Kill ffmpeg process
     def proc_kill(self):
+        """Stop the entire render job (all encoding steps)."""
         self.finish_message = True
-        if hasattr(self, 'threadMain') and self.threadMain and self.threadMain.runner:
-            # Use ProcessRunner for safe, targeted kill
-            self.threadMain.runner.kill_ffmpeg()
-            self.config.log('mainWindow', 'proc_kill', "Killed ffmpeg process via ProcessRunner")
+        if hasattr(self, 'threadMain') and self.threadMain:
+            # Use the new stop() method to cancel the entire job
+            self.threadMain.stop()
+            self.config.log('mainWindow', 'proc_kill', "Stopped render job (all steps cancelled)")
         else:
-            # Fallback to old method if ProcessRunner not available
+            # Fallback: kill all ffmpeg processes (old behavior)
             if self.config.pc_info.is_windows():
                 subprocess.run('taskkill /f /im ffmpeg.exe', shell=True)
             else:
@@ -511,8 +538,8 @@ class MainWindow(QMainWindow):
     # After coding
     def finished(self):
         os.chdir(self.config.main_paths.cwd)
-        self.ui.render_start_button.show()
-        self.ui.render_stop_button.hide()
+        self.ui.render_start_button.setEnabled(True)
+        self.ui.render_stop_button.setEnabled(False)
 
         if self.finish_message:
             self.coding_error('stop')
@@ -578,7 +605,9 @@ class MainWindow(QMainWindow):
             job_id: ID of the job that was cancelled
         """
         self.config.log('mainWindow', 'on_job_cancelled', f"Job cancelled: {job_id}")
-        # TODO: Update UI to show job cancellation
+        # Re-enable buttons (queue is paused after cancellation)
+        self.ui.render_stop_button.setEnabled(False)
+        # Note: NOT calling locker() - UI stays unlocked during queue processing
         self.refresh_queue_display()
 
     def on_queue_finished(self):
@@ -587,7 +616,10 @@ class MainWindow(QMainWindow):
         Emitted when all jobs in the queue have been processed.
         """
         self.config.log('mainWindow', 'on_queue_finished', "Queue processing finished")
-        # TODO: Update UI to show queue is finished
+        # Re-enable buttons
+        self.ui.render_stop_button.setEnabled(False)
+        # Note: NOT calling locker() - UI stays unlocked during queue processing
+        self.ui.app_state_label.setText("Очередь завершена!")
         self.refresh_queue_display()
 
     def on_move_up_requested(self, job_id: str):
@@ -650,20 +682,28 @@ class MainWindow(QMainWindow):
         jobs = self.job_queue.get_all_jobs()
         self.queue_widget.update_jobs(jobs)
 
-    def on_start_button_clicked(self):
-        """Handle Start button click with smart behavior.
+    def on_add_to_queue_and_start(self):
+        """Add current configuration to queue and start/resume processing.
 
-        If queue has waiting jobs, start queue processor.
-        Otherwise, start immediate render.
+        This is the unified "Добавить в очередь" button that:
+        1. Adds the current job to the queue (if UI has valid paths)
+        2. Starts/resumes processing if there are waiting jobs and processor is not running
         """
-        if self.job_queue.has_waiting_jobs():
-            # Start queue processor
-            self.config.log('mainWindow', 'on_start_button_clicked', "Starting queue processor")
-            self.queue_processor.start()
-        else:
-            # No jobs in queue, start immediate render
-            self.config.log('mainWindow', 'on_start_button_clicked', "No queue jobs, starting immediate render")
-            self.start_immediate_render()
+        # Try to add to queue (might fail if UI fields are empty, which is OK)
+        self.on_add_to_queue_clicked()
+
+        # Start/resume processing if there are waiting jobs and processor is not running
+        if not self.queue_processor.isRunning():
+            waiting_count = self.job_queue.count_by_status(JobStatus.WAITING)
+            if waiting_count > 0:
+                self.config.log('mainWindow', 'on_add_to_queue_and_start',
+                               f"Starting queue processor ({waiting_count} waiting jobs)")
+                # Reset cancelled flag (important if queue was stopped previously)
+                self.queue_processor.cancelled = False
+                # Don't disable "Добавить в очередь" - allow adding more jobs while processing
+                self.ui.render_stop_button.setEnabled(True)
+                # Note: NOT calling locker() - users can add more jobs while processing
+                self.queue_processor.start()
 
     def on_stop_button_clicked(self):
         """Handle stop button click - cancel queue or immediate render.
@@ -717,32 +757,35 @@ class MainWindow(QMainWindow):
         self.threadMain.state_upd.connect(self.state_update)
         self.threadMain.elapsed_time_upd.connect(self.elapsed_time_update)
         self.locker(True)
-        self.ui.render_start_button.hide()
-        self.ui.render_stop_button.show()
+        self.ui.render_start_button.setEnabled(False)
+        self.ui.render_stop_button.setEnabled(True)
         self.threadMain.start()
 
-    def on_add_to_queue_clicked(self):
+    def on_add_to_queue_clicked(self) -> bool:
         """Handle Add to Queue button click.
 
         Validates inputs, creates RenderJob, adds to queue, clears UI.
+
+        Returns:
+            True if job was added successfully, False otherwise.
         """
         # Validate episode name first
         if not re.match(r'^[a-zA-Zа-яА-Я0-9 _.\-\[\]!(),@~]+$', self.config.build_settings.episode_name):
             self.coding_error('name')
-            return
+            return False
 
         # Validate directories exist
         if not os.path.exists(self.config.main_paths.hardsub):
             self.coding_error('hardsub_folder')
-            return
+            return False
 
         if not os.path.exists(self.config.main_paths.softsub) and self.config.build_settings.build_state in [0, 1, 4]:
             self.coding_error('softsub')
-            return
+            return False
 
         # Validate input paths using centralized validation
         if not self._validate_before_render():
-            return
+            return False
 
         # Create validated, immutable paths
         paths = self._create_render_paths()
@@ -793,3 +836,4 @@ class MainWindow(QMainWindow):
         self.refresh_queue_display()
 
         self.config.log('mainWindow', 'on_add_to_queue_clicked', "Job added successfully, UI cleared")
+        return True  # Successfully added

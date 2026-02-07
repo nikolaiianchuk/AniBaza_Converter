@@ -284,17 +284,18 @@ class TestStartButtonSmartBehavior:
 
         window.job_queue.add(job)
 
-        # Mock queue processor start
+        # Mock queue processor start and isRunning
         window.queue_processor.start = Mock()
+        window.queue_processor.isRunning = Mock(return_value=False)
 
-        # Call on_start_button_clicked
-        window.on_start_button_clicked()
+        # Call on_add_to_queue_and_start (new unified button)
+        window.on_add_to_queue_and_start()
 
         # Queue processor should be started
         window.queue_processor.start.assert_called_once()
 
-    def test_start_button_immediate_render_when_no_jobs(self, qapp, mock_config, tmp_path):
-        """on_start_button_clicked starts immediate render when queue is empty."""
+    def test_start_button_does_nothing_when_no_jobs(self, qapp, mock_config, tmp_path):
+        """on_add_to_queue_and_start does nothing when queue is empty and UI is empty."""
         from windows.mainWindow import MainWindow
         from unittest.mock import Mock
 
@@ -303,14 +304,15 @@ class TestStartButtonSmartBehavior:
         # Ensure queue is empty
         assert len(window.job_queue.get_all_jobs()) == 0
 
-        # Mock start_immediate_render
-        window.start_immediate_render = Mock()
+        # Mock queue processor start
+        window.queue_processor.start = Mock()
+        window.queue_processor.isRunning = Mock(return_value=False)
 
-        # Call on_start_button_clicked
-        window.on_start_button_clicked()
+        # Call on_add_to_queue_and_start with empty UI
+        window.on_add_to_queue_and_start()
 
-        # Immediate render should be called
-        window.start_immediate_render.assert_called_once()
+        # Queue processor should NOT be started (no jobs to process)
+        window.queue_processor.start.assert_not_called()
 
 
 class TestStopButtonBehavior:
