@@ -646,14 +646,29 @@ class MainWindow(QMainWindow):
         self.refresh_queue_display()
 
     def on_job_failed(self, job_id: str, error_message: str):
-        """Handle job failed event from queue processor.
+        """Handle job failure signal from queue processor.
 
         Args:
-            job_id: ID of the job that failed
-            error_message: Error message describing the failure
+            job_id: ID of failed job
+            error_message: Error message from job execution
         """
         self.config.log('mainWindow', 'on_job_failed', f"Job failed: {job_id} - {error_message}")
-        # TODO: Show error to user
+
+        # Get job details for context
+        episode_name = "Unknown"
+        jobs = self.job_queue.get_all_jobs()
+        for queued_job in jobs:
+            if queued_job.id == job_id:
+                episode_name = queued_job.job.episode_name
+                break
+
+        # Display error to user with job context
+        self.display_error(
+            f"Ошибка обработки: {episode_name}\n{error_message}",
+            ErrorSeverity.ERROR
+        )
+
+        # Refresh queue display to show failed status
         self.refresh_queue_display()
 
     def on_job_cancelled(self, job_id: str):

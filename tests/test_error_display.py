@@ -150,3 +150,37 @@ class TestValidateBeforeRender:
         assert "not found" in args[0].lower() or "не найден" in args[0].lower()
         assert args[1] == ErrorSeverity.ERROR
         assert result is False
+
+
+class TestJobFailedHandler:
+    """Test on_job_failed shows errors to user."""
+
+    def test_on_job_failed_shows_error(self, qapp, mock_config):
+        """on_job_failed calls display_error with job details."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+        window.refresh_queue_display = Mock()
+
+        # Simulate job failure
+        job_id = "test-job-123"
+        error_message = "FFmpeg encoding failed"
+
+        window.on_job_failed(job_id, error_message)
+
+        # Should call display_error with ERROR severity
+        window.display_error.assert_called_once()
+        args = window.display_error.call_args[0]
+        assert "Ошибка обработки" in args[0]
+        assert error_message in args[0]
+        assert args[1] == ErrorSeverity.ERROR
+
+    def test_on_job_failed_refreshes_display(self, qapp, mock_config):
+        """on_job_failed refreshes queue display."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+        window.refresh_queue_display = Mock()
+
+        window.on_job_failed("job-123", "Error message")
+
+        # Should refresh queue display
+        window.refresh_queue_display.assert_called_once()
