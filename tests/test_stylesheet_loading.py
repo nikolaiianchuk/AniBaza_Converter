@@ -52,3 +52,13 @@ class TestStylesheetLoading:
         stylesheet = window.styleSheet()
         assert stylesheet != "", "Stylesheet not applied to window"
         assert "job_queue_list" in stylesheet or "app_state_label" in stylesheet
+
+
+class TestAppStateLabelObjectName:
+    """Test app_state_label has object name for QSS."""
+
+    def test_app_state_label_has_object_name(self, qapp, mock_config):
+        """app_state_label has object name set."""
+        window = MainWindow(mock_config)
+
+        assert window.ui.app_state_label.objectName() == "app_state_label"

@@ -45,6 +45,9 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Set object names for QSS targeting
+        self.ui.app_state_label.setObjectName("app_state_label")
+
         # Load application stylesheet
         self._load_stylesheet()
 
