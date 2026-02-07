@@ -148,6 +148,8 @@ class JobListItem(QWidget):
         """
         # Stop button
         self.stop_button = QPushButton("Stop")
+        self.stop_button.setObjectName("stop")
+        self.stop_button.setProperty("class", "job-action")
         self.stop_button.setFixedWidth(60)
         self.stop_button.setToolTip("Stop running job")
         self.stop_button.clicked.connect(lambda: self.stop_requested.emit(self.job_id))

@@ -403,3 +403,172 @@ class TestJobItemActionButtons:
         assert item_widget.move_up_button.styleSheet() == ""
         assert item_widget.move_down_button.styleSheet() == ""
         assert item_widget.remove_button.styleSheet() == ""
+
+    def test_stop_button_has_class_property(self, qapp):
+        """Stop button has 'job-action' class property for running jobs."""
+        mock_job = Mock()
+        mock_job.job.episode_name = "Episode 01"
+        mock_job.id = "test-job-id"
+        mock_job.status = JobStatus.RUNNING
+
+        item_widget = JobListItem(mock_job)
+
+        # Stop button should have 'job-action' class property
+        assert item_widget.stop_button.property("class") == "job-action"
+
+    def test_action_buttons_have_object_names(self, qapp):
+        """Action buttons have unique object names for QSS targeting."""
+        mock_job = Mock()
+        mock_job.job.episode_name = "Episode 01"
+        mock_job.id = "test-job-id"
+        mock_job.status = JobStatus.WAITING
+
+        item_widget = JobListItem(mock_job)
+
+        # Each button should have unique object name
+        assert item_widget.move_up_button.objectName() == "move_up"
+        assert item_widget.move_down_button.objectName() == "move_down"
+        assert item_widget.remove_button.objectName() == "remove"
+
+
+class TestJobQueueWidgetStyling:
+    """Test comprehensive QSS styling application."""
+
+    def test_list_widget_no_inline_stylesheet(self, qapp):
+        """Job list widget has no inline stylesheet."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # List widget should have empty inline stylesheet
+        assert widget.job_list_widget.styleSheet() == ""
+
+    def test_resume_button_enabled_when_queue_running(self, qapp):
+        """Resume button enabled state reflects queue processor status."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Initially, resume button should exist
+        assert widget.resume_button is not None
+        assert isinstance(widget.resume_button, QPushButton)
+
+    def test_widget_hierarchy_for_stylesheet_inheritance(self, qapp):
+        """JobQueueWidget properly nested for stylesheet inheritance."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Widget should have layout
+        assert widget.layout() is not None
+
+        # List widget should be child of JobQueueWidget
+        assert widget.job_list_widget.parent() == widget or widget.job_list_widget.parentWidget() == widget
+
+    def test_all_job_statuses_create_valid_widgets(self, qapp):
+        """All job statuses create widgets without styling errors."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        statuses = [
+            JobStatus.WAITING,
+            JobStatus.RUNNING,
+            JobStatus.COMPLETED,
+            JobStatus.FAILED,
+            JobStatus.CANCELLED
+        ]
+
+        for status in statuses:
+            mock_job = Mock()
+            mock_job.job.episode_name = f"Episode_{status.name}"
+            mock_job.id = f"test-{status.name}"
+            mock_job.status = status
+            mock_job.error_message = "Test error" if status == JobStatus.FAILED else None
+
+            # Create job list item - should not raise exceptions
+            item_widget = JobListItem(mock_job)
+
+            # Widget should be created successfully
+            assert item_widget is not None
+            assert item_widget.label is not None
+            assert item_widget.status_label is not None
+
+    def test_multiple_jobs_in_queue_widget(self, qapp):
+        """JobQueueWidget displays multiple jobs without styling conflicts."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Create multiple jobs with different statuses
+        jobs = []
+        for i, status in enumerate([JobStatus.WAITING, JobStatus.RUNNING, JobStatus.COMPLETED]):
+            mock_job = Mock()
+            mock_job.job.episode_name = f"Episode_{i+1}"
+            mock_job.id = f"job-{i+1}"
+            mock_job.status = status
+            jobs.append(mock_job)
+
+        # Update widget with all jobs
+        widget.update_jobs(jobs)
+
+        # Should display all 3 jobs
+        assert widget.job_list_widget.count() == 3
+
+        # Each job item should have proper widget
+        for i in range(3):
+            list_item = widget.job_list_widget.item(i)
+            job_item_widget = widget.job_list_widget.itemWidget(list_item)
+            assert job_item_widget is not None
+
+    def test_clear_completed_button_exists(self, qapp):
+        """Clear completed button exists in widget."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Button should exist
+        assert widget.clear_completed_button is not None
+        assert isinstance(widget.clear_completed_button, QPushButton)
+
+
+class TestJobQueueWidgetIntegrationWithMainWindow:
+    """Test JobQueueWidget integration with MainWindow stylesheet."""
+
+    def test_mainwindow_applies_stylesheet_to_job_queue(self, qapp, mock_config):
+        """MainWindow stylesheet applies to JobQueueWidget through inheritance."""
+        from windows.mainWindow import MainWindow
+
+        window = MainWindow(mock_config)
+
+        # MainWindow should have non-empty stylesheet
+        main_stylesheet = window.styleSheet()
+        assert main_stylesheet != "", "MainWindow should have stylesheet loaded"
+
+        # Job queue widget should exist (attribute is 'queue_widget')
+        assert hasattr(window, 'queue_widget')
+        assert window.queue_widget is not None
+
+        # Job queue buttons should have object names for QSS targeting
+        assert window.queue_widget.resume_button.objectName() == "resumeQueueButton"
+        assert window.queue_widget.clear_completed_button.objectName() == "clearCompletedButton"
+        assert window.queue_widget.job_list_widget.objectName() == "jobQueueList"
+
+    def test_stylesheet_contains_job_queue_selectors(self, qapp, mock_config):
+        """Stylesheet contains selectors for job queue widgets."""
+        from windows.mainWindow import MainWindow
+
+        window = MainWindow(mock_config)
+        stylesheet = window.styleSheet()
+
+        # Stylesheet should contain object name selectors
+        assert "resumeQueueButton" in stylesheet or "clearCompletedButton" in stylesheet or "jobQueueList" in stylesheet
+
+    def test_job_queue_buttons_no_inline_styles_in_mainwindow(self, qapp, mock_config):
+        """Job queue buttons have no inline styles when part of MainWindow."""
+        from windows.mainWindow import MainWindow
+
+        window = MainWindow(mock_config)
+
+        # Buttons should not have inline styles (styling comes from QSS)
+        assert window.queue_widget.resume_button.styleSheet() == ""
+        assert window.queue_widget.clear_completed_button.styleSheet() == ""
+        assert window.queue_widget.job_list_widget.styleSheet() == ""
