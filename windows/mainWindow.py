@@ -694,10 +694,9 @@ class MainWindow(QMainWindow):
 
         # Start/resume processing if there are waiting jobs and processor is not running
         if not self.queue_processor.isRunning():
-            waiting_count = self.job_queue.count_by_status(JobStatus.WAITING)
-            if waiting_count > 0:
+            if self.job_queue.has_waiting_jobs():
                 self.config.log('mainWindow', 'on_add_to_queue_and_start',
-                               f"Starting queue processor ({waiting_count} waiting jobs)")
+                               "Starting queue processor")
                 # Reset cancelled flag (important if queue was stopped previously)
                 self.queue_processor.cancelled = False
                 # Don't disable "Добавить в очередь" - allow adding more jobs while processing
