@@ -63,7 +63,7 @@ def mock_paths(tmp_path: Path) -> Paths:
     """Create Paths using tmp_path, without creating directories."""
     paths = object.__new__(Paths)
     paths.appdata = tmp_path / "appdata"
-    paths.cwd = tmp_path
+    paths.cwd = project_root  # Use real project root for resources
     paths.config_dir = tmp_path / "configs"
     paths.config = paths.config_dir / "config.ini"
     paths.version = paths.config_dir / "current_version.ini"

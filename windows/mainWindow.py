@@ -19,7 +19,7 @@ from modules.AppUpdater import UpdaterUI
 from models.protocols import ProcessRunner
 from models.render_paths import RenderPaths
 from models.job_queue import JobQueue
-from models.enums import JobStatus
+from models.enums import JobStatus, ErrorSeverity
 from threads.QueueProcessor import QueueProcessor
 from widgets.job_queue_widget import JobQueueWidget
 
@@ -44,6 +44,12 @@ class MainWindow(QMainWindow):
         }
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # Set object names for QSS targeting
+        self.ui.app_state_label.setObjectName("app_state_label")
+
+        # Load application stylesheet
+        self._load_stylesheet()
 
         # Initialize queue components
         self.job_queue = JobQueue()
@@ -437,37 +443,109 @@ class MainWindow(QMainWindow):
         self.ui.subtitle_path_editline.setText(self._ui_paths['sub'])
         self.config.log('mainWindow', 'sub_folder_path', f"Subtitle path updated to: {self._ui_paths['sub']}")
 
+    def _load_stylesheet(self):
+        """Load application stylesheet from resources/styles.qss."""
+        qss_path = self.config.main_paths.cwd / "resources" / "styles.qss"
+
+        if qss_path.exists():
+            try:
+                with open(qss_path, 'r', encoding='utf-8') as f:
+                    stylesheet_content = f.read()
+                    self.setStyleSheet(stylesheet_content)
+                self.config.log("mainWindow", "_load_stylesheet", "Stylesheet loaded successfully")
+            except Exception as e:
+                self.config.log("mainWindow", "_load_stylesheet", f"Error loading stylesheet: {e}")
+        else:
+            self.config.log("mainWindow", "_load_stylesheet", f"Stylesheet not found: {qss_path}")
+
+    def display_error(self, message: str, severity: ErrorSeverity = ErrorSeverity.INFO):
+        """Display error message in app_state_label with severity-based styling.
+
+        Args:
+            message: Error message to display
+            severity: ErrorSeverity level (INFO, WARNING, ERROR)
+        """
+        # Set label text
+        self.ui.app_state_label.setText(message)
+
+        # Set errorLevel property for QSS styling
+        self.ui.app_state_label.setProperty("errorLevel", severity.name.lower())
+
+        # Refresh widget styling to apply new property value
+        style = self.ui.app_state_label.style()
+        style.unpolish(self.ui.app_state_label)
+        style.polish(self.ui.app_state_label)
+
+        # Log error with severity level
+        self.config.log("mainWindow", "display_error", f"[{severity.name}] {message}")
+
     # Coding Errors
-    def coding_error(self, error_type):
-        error_messages = {
-            'softsub': ("Выбери правильно куда сохранять софтсаб!", self.soft_folder_path),
-            'subtitle': ("Выбери существующий путь к файлу субтитров!", self.sub_folder_path),
-            'raw': ("Выбери существующий путь к равке!", self.raw_folder_path),
-            'sound': ("Выбери существующий путь к дорожке звука!", self.sound_folder_path),
-            'name': ("Напиши корректное имя релиза!", None),
-            'hardsub_folder': ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
-            'stop': ("Зачем остановил?!", None),
-            'logs_folder' : ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
+    def coding_error(self, error_type: str) -> None:
+        """Display error message based on error type.
+
+        Args:
+            error_type: Error identifier ('softsub', 'hardsub', 'name', etc.)
+        """
+        # Error configuration with messages and severity
+        error_config = {
+            'softsub': {
+                'message': 'Софтсабы не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR
+            },
+            'hardsub': {
+                'message': 'Хардсабы не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR
+            },
+            'name': {
+                'message': 'Некорректное имя серии.\n'
+                          'Только A-z, а-я, 0-9, _, -, пробел',
+                'severity': ErrorSeverity.ERROR
+            },
+            'raw': {
+                'message': 'Равка не выбрана.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR
+            },
+            'audio': {
+                'message': 'Аудио не выбрано.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR
+            },
+            'subtitle': {
+                'message': 'Субтитры не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR
+            },
+            'logo': {
+                'message': 'Логотип не найден.\nПроверьте наличие файла:\n'
+                          f'{self.config.main_paths.logo}',
+                'severity': ErrorSeverity.ERROR
+            },
+            'logs_folder': {
+                'message': 'НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!',
+                'severity': ErrorSeverity.ERROR
+            },
+            'stop': {
+                'message': 'Рендер окончен.\nГотово!',
+                'severity': ErrorSeverity.WARNING
+            },
+            'hardsub_folder': {
+                'message': 'Папка для хардсабов не найдена.\nСоздать?',
+                'severity': ErrorSeverity.ERROR
+            }
         }
 
-        self.ui.app_state_label.setText("МЕГАПЛОХ!")
-        msg = QMessageBox()
-        msg.setWindowTitle("Чел ты...")
-        msg.setIcon(QMessageBox.Warning)
+        # Get error configuration
+        config = error_config.get(error_type)
+        if not config:
+            self.display_error(f"Unknown error type: {error_type}", ErrorSeverity.ERROR)
+            return
 
-        if error_type in error_messages:
-            message, action = error_messages[error_type]
-            msg.setText(message)
-            if action:
-                msg.setStandardButtons(QMessageBox.Open)
-                msg.buttonClicked.connect(action)
-            else:
-                msg.setStandardButtons(QMessageBox.Ok)
-            if error_type == 'hardsub_folder':
-                os.mkdir('HARDSUB')
+        # Special case: hardsub_folder - create directory if missing
+        if error_type == 'hardsub_folder':
+            self.config.main_paths.hardsub.mkdir(parents=True, exist_ok=True)
+            self.display_error("Папка для хардсабов создана", ErrorSeverity.INFO)
+            return
 
-        msg.exec_()
-        self.config.log('mainWindow', 'coding_error', f"Coding error: {error_type}")
+        # Display error with severity
+        self.display_error(config['message'], config['severity'])
 
     # Progress updater
     def frame_update(self, frame):
@@ -508,7 +586,7 @@ class MainWindow(QMainWindow):
             if errors:
                 # Show errors to user
                 error_msg = "\n".join(errors)
-                QtWidgets.QMessageBox.critical(self, "Validation Error", error_msg)
+                self.display_error(error_msg, ErrorSeverity.ERROR)
                 self.config.log('mainWindow', '_validate_before_render', f"Validation failed: {error_msg}")
                 return False
 
@@ -516,7 +594,7 @@ class MainWindow(QMainWindow):
             return True
         except Exception as e:
             error_msg = f"Error validating paths: {str(e)}"
-            QtWidgets.QMessageBox.critical(self, "Error", error_msg)
+            self.display_error(error_msg, ErrorSeverity.ERROR)
             self.config.log('mainWindow', '_validate_before_render', error_msg)
             return False
 
@@ -589,14 +667,29 @@ class MainWindow(QMainWindow):
         self.refresh_queue_display()
 
     def on_job_failed(self, job_id: str, error_message: str):
-        """Handle job failed event from queue processor.
+        """Handle job failure signal from queue processor.
 
         Args:
-            job_id: ID of the job that failed
-            error_message: Error message describing the failure
+            job_id: ID of failed job
+            error_message: Error message from job execution
         """
         self.config.log('mainWindow', 'on_job_failed', f"Job failed: {job_id} - {error_message}")
-        # TODO: Show error to user
+
+        # Get job details for context
+        episode_name = "Unknown"
+        jobs = self.job_queue.get_all_jobs()
+        for queued_job in jobs:
+            if queued_job.id == job_id:
+                episode_name = queued_job.job.episode_name
+                break
+
+        # Display error to user with job context
+        self.display_error(
+            f"Ошибка обработки: {episode_name}\n{error_message}",
+            ErrorSeverity.ERROR
+        )
+
+        # Refresh queue display to show failed status
         self.refresh_queue_display()
 
     def on_job_cancelled(self, job_id: str):

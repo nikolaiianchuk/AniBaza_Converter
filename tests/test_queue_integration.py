@@ -115,8 +115,10 @@ class TestAddToQueueValidation:
     def test_add_to_queue_fails_with_missing_raw_path(self, qapp, mock_config, tmp_path):
         """on_add_to_queue_clicked shows error when raw path is missing."""
         from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
 
         window = MainWindow(mock_config)
+        window.display_error = Mock()
 
         # Set invalid path (file doesn't exist)
         window._ui_paths['raw'] = str(tmp_path / "nonexistent.mkv")
@@ -124,15 +126,14 @@ class TestAddToQueueValidation:
         window._ui_paths['sub'] = ''
         window.config.build_settings.episode_name = "Episode_01"
 
-        # Mock QMessageBox to capture error
-        with patch('PyQt5.QtWidgets.QMessageBox.critical') as mock_msg:
-            window.on_add_to_queue_clicked()
+        # Call add to queue
+        window.on_add_to_queue_clicked()
 
-            # Should show error message
-            mock_msg.assert_called_once()
-            args = mock_msg.call_args[0]
-            error_message = args[2]
-            assert "Raw video not found" in error_message
+        # Should show error via display_error
+        window.display_error.assert_called_once()
+        args = window.display_error.call_args[0]
+        error_message = args[0]
+        assert "Raw video not found" in error_message or "не найден" in error_message.lower()
 
         # Job should NOT be added
         assert len(window.job_queue.get_all_jobs()) == 0
@@ -140,6 +141,7 @@ class TestAddToQueueValidation:
     def test_add_to_queue_fails_with_invalid_episode_name(self, qapp, mock_config, tmp_path):
         """on_add_to_queue_clicked shows error when episode name is invalid."""
         from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
 
         window = MainWindow(mock_config)
 
@@ -154,12 +156,15 @@ class TestAddToQueueValidation:
         # Invalid episode name (contains invalid characters)
         window.config.build_settings.episode_name = "Episode/01"
 
-        # Mock QMessageBox to capture error - coding_error uses QMessageBox.exec_
-        with patch('PyQt5.QtWidgets.QMessageBox.exec_') as mock_exec:
-            window.on_add_to_queue_clicked()
+        # Mock display_error to verify error is shown (coding_error now uses display_error)
+        window.display_error = Mock()
 
-            # Should show error message (coding_error creates and displays QMessageBox)
-            mock_exec.assert_called_once()
+        window.on_add_to_queue_clicked()
+
+        # Should show error message via display_error
+        window.display_error.assert_called_once()
+        args = window.display_error.call_args[0]
+        assert "Некорректное имя серии" in args[0]  # Error message about invalid name
 
         # Job should NOT be added
         assert len(window.job_queue.get_all_jobs()) == 0

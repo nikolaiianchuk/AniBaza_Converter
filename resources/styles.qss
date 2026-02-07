@@ -1,0 +1,146 @@
+/* ===================================================================
+   AniBaza Converter - Dark Theme Stylesheet
+   Color Palette:
+   - Text: rgb(98, 114, 164)
+   - Background: rgb(54, 57, 63)
+   - Hover: rgb(62, 65, 72)
+   - Pressed: rgb(44, 47, 52)
+   - Border: rgb(37, 40, 44)
+   - Error: rgb(220, 50, 50)
+   - Warning: rgb(255, 170, 0)
+   - Info: rgb(98, 114, 164)
+   =================================================================== */
+
+/* ===================================================================
+   Error Severity Styling for app_state_label
+   =================================================================== */
+
+QLabel#app_state_label[severity="error"] {
+    color: rgb(220, 50, 50);
+    font-weight: bold;
+}
+
+QLabel#app_state_label[severity="warning"] {
+    color: rgb(255, 170, 0);
+    font-weight: bold;
+}
+
+QLabel#app_state_label[severity="info"] {
+    color: rgb(98, 114, 164);
+    font-weight: normal;
+}
+
+/* ===================================================================
+   Job Queue Buttons (Resume, Clear Completed) - 3-State Styling
+   =================================================================== */
+
+QPushButton#resumeQueueButton,
+QPushButton#clearCompletedButton {
+    background-color: rgb(54, 57, 63);
+    border: 1px solid rgb(37, 40, 44);
+    color: rgb(98, 114, 164);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 11pt;
+    min-height: 24px;
+}
+
+QPushButton#resumeQueueButton:hover,
+QPushButton#clearCompletedButton:hover {
+    background-color: rgb(62, 65, 72);
+    border: 1px solid rgb(98, 114, 164);
+}
+
+QPushButton#resumeQueueButton:pressed,
+QPushButton#clearCompletedButton:pressed {
+    background-color: rgb(44, 47, 52);
+}
+
+QPushButton#resumeQueueButton:disabled,
+QPushButton#clearCompletedButton:disabled {
+    color: rgb(70, 80, 100);
+    background-color: rgb(50, 52, 56);
+    border: 1px solid rgb(37, 40, 44);
+}
+
+/* ===================================================================
+   Job Queue List Widget Styling
+   =================================================================== */
+
+QListWidget#jobQueueList {
+    background-color: rgb(54, 57, 63);
+    border: 1px solid rgb(37, 40, 44);
+    color: rgb(98, 114, 164);
+    padding: 4px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 10pt;
+    outline: none;
+}
+
+QListWidget#jobQueueList::item {
+    background-color: rgb(54, 57, 63);
+    border: none;
+    padding: 2px;
+    margin: 2px 0px;
+}
+
+QListWidget#jobQueueList::item:hover {
+    background-color: rgb(62, 65, 72);
+}
+
+QListWidget#jobQueueList::item:selected {
+    background-color: rgb(62, 65, 72);
+    border: 1px solid rgb(98, 114, 164);
+}
+
+/* ===================================================================
+   Job Item Action Buttons - Compact Style
+   =================================================================== */
+
+QPushButton#job_action_btn {
+    background-color: rgb(54, 57, 63);
+    border: 1px solid rgb(37, 40, 44);
+    color: rgb(98, 114, 164);
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 9pt;
+    min-height: 18px;
+    min-width: 50px;
+}
+
+QPushButton#job_action_btn:hover {
+    background-color: rgb(62, 65, 72);
+    border: 1px solid rgb(98, 114, 164);
+}
+
+QPushButton#job_action_btn:pressed {
+    background-color: rgb(44, 47, 52);
+}
+
+QPushButton#job_action_btn:disabled {
+    color: rgb(70, 80, 100);
+    background-color: rgb(50, 52, 56);
+    border: 1px solid rgb(37, 40, 44);
+}
+
+/* Cancel button variant - red accent */
+QPushButton#job_action_btn[action="cancel"] {
+    color: rgb(220, 50, 50);
+}
+
+QPushButton#job_action_btn[action="cancel"]:hover {
+    background-color: rgb(62, 65, 72);
+    border: 1px solid rgb(220, 50, 50);
+}
+
+/* Retry button variant - green accent */
+QPushButton#job_action_btn[action="retry"] {
+    color: rgb(80, 200, 120);
+}
+
+QPushButton#job_action_btn[action="retry"]:hover {
+    background-color: rgb(62, 65, 72);
+    border: 1px solid rgb(80, 200, 120);
+}
