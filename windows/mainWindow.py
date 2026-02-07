@@ -45,6 +45,9 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Load application stylesheet
+        self._load_stylesheet()
+
         # Initialize queue components
         self.job_queue = JobQueue()
         self.queue_processor = QueueProcessor(self.job_queue, config=config, runner=runner)
@@ -436,6 +439,21 @@ class MainWindow(QMainWindow):
                                                             "Хуй (*.ass *.srt)")
         self.ui.subtitle_path_editline.setText(self._ui_paths['sub'])
         self.config.log('mainWindow', 'sub_folder_path', f"Subtitle path updated to: {self._ui_paths['sub']}")
+
+    def _load_stylesheet(self):
+        """Load application stylesheet from resources/styles.qss."""
+        qss_path = self.config.main_paths.cwd / "resources" / "styles.qss"
+
+        if qss_path.exists():
+            try:
+                with open(qss_path, 'r', encoding='utf-8') as f:
+                    stylesheet_content = f.read()
+                    self.setStyleSheet(stylesheet_content)
+                self.config.log("mainWindow", "_load_stylesheet", "Stylesheet loaded successfully")
+            except Exception as e:
+                self.config.log("mainWindow", "_load_stylesheet", f"Error loading stylesheet: {e}")
+        else:
+            self.config.log("mainWindow", "_load_stylesheet", f"Stylesheet not found: {qss_path}")
 
     def display_error(self, message: str, severity: ErrorSeverity = ErrorSeverity.INFO):
         """Display error message in app_state_label with severity-based styling.
