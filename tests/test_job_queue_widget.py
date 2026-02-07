@@ -246,8 +246,8 @@ class TestJobQueueWidget:
         widget = JobQueueWidget()
 
         # Should have QListWidget
-        assert hasattr(widget, 'list_widget')
-        assert widget.list_widget is not None
+        assert hasattr(widget, 'job_list_widget')
+        assert widget.job_list_widget is not None
 
         # Should have clear completed button
         assert hasattr(widget, 'clear_completed_button')
@@ -275,7 +275,7 @@ class TestJobQueueWidget:
         widget.update_jobs(jobs)
 
         # Should display 2 items in list
-        assert widget.list_widget.count() == 2
+        assert widget.job_list_widget.count() == 2
 
     def test_clear_button_emits_signal(self, qapp):
         """Clear completed button emits clear_completed signal."""
@@ -318,8 +318,8 @@ class TestJobQueueWidget:
         widget.stop_requested.connect(stop_handler)
 
         # Get the JobListItem widget from the list
-        list_item = widget.list_widget.item(0)
-        job_item_widget = widget.list_widget.itemWidget(list_item)
+        list_item = widget.job_list_widget.item(0)
+        job_item_widget = widget.job_list_widget.itemWidget(list_item)
 
         # Trigger move up action
         job_item_widget.move_up_requested.emit("test-job-123")
@@ -332,3 +332,41 @@ class TestJobQueueWidget:
         # Trigger remove action
         job_item_widget.remove_requested.emit("test-job-123")
         remove_handler.assert_called_once_with("test-job-123")
+
+
+class TestJobQueueWidgetObjectNames:
+    """Test object names set for QSS targeting."""
+
+    def test_resume_button_has_object_name(self, qapp):
+        """Resume button has object name set."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        assert widget.resume_button.objectName() == "resumeQueueButton"
+
+    def test_clear_button_has_object_name(self, qapp):
+        """Clear completed button has object name set."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        assert widget.clear_completed_button.objectName() == "clearCompletedButton"
+
+    def test_job_list_widget_has_object_name(self, qapp):
+        """Job list widget has object name set."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        assert widget.job_list_widget.objectName() == "jobQueueList"
+
+    def test_no_inline_stylesheets_on_buttons(self, qapp):
+        """Buttons have no inline stylesheets."""
+        from widgets.job_queue_widget import JobQueueWidget
+
+        widget = JobQueueWidget()
+
+        # Buttons should have empty inline stylesheet
+        assert widget.resume_button.styleSheet() == ""
+        assert widget.clear_completed_button.styleSheet() == ""

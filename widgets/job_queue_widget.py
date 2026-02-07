@@ -203,17 +203,20 @@ class JobQueueWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Job list widget
-        self.list_widget = QListWidget()
-        layout.addWidget(self.list_widget)
+        self.job_list_widget = QListWidget()
+        self.job_list_widget.setObjectName("jobQueueList")
+        layout.addWidget(self.job_list_widget)
 
         # Resume button
         self.resume_button = QPushButton("Продолжить обработку")
+        self.resume_button.setObjectName("resumeQueueButton")
         self.resume_button.setToolTip("Start processing waiting jobs from the queue")
         self.resume_button.clicked.connect(self.resume_requested.emit)
         layout.addWidget(self.resume_button)
 
         # Clear completed button
         self.clear_completed_button = QPushButton("Clear Completed")
+        self.clear_completed_button.setObjectName("clearCompletedButton")
         self.clear_completed_button.setToolTip("Remove all completed jobs from queue")
         self.clear_completed_button.clicked.connect(self.clear_completed_requested.emit)
         layout.addWidget(self.clear_completed_button)
@@ -230,7 +233,7 @@ class JobQueueWidget(QWidget):
             jobs: List of QueuedJob objects to display
         """
         # Clear existing items
-        self.list_widget.clear()
+        self.job_list_widget.clear()
 
         # Add each job as a JobListItem
         for queued_job in jobs:
@@ -244,7 +247,7 @@ class JobQueueWidget(QWidget):
             job_item_widget.stop_requested.connect(self.stop_requested.emit)
 
             # Create list item and set widget
-            list_item = QListWidgetItem(self.list_widget)
+            list_item = QListWidgetItem(self.job_list_widget)
             list_item.setSizeHint(job_item_widget.sizeHint())
-            self.list_widget.addItem(list_item)
-            self.list_widget.setItemWidget(list_item, job_item_widget)
+            self.job_list_widget.addItem(list_item)
+            self.job_list_widget.setItemWidget(list_item, job_item_widget)

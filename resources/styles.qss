@@ -34,8 +34,8 @@ QLabel#app_state_label[severity="info"] {
    Job Queue Buttons (Resume, Clear Completed) - 3-State Styling
    =================================================================== */
 
-QPushButton#resume_queue_btn,
-QPushButton#clear_completed_btn {
+QPushButton#resumeQueueButton,
+QPushButton#clearCompletedButton {
     background-color: rgb(54, 57, 63);
     border: 1px solid rgb(37, 40, 44);
     color: rgb(98, 114, 164);
@@ -46,19 +46,19 @@ QPushButton#clear_completed_btn {
     min-height: 24px;
 }
 
-QPushButton#resume_queue_btn:hover,
-QPushButton#clear_completed_btn:hover {
+QPushButton#resumeQueueButton:hover,
+QPushButton#clearCompletedButton:hover {
     background-color: rgb(62, 65, 72);
     border: 1px solid rgb(98, 114, 164);
 }
 
-QPushButton#resume_queue_btn:pressed,
-QPushButton#clear_completed_btn:pressed {
+QPushButton#resumeQueueButton:pressed,
+QPushButton#clearCompletedButton:pressed {
     background-color: rgb(44, 47, 52);
 }
 
-QPushButton#resume_queue_btn:disabled,
-QPushButton#clear_completed_btn:disabled {
+QPushButton#resumeQueueButton:disabled,
+QPushButton#clearCompletedButton:disabled {
     color: rgb(70, 80, 100);
     background-color: rgb(50, 52, 56);
     border: 1px solid rgb(37, 40, 44);
@@ -68,7 +68,7 @@ QPushButton#clear_completed_btn:disabled {
    Job Queue List Widget Styling
    =================================================================== */
 
-QListWidget#job_queue_list {
+QListWidget#jobQueueList {
     background-color: rgb(54, 57, 63);
     border: 1px solid rgb(37, 40, 44);
     color: rgb(98, 114, 164);
@@ -78,18 +78,18 @@ QListWidget#job_queue_list {
     outline: none;
 }
 
-QListWidget#job_queue_list::item {
+QListWidget#jobQueueList::item {
     background-color: rgb(54, 57, 63);
     border: none;
     padding: 2px;
     margin: 2px 0px;
 }
 
-QListWidget#job_queue_list::item:hover {
+QListWidget#jobQueueList::item:hover {
     background-color: rgb(62, 65, 72);
 }
 
-QListWidget#job_queue_list::item:selected {
+QListWidget#jobQueueList::item:selected {
     background-color: rgb(62, 65, 72);
     border: 1px solid rgb(98, 114, 164);
 }
