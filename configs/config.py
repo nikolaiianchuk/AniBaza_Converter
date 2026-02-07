@@ -254,6 +254,15 @@ class Config:
         self.update_search = True
         self.potato_PC = False
 
+        # Rendering paths - backward compatibility with old UI code
+        self.rendering_paths = {
+            'raw': '',
+            'audio': '',
+            'sub': '',
+            'softsub': '',
+            'hardsub': ''
+        }
+
     def start_log(self):
         self.logging_module.start_logging(
             self.dev_settings.logging_enabled, self.main_paths.logs, self.dev_settings.max_logs
