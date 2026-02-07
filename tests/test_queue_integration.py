@@ -304,6 +304,9 @@ class TestStartButtonSmartBehavior:
         # Ensure queue is empty
         assert len(window.job_queue.get_all_jobs()) == 0
 
+        # Mock on_add_to_queue_clicked to fail (simulating invalid UI state)
+        window.on_add_to_queue_clicked = Mock(return_value=False)
+
         # Mock queue processor start
         window.queue_processor.start = Mock()
         window.queue_processor.isRunning = Mock(return_value=False)
