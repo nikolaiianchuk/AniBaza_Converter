@@ -98,12 +98,12 @@ class TestCodingErrorRefactored:
             assert args[1] == ErrorSeverity.ERROR
 
     def test_coding_error_all_types_work(self, qapp, mock_config):
-        """coding_error handles all 9 error types."""
+        """coding_error handles all 10 error types."""
         window = MainWindow(mock_config)
         window.display_error = Mock()
 
         error_types = ['softsub', 'hardsub', 'name', 'raw', 'audio',
-                       'subtitle', 'logo', 'stop', 'hardsub_folder']
+                       'subtitle', 'logo', 'logs_folder', 'stop', 'hardsub_folder']
 
         with patch('windows.mainWindow.QMessageBox') as mock_msgbox:
             # Mock exec_ to prevent blocking (for current implementation)

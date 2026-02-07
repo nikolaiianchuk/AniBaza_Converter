@@ -459,60 +459,55 @@ class MainWindow(QMainWindow):
         self.config.log("mainWindow", "display_error", f"[{severity.name}] {message}")
 
     # Coding Errors
-    def coding_error(self, error_type):
+    def coding_error(self, error_type: str) -> None:
         """Display error message based on error type.
 
         Args:
             error_type: Error identifier ('softsub', 'hardsub', 'name', etc.)
         """
-        # Error configuration with messages, severity, and actions
+        # Error configuration with messages and severity
         error_config = {
             'softsub': {
                 'message': 'Софтсабы не выбраны.\nВыбрать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Actions not used in inline display
+                'severity': ErrorSeverity.ERROR
             },
             'hardsub': {
                 'message': 'Хардсабы не выбраны.\nВыбрать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Actions not used in inline display
+                'severity': ErrorSeverity.ERROR
             },
             'name': {
                 'message': 'Некорректное имя серии.\n'
                           'Только A-z, а-я, 0-9, _, -, пробел',
-                'severity': ErrorSeverity.ERROR,
-                'action': None
+                'severity': ErrorSeverity.ERROR
             },
             'raw': {
                 'message': 'Равка не выбрана.\nВыбрать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Actions not used in inline display
+                'severity': ErrorSeverity.ERROR
             },
             'audio': {
                 'message': 'Аудио не выбрано.\nВыбрать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Actions not used in inline display
+                'severity': ErrorSeverity.ERROR
             },
             'subtitle': {
                 'message': 'Субтитры не выбраны.\nВыбрать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Actions not used in inline display
+                'severity': ErrorSeverity.ERROR
             },
             'logo': {
                 'message': 'Логотип не найден.\nПроверьте наличие файла:\n'
                           f'{self.config.main_paths.logo}',
-                'severity': ErrorSeverity.ERROR,
-                'action': None
+                'severity': ErrorSeverity.ERROR
+            },
+            'logs_folder': {
+                'message': 'НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!',
+                'severity': ErrorSeverity.ERROR
             },
             'stop': {
                 'message': 'Рендер окончен.\nГотово!',
-                'severity': ErrorSeverity.WARNING,  # Downgraded to warning
-                'action': None
+                'severity': ErrorSeverity.WARNING
             },
             'hardsub_folder': {
                 'message': 'Папка для хардсабов не найдена.\nСоздать?',
-                'severity': ErrorSeverity.ERROR,
-                'action': None  # Special handling below
+                'severity': ErrorSeverity.ERROR
             }
         }
 
