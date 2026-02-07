@@ -12,15 +12,22 @@ def load_parser(config, path):
         return None
 
 def get_config_value(config, parser, section, option, conv):
+    if not parser.has_option(section, option):
+        config.log('ConfigModule', 'get_config_value', f"Option not found: |{section}({option})|")
+        return None
+
     if conv == bool:
-        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {parser.getboolean(section, option)}")
-        return parser.getboolean(section, option) if parser.has_option(section, option) else None
+        value = parser.getboolean(section, option)
+        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {value}")
+        return value
     elif conv == int:
-        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {parser.getint(section, option)}")
-        return parser.getint(section, option) if parser.has_option(section, option) else None
+        value = parser.getint(section, option)
+        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {value}")
+        return value
     elif conv == str:
-        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {parser.get(section, option)}")
-        return str(parser.get(section, option)) if parser.has_option(section, option) else None
+        value = parser.get(section, option)
+        config.log('ConfigModule', 'get_config_value', f"Loaded value: |{section}({option})|: {value}")
+        return value
     return None
 
 def load_configs(config):

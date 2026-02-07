@@ -39,3 +39,22 @@ class TestEnums:
         assert BuildState.SOFT_AND_HARD == 0
         assert BuildState.SOFT_ONLY > BuildState.SOFT_AND_HARD
         assert BuildState.RAW_REPAIR > BuildState.FOR_HARDSUBBERS
+
+
+def test_job_status_values():
+    """JobStatus enum has all required states."""
+    from models.enums import JobStatus
+
+    assert JobStatus.WAITING.value == 0
+    assert JobStatus.RUNNING.value == 1
+    assert JobStatus.COMPLETED.value == 2
+    assert JobStatus.FAILED.value == 3
+    assert JobStatus.CANCELLED.value == 4
+
+def test_job_status_membership():
+    """JobStatus can be used in membership checks."""
+    from models.enums import JobStatus
+
+    status = JobStatus.WAITING
+    assert status in [JobStatus.WAITING, JobStatus.RUNNING]
+    assert status not in [JobStatus.COMPLETED, JobStatus.FAILED]

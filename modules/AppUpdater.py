@@ -24,10 +24,10 @@ class UpdaterThread(QThread):
         get_global_handler().register_callback(self.handle_exception)
         self.config = config
 
-    def handle_exception(self, e):
-        error_message = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+    def handle_exception(self, exc_type, exc_value, exc_traceback):
+        error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         self.config.log('AppUpdater', 'handle_exception', f"UpdaterThread Exception: {error_message}")
-        self.error_signal.emit(e)
+        self.error_signal.emit(exc_value)
 
     def run(self):
         try:
@@ -44,7 +44,7 @@ class UpdaterThread(QThread):
                     self.ffmpeg_update_signal.emit(ffmpeg_latest_version, ffmpeg_installed_version)
 
         except Exception as e:
-            self.handle_exception(e)
+            self.handle_exception(*sys.exc_info())
 
     def get_latest_ffmpeg_version(self):
         try:
@@ -59,7 +59,7 @@ class UpdaterThread(QThread):
             self.config.log('AppUpdater', 'get_latest_ffmpeg_version', f"Latest FFmpeg version: {match.group(1) if match else None}")
             return match.group(1) if match else None
         except Exception as e:
-            self.handle_exception(e)
+            self.handle_exception(*sys.exc_info())
         return None
 
     def should_update_ffmpeg(self):
@@ -91,7 +91,7 @@ class UpdaterThread(QThread):
                 except InvalidVersion as e:
                     self.config.log('AppUpdater', 'check_for_app_update', f"Invalid version format: {e}")
         except Exception as e:
-            self.handle_exception(e)
+            self.handle_exception(*sys.exc_info())
         return None, None, None
 
 class UpdaterUI:

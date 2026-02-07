@@ -137,7 +137,7 @@ def mock_config(tmp_path: Path, mock_paths: Paths, mock_pc_info: PCInfo, mock_ff
 
     # Build settings (Phase 4: now dataclass)
     config.build_settings = BuildSettings(
-        episode_name='',
+        episode_name='Test_Episode_01',  # Valid name to prevent MessageBox in tests
         build_state=BuildState.SOFT_AND_HARD,
         logo_state=LogoState.LOGO_BOTH,
         nvenc_state=NvencState.NVENC_BOTH

@@ -9,6 +9,7 @@
 /tmp/
 *.log
 .DS_Store
+/.worktrees/
 
 # Build artifacts
 /build/

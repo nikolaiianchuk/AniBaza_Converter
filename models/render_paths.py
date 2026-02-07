@@ -34,12 +34,16 @@ class RenderPaths:
             audio_path: Path to audio file (empty string if not used)
             sub_path: Path to subtitle file (empty string if not used)
             episode_name: Episode name for output files
-            softsub_dir: Directory for softsub output
-            hardsub_dir: Directory for hardsub output
+            softsub_dir: Directory for softsub output (Path or str)
+            hardsub_dir: Directory for hardsub output (Path or str)
 
         Returns:
             RenderPaths instance with validated paths
         """
+        # Ensure directory paths are Path objects (defensive)
+        softsub_dir = Path(softsub_dir) if not isinstance(softsub_dir, Path) else softsub_dir
+        hardsub_dir = Path(hardsub_dir) if not isinstance(hardsub_dir, Path) else hardsub_dir
+
         return cls(
             raw=Path(raw_path),
             audio=Path(audio_path) if audio_path else None,

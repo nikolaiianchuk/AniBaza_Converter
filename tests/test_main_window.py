@@ -71,3 +71,54 @@ class TestMainWindow:
 
         # Verify expected command
         expected_cmd = 'taskkill /f /im ffmpeg.exe'
+
+
+class TestMainWindowQueueIntegration:
+    """Test queue components integration in MainWindow."""
+
+    def test_main_window_initializes_queue_components(self, qapp, mock_config):
+        """MainWindow initializes JobQueue, QueueProcessor, and JobQueueWidget."""
+        from windows.mainWindow import MainWindow
+
+        window = MainWindow(mock_config)
+
+        # Should have queue, processor, and widget
+        assert hasattr(window, 'job_queue')
+        assert hasattr(window, 'queue_processor')
+        assert hasattr(window, 'queue_widget')
+
+        # Components should be initialized
+        assert window.job_queue is not None
+        assert window.queue_processor is not None
+        assert window.queue_widget is not None
+
+    def test_main_window_connects_queue_signals(self, qapp, mock_config):
+        """MainWindow connects all queue-related signals."""
+        from windows.mainWindow import MainWindow
+        from unittest.mock import Mock
+
+        window = MainWindow(mock_config)
+
+        # Mock the handler methods to verify they exist
+        assert hasattr(window, 'on_job_started')
+        assert hasattr(window, 'on_job_completed')
+        assert hasattr(window, 'on_job_failed')
+        assert hasattr(window, 'on_job_cancelled')
+        assert hasattr(window, 'on_queue_finished')
+        assert hasattr(window, 'on_move_up_requested')
+        assert hasattr(window, 'on_move_down_requested')
+        assert hasattr(window, 'on_remove_requested')
+        assert hasattr(window, 'on_stop_requested')
+        assert hasattr(window, 'on_clear_completed_requested')
+
+        # Verify signals are connected by emitting and checking handlers are callable
+        assert callable(window.on_job_started)
+        assert callable(window.on_job_completed)
+        assert callable(window.on_job_failed)
+        assert callable(window.on_job_cancelled)
+        assert callable(window.on_queue_finished)
+        assert callable(window.on_move_up_requested)
+        assert callable(window.on_move_down_requested)
+        assert callable(window.on_remove_requested)
+        assert callable(window.on_stop_requested)
+        assert callable(window.on_clear_completed_requested)

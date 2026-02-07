@@ -47,6 +47,7 @@ class ThreadClassRender(QThread):
         self.total_duration_sec = 0
         self.total_frames = 0
         self.video_res = ''
+        self._cancelled = False  # Flag to stop entire job
 
         # Convert to EncodingParams dataclass
         self.encoding_params = EncodingParams(
@@ -421,15 +422,40 @@ class ThreadClassRender(QThread):
                                       f"Failed to remove {temp_file.name}: {e}")
 
     # Coding commands
+    def stop(self):
+        """Stop the entire render job (all encoding steps)."""
+        self._cancelled = True
+        if self.runner:
+            self.runner.kill_ffmpeg()
+        self.config.log('RenderThread', 'stop', "Render job cancelled")
+
     def run(self):
         try:
             self.config.log('RenderThread', 'run', "Running ffmpeg thread...")
             self.ffmpeg_analysis()
+            if self._cancelled:
+                return
+
             self.encoding_params = self.calculate_encoding_params(2, self.video_res)
+            if self._cancelled:
+                return
+
             self.softsub()
+            if self._cancelled:
+                return
+
             self.hardsub()
+            if self._cancelled:
+                return
+
             self.hardsubbering()
+            if self._cancelled:
+                return
+
             self.raw_repairing()
+            if self._cancelled:
+                return
+
             self._cleanup_temp_files()
 
         except Exception as e:
