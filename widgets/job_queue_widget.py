@@ -166,6 +166,7 @@ class JobQueueWidget(QWidget):
 
     Shows:
     - QListWidget with all queued jobs (as JobListItem widgets)
+    - Resume button to start processing waiting jobs
     - Clear Completed button to remove finished jobs
 
     Signals:
@@ -173,6 +174,7 @@ class JobQueueWidget(QWidget):
         move_down_requested(str): Emitted when job move down clicked, passes job ID
         remove_requested(str): Emitted when job remove clicked, passes job ID
         stop_requested(str): Emitted when job stop clicked, passes job ID
+        resume_requested(): Emitted when resume button clicked
         clear_completed_requested(): Emitted when clear completed button clicked
     """
 
@@ -182,7 +184,8 @@ class JobQueueWidget(QWidget):
     remove_requested = pyqtSignal(str)
     stop_requested = pyqtSignal(str)
 
-    # Signal from clear button
+    # Signal from control buttons
+    resume_requested = pyqtSignal()
     clear_completed_requested = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -202,6 +205,12 @@ class JobQueueWidget(QWidget):
         # Job list widget
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget)
+
+        # Resume button
+        self.resume_button = QPushButton("Продолжить обработку")
+        self.resume_button.setToolTip("Start processing waiting jobs from the queue")
+        self.resume_button.clicked.connect(self.resume_requested.emit)
+        layout.addWidget(self.resume_button)
 
         # Clear completed button
         self.clear_completed_button = QPushButton("Clear Completed")

@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         self.queue_widget.move_down_requested.connect(self.on_move_down_requested)
         self.queue_widget.remove_requested.connect(self.on_remove_requested)
         self.queue_widget.stop_requested.connect(self.on_stop_requested)
+        self.queue_widget.resume_requested.connect(self.on_resume_requested)
         self.queue_widget.clear_completed_requested.connect(self.on_clear_completed_requested)
 
         self.set_buttons()
@@ -668,6 +669,24 @@ class MainWindow(QMainWindow):
         # TODO: Implement job cancellation
         self.queue_processor.cancel_current_job()
 
+    def on_resume_requested(self):
+        """Handle resume request from queue widget.
+
+        Starts processing waiting jobs from the queue if processor is not running.
+        """
+        self.config.log('mainWindow', 'on_resume_requested', "Resume requested")
+        if not self.queue_processor.isRunning():
+            if self.job_queue.has_waiting_jobs():
+                self.config.log('mainWindow', 'on_resume_requested', "Starting queue processor")
+                # Reset cancelled flag (important if queue was stopped previously)
+                self.queue_processor.cancelled = False
+                self.ui.render_stop_button.setEnabled(True)
+                self.queue_processor.start()
+            else:
+                self.config.log('mainWindow', 'on_resume_requested', "No waiting jobs to process")
+        else:
+            self.config.log('mainWindow', 'on_resume_requested', "Queue processor already running")
+
     def on_clear_completed_requested(self):
         """Handle clear completed request from queue widget.
 
@@ -681,6 +700,11 @@ class MainWindow(QMainWindow):
         """Refresh the queue widget to show current queue state."""
         jobs = self.job_queue.get_all_jobs()
         self.queue_widget.update_jobs(jobs)
+
+        # Enable/disable resume button based on queue state
+        has_waiting = self.job_queue.has_waiting_jobs()
+        is_running = self.queue_processor.isRunning()
+        self.queue_widget.resume_button.setEnabled(has_waiting and not is_running)
 
     def on_add_to_queue_and_start(self):
         """Add current configuration to queue and start/resume processing.
