@@ -57,3 +57,61 @@ class TestDisplayError:
 
         mock_style.unpolish.assert_called_once()
         mock_style.polish.assert_called_once()
+
+
+class TestCodingErrorRefactored:
+    """Test coding_error uses display_error instead of MessageBox."""
+
+    def test_coding_error_no_messagebox(self, qapp, mock_config):
+        """coding_error does NOT create QMessageBox."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+
+        with patch('windows.mainWindow.QMessageBox') as mock_msgbox:
+            # Mock exec_ to prevent blocking
+            mock_instance = Mock()
+            mock_msgbox.return_value = mock_instance
+            mock_instance.exec_.return_value = 0
+
+            window.coding_error('softsub')
+
+            # QMessageBox should NOT be instantiated
+            mock_msgbox.assert_not_called()
+
+    def test_coding_error_calls_display_error(self, qapp, mock_config):
+        """coding_error calls display_error with error message."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+
+        with patch('windows.mainWindow.QMessageBox') as mock_msgbox:
+            # Mock exec_ to prevent blocking (for current implementation)
+            mock_instance = Mock()
+            mock_msgbox.return_value = mock_instance
+            mock_instance.exec_.return_value = 0
+
+            window.coding_error('softsub')
+
+            # After refactor: should call display_error with softsub error message
+            window.display_error.assert_called_once()
+            args = window.display_error.call_args[0]
+            assert "Софтсабы" in args[0]  # Error message contains "Софтсабы"
+            assert args[1] == ErrorSeverity.ERROR
+
+    def test_coding_error_all_types_work(self, qapp, mock_config):
+        """coding_error handles all 9 error types."""
+        window = MainWindow(mock_config)
+        window.display_error = Mock()
+
+        error_types = ['softsub', 'hardsub', 'name', 'raw', 'audio',
+                       'subtitle', 'logo', 'stop', 'hardsub_folder']
+
+        with patch('windows.mainWindow.QMessageBox') as mock_msgbox:
+            # Mock exec_ to prevent blocking (for current implementation)
+            mock_instance = Mock()
+            mock_msgbox.return_value = mock_instance
+            mock_instance.exec_.return_value = 0
+
+            for error_type in error_types:
+                window.display_error.reset_mock()
+                window.coding_error(error_type)
+                window.display_error.assert_called_once()

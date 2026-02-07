@@ -460,35 +460,76 @@ class MainWindow(QMainWindow):
 
     # Coding Errors
     def coding_error(self, error_type):
-        error_messages = {
-            'softsub': ("Выбери правильно куда сохранять софтсаб!", self.soft_folder_path),
-            'subtitle': ("Выбери существующий путь к файлу субтитров!", self.sub_folder_path),
-            'raw': ("Выбери существующий путь к равке!", self.raw_folder_path),
-            'sound': ("Выбери существующий путь к дорожке звука!", self.sound_folder_path),
-            'name': ("Напиши корректное имя релиза!", None),
-            'hardsub_folder': ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
-            'stop': ("Зачем остановил?!", None),
-            'logs_folder' : ("НАХУЯ ТЫ ПАПКИ УДАЛЯЕШЬ?!", None),
+        """Display error message based on error type.
+
+        Args:
+            error_type: Error identifier ('softsub', 'hardsub', 'name', etc.)
+        """
+        # Error configuration with messages, severity, and actions
+        error_config = {
+            'softsub': {
+                'message': 'Софтсабы не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Actions not used in inline display
+            },
+            'hardsub': {
+                'message': 'Хардсабы не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Actions not used in inline display
+            },
+            'name': {
+                'message': 'Некорректное имя серии.\n'
+                          'Только A-z, а-я, 0-9, _, -, пробел',
+                'severity': ErrorSeverity.ERROR,
+                'action': None
+            },
+            'raw': {
+                'message': 'Равка не выбрана.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Actions not used in inline display
+            },
+            'audio': {
+                'message': 'Аудио не выбрано.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Actions not used in inline display
+            },
+            'subtitle': {
+                'message': 'Субтитры не выбраны.\nВыбрать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Actions not used in inline display
+            },
+            'logo': {
+                'message': 'Логотип не найден.\nПроверьте наличие файла:\n'
+                          f'{self.config.main_paths.logo}',
+                'severity': ErrorSeverity.ERROR,
+                'action': None
+            },
+            'stop': {
+                'message': 'Рендер окончен.\nГотово!',
+                'severity': ErrorSeverity.WARNING,  # Downgraded to warning
+                'action': None
+            },
+            'hardsub_folder': {
+                'message': 'Папка для хардсабов не найдена.\nСоздать?',
+                'severity': ErrorSeverity.ERROR,
+                'action': None  # Special handling below
+            }
         }
 
-        self.ui.app_state_label.setText("МЕГАПЛОХ!")
-        msg = QMessageBox()
-        msg.setWindowTitle("Чел ты...")
-        msg.setIcon(QMessageBox.Warning)
+        # Get error configuration
+        config = error_config.get(error_type)
+        if not config:
+            self.display_error(f"Unknown error type: {error_type}", ErrorSeverity.ERROR)
+            return
 
-        if error_type in error_messages:
-            message, action = error_messages[error_type]
-            msg.setText(message)
-            if action:
-                msg.setStandardButtons(QMessageBox.Open)
-                msg.buttonClicked.connect(action)
-            else:
-                msg.setStandardButtons(QMessageBox.Ok)
-            if error_type == 'hardsub_folder':
-                os.mkdir('HARDSUB')
+        # Special case: hardsub_folder - create directory if missing
+        if error_type == 'hardsub_folder':
+            self.config.main_paths.hardsub.mkdir(parents=True, exist_ok=True)
+            self.display_error("Папка для хардсабов создана", ErrorSeverity.INFO)
+            return
 
-        msg.exec_()
-        self.config.log('mainWindow', 'coding_error', f"Coding error: {error_type}")
+        # Display error with severity
+        self.display_error(config['message'], config['severity'])
 
     # Progress updater
     def frame_update(self, frame):
